@@ -99,68 +99,70 @@ export function PrintView({ budget }: { budget: any }) {
         .page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 14mm 14mm 18mm 14mm; }
 
         /* Header */
-        .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 10px; border-bottom: 3px solid #EA580C; margin-bottom: 14px; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 3px solid #EA580C; margin-bottom: 16px; }
         .logo-block { display: flex; align-items: center; gap: 10px; }
-        .logo-icon { width: 44px; height: 44px; background: #EA580C; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; color: white; flex-shrink: 0; }
-        .logo-text h1 { font-size: 18px; font-weight: 800; color: #EA580C; letter-spacing: -0.5px; }
-        .logo-text p { font-size: 9px; color: #6b7280; margin-top: 1px; }
-        .company-info { text-align: right; color: #4b5563; font-size: 9.5px; line-height: 1.6; }
-        .company-info strong { color: #EA580C; font-size: 10px; }
+        .logo-icon { width: 48px; height: 48px; background: #EA580C; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; color: white; flex-shrink: 0; }
+        .logo-text h1 { font-size: 20px; font-weight: 800; color: #111827; letter-spacing: -0.5px; }
+        .logo-text p { font-size: 9px; color: #6b7280; margin-top: 2px; }
+        .company-info { text-align: right; color: #6b7280; font-size: 9.5px; line-height: 1.7; }
+        .company-info strong { color: #111827; font-size: 10.5px; font-weight: 700; display: block; margin-bottom: 2px; }
 
-        /* Budget meta */
-        .budget-meta { background: #EA580C; color: white; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
-        .budget-meta-left h2 { font-size: 13px; font-weight: 700; }
-        .budget-meta-left .code { font-size: 10px; opacity: 0.75; margin-top: 2px; font-family: monospace; }
-        .budget-meta-right { text-align: right; font-size: 9.5px; opacity: 0.85; line-height: 1.8; }
-        .status-badge { display: inline-block; background: white; color: #EA580C; font-weight: 700; font-size: 9px; padding: 2px 8px; border-radius: 99px; margin-top: 4px; }
+        /* Budget meta bar */
+        .budget-meta { background: #1F2937; color: white; border-radius: 6px; padding: 11px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .budget-meta-left h2 { font-size: 14px; font-weight: 700; color: white; }
+        .budget-meta-left .code { font-size: 10px; color: #9ca3af; margin-top: 3px; font-family: monospace; letter-spacing: 0.5px; }
+        .budget-meta-right { text-align: right; font-size: 9.5px; color: #d1d5db; line-height: 1.8; }
+        .status-badge { display: inline-block; background: #EA580C; color: white; font-weight: 700; font-size: 8.5px; padding: 2px 9px; border-radius: 99px; margin-top: 5px; letter-spacing: 0.3px; }
 
         /* Info grid */
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
         .info-box { border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px 12px; }
-        .info-box h3 { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #9ca3af; margin-bottom: 6px; }
-        .info-row { display: flex; gap: 4px; margin-bottom: 3px; font-size: 10px; }
-        .info-label { color: #6b7280; min-width: 60px; flex-shrink: 0; }
+        .info-box h3 { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; margin-bottom: 7px; }
+        .info-row { display: flex; gap: 6px; margin-bottom: 3px; font-size: 10px; }
+        .info-label { color: #6b7280; min-width: 62px; flex-shrink: 0; }
         .info-value { color: #111827; font-weight: 500; }
 
         /* Section title */
-        .section-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #EA580C; border-bottom: 1.5px solid #EA580C; padding-bottom: 4px; margin-bottom: 8px; margin-top: 14px; }
+        .section-title { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #374151; border-bottom: 1.5px solid #d1d5db; padding-bottom: 5px; margin-bottom: 8px; margin-top: 16px; }
+        .section-title span { color: #EA580C; }
 
         /* Items table */
         table { width: 100%; border-collapse: collapse; }
-        th { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; padding: 5px 8px; text-align: left; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
+        th { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; padding: 6px 8px; text-align: left; border-bottom: 1.5px solid #e5e7eb; background: #f9fafb; }
         th.right { text-align: right; }
-        td { padding: 5px 8px; font-size: 10px; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+        td { padding: 5px 8px; font-size: 10px; border-bottom: 1px solid #f3f4f6; vertical-align: top; color: #374151; }
         td.right { text-align: right; }
         tr:last-child td { border-bottom: none; }
 
         /* Category row */
-        .cat-row td { background: #FFF4EE; font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #EA580C; padding: 4px 8px; }
+        .cat-row td { background: #f3f4f6; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #374151; padding: 4px 8px; border-bottom: none; }
 
         /* Item name */
         .item-name { font-weight: 600; color: #111827; }
-        .item-desc { color: #6b7280; font-size: 9px; margin-top: 1px; }
+        .item-desc { color: #9ca3af; font-size: 9px; margin-top: 1px; }
 
         /* Totals */
-        .totals-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        .totals-table td { padding: 4px 8px; font-size: 10px; }
-        .totals-table .total-row td { font-weight: 800; font-size: 13px; color: #EA580C; border-top: 2px solid #EA580C; padding-top: 6px; }
-        .totals-table .sub-row td { color: #4b5563; }
+        .totals-table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+        .totals-table td { padding: 4px 8px; font-size: 10px; color: #4b5563; }
+        .totals-table .total-row td { font-weight: 800; font-size: 13px; color: #111827; border-top: 2px solid #1F2937; padding-top: 8px; }
+        .totals-table .sub-row td { color: #6b7280; font-size: 9.5px; }
 
         /* Notes */
-        .notes-box { border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px 12px; margin-top: 12px; font-size: 10px; color: #374151; line-height: 1.5; white-space: pre-wrap; }
+        .notes-box { border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px 12px; margin-top: 10px; font-size: 10px; color: #374151; line-height: 1.5; white-space: pre-wrap; background: #fafafa; }
 
         /* Validity */
-        .validity-bar { background: #fef3c7; border: 1px solid #fde68a; border-radius: 6px; padding: 7px 12px; margin-top: 12px; font-size: 10px; color: #92400e; display: flex; justify-content: space-between; align-items: center; }
+        .validity-bar { background: #f9fafb; border: 1px solid #e5e7eb; border-left: 3px solid #EA580C; border-radius: 0 6px 6px 0; padding: 8px 12px; margin-top: 12px; font-size: 10px; color: #374151; display: flex; justify-content: space-between; align-items: center; }
+        .validity-bar strong { color: #111827; }
 
         /* Signatures */
-        .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 36px; padding-top: 0; }
+        .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; }
         .sig-block { text-align: center; }
-        .sig-line { border-top: 1.5px solid #374151; margin-bottom: 6px; }
-        .sig-label { font-size: 10px; font-weight: 600; color: #374151; }
+        .sig-line { border-top: 1px solid #374151; margin-bottom: 7px; }
+        .sig-label { font-size: 10px; font-weight: 600; color: #111827; }
         .sig-sub { font-size: 9px; color: #9ca3af; margin-top: 2px; }
 
         /* Footer */
-        .footer { margin-top: 20px; padding-top: 8px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; font-size: 8.5px; color: #9ca3af; }
+        .footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; font-size: 8px; color: #9ca3af; }
 
         /* Print */
         @media print {
@@ -170,12 +172,12 @@ export function PrintView({ budget }: { budget: any }) {
           .no-print { display: none !important; }
         }
 
-        /* Screen only: show print button */
+        /* Screen only */
         @media screen {
-          .print-bar { position: fixed; top: 0; left: 0; right: 0; background: #EA580C; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-size: 13px; }
-          .print-bar button { background: white; color: #EA580C; font-weight: 700; border: none; padding: 7px 20px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-          .print-bar button:hover { background: #f3f4f6; }
-          .page { margin-top: 50px; box-shadow: 0 4px 24px rgba(0,0,0,0.12); }
+          .print-bar { position: fixed; top: 0; left: 0; right: 0; background: #1F2937; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-size: 13px; }
+          .print-bar button { background: #EA580C; color: white; font-weight: 700; border: none; padding: 7px 20px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+          .print-bar button:hover { background: #C2410C; }
+          .page { margin-top: 52px; box-shadow: 0 4px 24px rgba(0,0,0,0.12); }
         }
       `}</style>
 
@@ -192,7 +194,7 @@ export function PrintView({ budget }: { budget: any }) {
             <img
               src="/logo.png"
               alt="Contécnica"
-              style={{ height: 52, width: "auto", objectFit: "contain" }}
+              style={{ height: 72, width: "auto", objectFit: "contain" }}
               onError={(e) => {
                 const t = e.currentTarget;
                 t.style.display = "none";

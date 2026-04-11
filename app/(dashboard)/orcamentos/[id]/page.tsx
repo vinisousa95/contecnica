@@ -23,6 +23,7 @@ import {
   MapPin,
   Calendar,
   FileText,
+  Printer,
   Package,
   CheckCircle,
   XCircle,
@@ -189,6 +190,13 @@ export default function OrcamentoDetailPage() {
                 {action.label}
               </Button>
             ))}
+
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/orcamentos/${id}/imprimir`} target="_blank">
+                <Printer className="h-4 w-4" />
+                Exportar PDF
+              </Link>
+            </Button>
 
             <Button
               variant="outline"

@@ -195,14 +195,11 @@ export default function ItensReformaPage() {
               className="w-44"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-            >
-              <option value="">Todas as categorias</option>
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {CATEGORY_LABELS[cat]}
-                </option>
-              ))}
-            </Select>
+              options={[
+                { value: "", label: "Todas as categorias" },
+                ...CATEGORIES.map((cat) => ({ value: cat, label: CATEGORY_LABELS[cat] })),
+              ]}
+            />
             <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
               <input
                 type="checkbox"
@@ -326,24 +323,21 @@ export default function ItensReformaPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Categoria <span className="text-red-500">*</span>
                 </label>
-                <Select {...register("category")} error={(errors.category as any)?.message}>
-                  <option value="">Selecione...</option>
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {CATEGORY_LABELS[cat]}
-                    </option>
-                  ))}
-                </Select>
+                <Select
+                  {...register("category")}
+                  error={(errors.category as any)?.message}
+                  options={[
+                    { value: "", label: "Selecione..." },
+                    ...CATEGORIES.map((cat) => ({ value: cat, label: CATEGORY_LABELS[cat] })),
+                  ]}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Unidade</label>
-                <Select {...register("unit")}>
-                  {UNITS.map((u) => (
-                    <option key={u} value={u}>
-                      {UNIT_LABELS[u]}
-                    </option>
-                  ))}
-                </Select>
+                <Select
+                  {...register("unit")}
+                  options={UNITS.map((u) => ({ value: u, label: UNIT_LABELS[u] }))}
+                />
               </div>
             </div>
 

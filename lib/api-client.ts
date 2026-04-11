@@ -31,6 +31,37 @@ async function request<T>(
   return json.data as T;
 }
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+async function requestPaginated<T>(
+  path: string,
+  options?: RequestInit
+): Promise<PaginatedResponse<T>> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+    ...options,
+  });
+
+  const json = await res.json();
+
+  if (!res.ok || !json.success) {
+    throw new ApiError(json.error ?? "Erro desconhecido", res.status);
+  }
+
+  return { data: json.data, pagination: json.pagination };
+}
+
 export const api = {
   // Auth
   auth: {
@@ -164,7 +195,7 @@ export const api = {
   budgets: {
     list: (params?: Record<string, string>) => {
       const qs = params ? "?" + new URLSearchParams(params).toString() : "";
-      return request(`/budgets${qs}`);
+      return requestPaginated(`/budgets${qs}`);
     },
     get: (id: string) => request(`/budgets/${id}`),
     create: (data: unknown) =>

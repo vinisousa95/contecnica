@@ -9,7 +9,6 @@ import { api } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn, formatCurrency } from "@/lib/utils";
 import {
@@ -391,25 +390,32 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Cliente <span className="text-red-500">*</span>
               </label>
-              <Select {...register("clientId")} error={errors.clientId?.message}>
+              <select
+                {...register("clientId")}
+                className="flex h-9 w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F2D52]"
+              >
                 <option value="">Selecione um cliente...</option>
                 {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
+                  <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
-              </Select>
+              </select>
+              {errors.clientId?.message && (
+                <p className="mt-1 text-xs text-red-600">{errors.clientId.message}</p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Padrão de Acabamento <span className="text-red-500">*</span>
               </label>
-              <Select {...register("tier")} error={(errors.tier as any)?.message}>
+              <select
+                {...register("tier")}
+                className="flex h-9 w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F2D52]"
+              >
                 <option value="LOW">Padrão Baixo</option>
                 <option value="MEDIUM">Padrão Médio</option>
                 <option value="HIGH">Padrão Alto</option>
-              </Select>
+              </select>
             </div>
 
             <div>
@@ -419,14 +425,17 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <Select {...register("status")}>
+              <select
+                {...register("status")}
+                className="flex h-9 w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F2D52]"
+              >
                 <option value="DRAFT">Rascunho</option>
                 <option value="UNDER_REVIEW">Em Revisão</option>
                 <option value="SENT">Enviado</option>
                 <option value="APPROVED">Aprovado</option>
                 <option value="REJECTED">Recusado</option>
                 <option value="CANCELLED">Cancelado</option>
-              </Select>
+              </select>
             </div>
 
             <div className="sm:col-span-2">

@@ -163,20 +163,15 @@ export default function OrcamentoDetailPage() {
 
   return (
     <div className="max-w-4xl space-y-5">
+      <div className="flex items-center gap-3 mb-1">
+        <Badge variant={STATUS_VARIANTS[budget.status]}>{STATUS_LABELS[budget.status]}</Badge>
+        <span className="text-xs font-mono text-gray-400">{budget.code}</span>
+        <ChevronRight className="h-3 w-3 text-gray-300" />
+        <span className="text-xs text-gray-500">{TIER_LABELS[budget.tier]}</span>
+      </div>
       <PageHeader
-        title={
-          <span className="flex items-center gap-2">
-            {budget.title}
-            <Badge variant={STATUS_VARIANTS[budget.status]}>{STATUS_LABELS[budget.status]}</Badge>
-          </span>
-        }
-        description={
-          <span className="flex items-center gap-2 text-sm text-gray-500">
-            <span className="font-mono">{budget.code}</span>
-            <ChevronRight className="h-3 w-3" />
-            <span>{TIER_LABELS[budget.tier]}</span>
-          </span>
-        }
+        title={budget.title}
+        description={`${budget.code} · ${TIER_LABELS[budget.tier]}`}
         actions={
           <div className="flex items-center gap-2">
             {/* Next status actions */}

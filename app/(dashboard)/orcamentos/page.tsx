@@ -69,11 +69,11 @@ export default function OrcamentosPage() {
         ...(status && { status }),
         ...(tier && { tier }),
         page: String(page),
-      }) as Promise<any>,
+      }),
   });
 
-  const budgets = Array.isArray(data) ? data : (data as any)?.data ?? [];
-  const pagination = (data as any)?.pagination;
+  const budgets = data?.data ?? [];
+  const pagination = data?.pagination;
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.budgets.delete(id),
@@ -134,22 +134,22 @@ export default function OrcamentosPage() {
               className="w-40"
               value={status}
               onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-            >
-              <option value="">Todos os status</option>
-              {Object.entries(STATUS_LABELS).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
-              ))}
-            </Select>
+              options={[
+                { value: "", label: "Todos os status" },
+                ...Object.entries(STATUS_LABELS).map(([k, v]) => ({ value: k, label: v })),
+              ]}
+            />
             <Select
               className="w-36"
               value={tier}
               onChange={(e) => { setTier(e.target.value); setPage(1); }}
-            >
-              <option value="">Todos os padrões</option>
-              <option value="LOW">Padrão Baixo</option>
-              <option value="MEDIUM">Padrão Médio</option>
-              <option value="HIGH">Padrão Alto</option>
-            </Select>
+              options={[
+                { value: "", label: "Todos os padrões" },
+                { value: "LOW", label: "Padrão Baixo" },
+                { value: "MEDIUM", label: "Padrão Médio" },
+                { value: "HIGH", label: "Padrão Alto" },
+              ]}
+            />
           </div>
         </CardContent>
       </Card>
@@ -159,7 +159,7 @@ export default function OrcamentosPage() {
         <CardContent className="p-0">
           {budgets.length === 0 ? (
             <EmptyState
-              icon={FileText}
+              icon={<FileText className="h-12 w-12" />}
               title="Nenhum orçamento encontrado"
               description="Crie um novo orçamento para começar."
               action={

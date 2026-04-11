@@ -42,11 +42,11 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="bg-white rounded-2xl px-6 py-4 mb-4 shadow-lg">
+          <div className="mb-4">
             <img
               src="/logo.png"
               alt="Contécnica"
-              className="h-14 w-auto object-contain"
+              className="h-16 w-auto object-contain"
               onError={(e) => {
                 const t = e.currentTarget;
                 t.style.display = "none";
@@ -58,7 +58,7 @@ export default function LoginPage() {
               <div className="w-10 h-10 bg-[#EA580C] rounded-xl flex items-center justify-center">
                 <Building2 className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900">Contécnica</span>
+              <span className="text-xl font-bold text-white">Contécnica</span>
             </div>
           </div>
           <p className="text-gray-400 text-sm">Sistema de Gestão de Reformas</p>

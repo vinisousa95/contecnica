@@ -147,9 +147,6 @@ export async function GET(request: NextRequest) {
     prisma.budget.findMany({
       orderBy: { createdAt: "desc" },
       take: 5,
-      include: {
-        client: { select: { name: true } },
-      },
       select: {
         id: true,
         code: true,

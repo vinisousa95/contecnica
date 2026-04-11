@@ -1,0 +1,72 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api-client";
+import { type ExpenseInput } from "@/lib/validations";
+import { PageHeader } from "@/components/layout/page-header";
+import { ExpenseForm } from "@/components/financial/expense-form";
+import { LoadingPage } from "@/components/ui/loading";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { format } from "date-fns";
+
+export default function EditarDespesaPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const { data: expense, isLoading } = useQuery({
+    queryKey: ["expense", params.id],
+    queryFn: () => api.expenses.get(params.id) as Promise<any>,
+  });
+
+  const mutation = useMutation({
+    mutationFn: (data: ExpenseInput) => api.expenses.update(params.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      toast({ title: "Despesa atualizada!", variant: "success" });
+      router.push("/financeiro/despesas");
+    },
+    onError: (err: Error) => {
+      toast({ title: "Erro ao atualizar", description: err.message, variant: "error" });
+    },
+  });
+
+  if (isLoading) return <LoadingPage />;
+  if (!expense) return null;
+
+  const defaultValues: Partial<ExpenseInput> = {
+    ...expense,
+    projectId: expense.project?.id ?? "",
+    categoryId: expense.category?.id ?? "",
+    amount: String(expense.amount),
+    dueDate: expense.dueDate ? format(new Date(expense.dueDate), "yyyy-MM-dd") : "",
+    paymentDate: expense.paymentDate ? format(new Date(expense.paymentDate), "yyyy-MM-dd") : "",
+  };
+
+  return (
+    <div className="max-w-3xl space-y-5">
+      <PageHeader
+        title="Editar Despesa"
+        description={expense.description}
+        actions={
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/financeiro/despesas">
+              <ArrowLeft className="h-4 w-4" />
+              Voltar
+            </Link>
+          </Button>
+        }
+      />
+      <ExpenseForm
+        defaultValues={defaultValues}
+        onSubmit={mutation.mutateAsync}
+        isLoading={mutation.isPending}
+        submitLabel="Salvar Alterações"
+      />
+    </div>
+  );
+}

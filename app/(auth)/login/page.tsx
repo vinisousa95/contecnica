@@ -1,0 +1,113 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Building2, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { loginSchema, type LoginInput } from "@/lib/validations";
+import { api } from "@/lib/api-client";
+import { toast } from "@/hooks/use-toast";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginInput) => {
+    try {
+      await api.auth.login(data);
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      toast({
+        title: "Erro ao entrar",
+        description: "E-mail ou senha incorretos.",
+        variant: "error",
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#0F2D52] via-[#0a2240] to-[#061628] flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 bg-[#F59E0B] rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+            <Building2 className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-white">Contécnica</h1>
+          <p className="text-blue-300 text-sm mt-1">Sistema de Gestão de Reformas</p>
+        </div>
+
+        {/* Card */}
+        <div className="bg-white rounded-2xl shadow-2xl p-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">Bem-vindo de volta</h2>
+          <p className="text-sm text-gray-500 mb-6">Entre com suas credenciais para acessar</p>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <Input
+              label="E-mail"
+              type="email"
+              placeholder="seu@email.com"
+              required
+              leftIcon={<Mail className="h-4 w-4" />}
+              error={errors.email?.message}
+              {...register("email")}
+            />
+
+            <Input
+              label="Senha"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              required
+              leftIcon={<Lock className="h-4 w-4" />}
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              }
+              error={errors.password?.message}
+              {...register("password")}
+            />
+
+            <Button
+              type="submit"
+              className="w-full h-10"
+              loading={isSubmitting}
+            >
+              Entrar no sistema
+            </Button>
+          </form>
+
+          <div className="mt-6 pt-4 border-t border-gray-100">
+            <p className="text-xs text-gray-400 text-center">
+              Problemas para acessar? Contate o administrador.
+            </p>
+          </div>
+        </div>
+
+        <p className="text-center text-blue-400 text-xs mt-6">
+          © {new Date().getFullYear()} Contécnica. Todos os direitos reservados.
+        </p>
+      </div>
+    </div>
+  );
+}

@@ -18,6 +18,7 @@ import {
   ArrowDownCircle,
   Clock,
   DollarSign,
+  FileText,
 } from "lucide-react";
 import {
   AreaChart,
@@ -78,7 +79,7 @@ export default function DashboardPage() {
   if (isLoading) return <LoadingPage message="Carregando dashboard..." />;
   if (!data) return null;
 
-  const { projects, financial, alerts, recentMovements, activeProjects } = data as any;
+  const { projects, financial, alerts, recentMovements, activeProjects, budgets, recentBudgets } = data as any;
 
   const cashflowData = [
     {
@@ -322,6 +323,69 @@ export default function DashboardPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Budget Summary */}
+      {budgets && budgets.total > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm">Orçamentos Recentes</CardTitle>
+              <div className="flex items-center gap-4 text-xs text-gray-500">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+                  {budgets.sent} enviado(s) · {formatCurrency(budgets.sentTotal)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                  {budgets.approved} aprovado(s) · {formatCurrency(budgets.approvedTotal)}
+                </span>
+                <Link href="/orcamentos" className="text-blue-600 hover:text-blue-700 font-medium">
+                  Ver todos →
+                </Link>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-gray-50">
+              {recentBudgets.map((b: any) => (
+                <Link
+                  key={b.id}
+                  href={`/orcamentos/${b.id}`}
+                  className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50/80 transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-blue-50">
+                    <FileText className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{b.title}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {b.clientName} · <span className="font-mono">{b.code}</span>
+                    </p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-semibold text-gray-900">{formatCurrency(b.totalAmount)}</p>
+                    <p className="text-xs text-gray-400">{formatDate(b.createdAt)}</p>
+                  </div>
+                  <Badge
+                    variant={
+                      b.status === "APPROVED" ? "success" :
+                      b.status === "SENT" ? "info" :
+                      b.status === "UNDER_REVIEW" ? "warning" :
+                      b.status === "REJECTED" ? "danger" : "default"
+                    }
+                  >
+                    {b.status === "DRAFT" ? "Rascunho" :
+                     b.status === "UNDER_REVIEW" ? "Em Revisão" :
+                     b.status === "SENT" ? "Enviado" :
+                     b.status === "APPROVED" ? "Aprovado" :
+                     b.status === "REJECTED" ? "Recusado" : "Cancelado"}
+                  </Badge>
+                </Link>
+              ))}
             </div>
           </CardContent>
         </Card>

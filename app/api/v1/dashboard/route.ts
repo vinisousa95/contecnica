@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
     recentExpenses,
     recentRevenues,
     projectsWithFinancials,
+    budgetCounts,
+    recentBudgets,
   ] = await Promise.all([
     // Project counts
     prisma.project.groupBy({
@@ -133,6 +135,32 @@ export async function GET(request: NextRequest) {
       take: 5,
       orderBy: { updatedAt: "desc" },
     }),
+
+    // Budget counts by status
+    prisma.budget.groupBy({
+      by: ["status"],
+      _count: { id: true },
+      _sum: { totalAmount: true },
+    }),
+
+    // Recent budgets
+    prisma.budget.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      include: {
+        client: { select: { name: true } },
+      },
+      select: {
+        id: true,
+        code: true,
+        title: true,
+        status: true,
+        tier: true,
+        totalAmount: true,
+        createdAt: true,
+        client: { select: { name: true } },
+      },
+    }),
   ]);
 
   // Calculate project counts
@@ -230,6 +258,29 @@ export async function GET(request: NextRequest) {
       })),
     },
     activeProjects: projectsData,
+    budgets: {
+      draft: budgetCounts.find((b) => b.status === "DRAFT")?._count.id ?? 0,
+      underReview: budgetCounts.find((b) => b.status === "UNDER_REVIEW")?._count.id ?? 0,
+      sent: budgetCounts.find((b) => b.status === "SENT")?._count.id ?? 0,
+      approved: budgetCounts.find((b) => b.status === "APPROVED")?._count.id ?? 0,
+      total: budgetCounts.reduce((s, b) => s + b._count.id, 0),
+      approvedTotal: Number(
+        budgetCounts.find((b) => b.status === "APPROVED")?._sum.totalAmount ?? 0
+      ),
+      sentTotal: Number(
+        budgetCounts.find((b) => b.status === "SENT")?._sum.totalAmount ?? 0
+      ),
+    },
+    recentBudgets: recentBudgets.map((b) => ({
+      id: b.id,
+      code: b.code,
+      title: b.title,
+      status: b.status,
+      tier: b.tier,
+      totalAmount: Number(b.totalAmount),
+      clientName: b.client?.name,
+      createdAt: b.createdAt,
+    })),
   };
 
   return apiSuccess(data);

@@ -149,7 +149,7 @@ export function Sidebar({ user }: SidebarProps) {
         <img
           src="/logo.png"
           alt="Contécnica"
-          className="h-12 w-auto object-contain"
+          className="w-full max-w-[180px] h-auto object-contain"
           onError={(e) => {
             const t = e.currentTarget;
             t.style.display = "none";

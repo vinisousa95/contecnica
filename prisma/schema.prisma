@@ -26,6 +26,7 @@ model User {
   revenues            Revenue[]
   appSubmissions      AppSubmission[]
   reviewedSubmissions AppSubmission[] @relation("ReviewedBy")
+  budgets             Budget[]
 
   @@map("users")
 }
@@ -59,6 +60,7 @@ model Client {
 
   projects Project[]
   revenues Revenue[]
+  budgets  Budget[]
 
   @@map("clients")
 }
@@ -225,4 +227,127 @@ enum SubmissionStatus {
   PENDING_APPROVAL
   APPROVED
   REJECTED
+}
+
+// ─────────────────────────────────────────────
+// REFORM ITEMS — Catálogo de itens/serviços
+// ─────────────────────────────────────────────
+model ReformItem {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  category    ItemCategory
+  unit        ItemUnit     @default(UNIT)
+  priceLow    Decimal      @db.Decimal(10, 2) @map("price_low")
+  priceMedium Decimal      @db.Decimal(10, 2) @map("price_medium")
+  priceHigh   Decimal      @db.Decimal(10, 2) @map("price_high")
+  isActive    Boolean      @default(true) @map("is_active")
+  sortOrder   Int          @default(0) @map("sort_order")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  budgetItems BudgetItem[]
+
+  @@map("reform_items")
+}
+
+enum ItemCategory {
+  DEMOLITION
+  PAINTING
+  MASONRY
+  ELECTRICAL
+  PLUMBING
+  FINISHING
+  CLEANING
+  JOINERY
+  TILING
+  CARPENTRY
+  OTHERS
+}
+
+enum ItemUnit {
+  UNIT
+  SQM
+  M
+  DAILY
+  SERVICE
+  POINT
+  HOUR
+}
+
+// ─────────────────────────────────────────────
+// BUDGETS — Orçamentos
+// ─────────────────────────────────────────────
+model Budget {
+  id           String       @id @default(cuid())
+  code         String       @unique
+  clientId     String       @map("client_id")
+  client       Client       @relation(fields: [clientId], references: [id])
+  title        String
+  tier         BudgetTier
+  status       BudgetStatus @default(DRAFT)
+  totalAmount  Decimal      @default(0) @db.Decimal(12, 2) @map("total_amount")
+  notes        String?
+  validUntil   DateTime?    @map("valid_until")
+  zipCode      String?      @map("zip_code")
+  street       String?
+  number       String?
+  complement   String?
+  neighborhood String?
+  city         String?
+  state        String?
+  createdById  String       @map("created_by_id")
+  createdBy    User         @relation(fields: [createdById], references: [id])
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  items      BudgetItem[]
+  extraItems BudgetExtraItem[]
+
+  @@map("budgets")
+}
+
+enum BudgetTier {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum BudgetStatus {
+  DRAFT
+  UNDER_REVIEW
+  SENT
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+// Itens do catálogo selecionados no orçamento
+model BudgetItem {
+  id           String     @id @default(cuid())
+  budgetId     String     @map("budget_id")
+  budget       Budget     @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  reformItemId String     @map("reform_item_id")
+  reformItem   ReformItem @relation(fields: [reformItemId], references: [id])
+  quantity     Decimal    @db.Decimal(10, 3)
+  unitPrice    Decimal    @db.Decimal(10, 2) @map("unit_price")
+  subtotal     Decimal    @db.Decimal(12, 2)
+
+  @@map("budget_items")
+}
+
+// Itens manuais/extras adicionados livremente
+model BudgetExtraItem {
+  id          String   @id @default(cuid())
+  budgetId    String   @map("budget_id")
+  budget      Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  quantity    Decimal  @db.Decimal(10, 3)
+  unit        ItemUnit @default(UNIT)
+  unitPrice   Decimal  @db.Decimal(10, 2) @map("unit_price")
+  subtotal    Decimal  @db.Decimal(12, 2)
+  sortOrder   Int      @default(0) @map("sort_order")
+
+  @@map("budget_extra_items")
 }

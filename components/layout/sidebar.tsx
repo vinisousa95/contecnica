@@ -17,6 +17,7 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   TrendingUp,
+  FileText,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -53,6 +54,11 @@ const navigation: NavItem[] = [
     ],
   },
   {
+    label: "Orçamentos",
+    href: "/orcamentos",
+    icon: FileText,
+  },
+  {
     label: "Relatórios",
     href: "/relatorios",
     icon: BarChart3,
@@ -63,6 +69,7 @@ const navigation: NavItem[] = [
     children: [
       { label: "Usuários", href: "/configuracoes/usuarios", icon: Users },
       { label: "Categorias", href: "/configuracoes/categorias", icon: CreditCard },
+      { label: "Itens de Reforma", href: "/configuracoes/itens-reforma", icon: HardHat },
     ],
   },
 ];

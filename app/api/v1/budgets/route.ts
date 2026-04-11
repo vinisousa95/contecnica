@@ -1,0 +1,144 @@
+import { NextRequest } from "next/server";
+import { getSessionFromRequest } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { budgetSchema } from "@/lib/validations";
+import { apiSuccess, apiError, getPaginationParams } from "@/lib/utils";
+
+async function generateCode(): Promise<string> {
+  const year = new Date().getFullYear();
+  const prefix = `ORC-${year}-`;
+  const last = await prisma.budget.findFirst({
+    where: { code: { startsWith: prefix } },
+    orderBy: { code: "desc" },
+    select: { code: true },
+  });
+  const seq = last ? parseInt(last.code.split("-")[2]) + 1 : 1;
+  return `${prefix}${String(seq).padStart(4, "0")}`;
+}
+
+export async function GET(request: NextRequest) {
+  const session = await getSessionFromRequest(request);
+  if (!session) return apiError("Não autorizado", 401);
+
+  const { searchParams } = new URL(request.url);
+  const { page, limit, skip } = getPaginationParams(searchParams);
+  const search = searchParams.get("search") ?? "";
+  const status = searchParams.get("status") ?? "";
+  const tier = searchParams.get("tier") ?? "";
+
+  const where: Record<string, unknown> = {};
+  if (status) where.status = status;
+  if (tier) where.tier = tier;
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { code: { contains: search, mode: "insensitive" } },
+      { client: { name: { contains: search, mode: "insensitive" } } },
+    ];
+  }
+
+  const [budgets, total] = await Promise.all([
+    prisma.budget.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+      include: {
+        client: { select: { id: true, name: true } },
+        _count: { select: { items: true, extraItems: true } },
+      },
+    }),
+    prisma.budget.count({ where }),
+  ]);
+
+  return apiSuccess(
+    budgets.map((b) => ({ ...b, totalAmount: Number(b.totalAmount) })),
+    { pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } }
+  );
+}
+
+export async function POST(request: NextRequest) {
+  const session = await getSessionFromRequest(request);
+  if (!session) return apiError("Não autorizado", 401);
+
+  try {
+    const body = await request.json();
+    const parsed = budgetSchema.safeParse(body);
+    if (!parsed.success) return apiError(parsed.error.errors[0].message);
+
+    const { items, extraItems, validUntil, ...rest } = parsed.data;
+
+    // Calculate total
+    const itemsTotal = items.reduce((sum, i) => sum + i.subtotal, 0);
+    const extrasTotal = extraItems.reduce((sum, i) => sum + i.subtotal, 0);
+    const totalAmount = itemsTotal + extrasTotal;
+
+    const code = await generateCode();
+
+    const budget = await prisma.budget.create({
+      data: {
+        ...rest,
+        code,
+        validUntil: validUntil ? new Date(validUntil) : null,
+        totalAmount,
+        createdById: session.userId,
+        items: {
+          create: items.map((i) => ({
+            reformItemId: i.reformItemId,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+            subtotal: i.subtotal,
+          })),
+        },
+        extraItems: {
+          create: extraItems.map((e, idx) => ({
+            name: e.name,
+            description: e.description,
+            quantity: e.quantity,
+            unit: e.unit,
+            unitPrice: e.unitPrice,
+            subtotal: e.subtotal,
+            sortOrder: idx,
+          })),
+        },
+      },
+      include: {
+        client: { select: { id: true, name: true } },
+        items: { include: { reformItem: true } },
+        extraItems: true,
+      },
+    });
+
+    return apiSuccess(serializeBudget(budget));
+  } catch (err) {
+    console.error(err);
+    return apiError("Erro ao criar orçamento", 500);
+  }
+}
+
+export function serializeBudget(b: any) {
+  return {
+    ...b,
+    totalAmount: Number(b.totalAmount),
+    items: b.items?.map((i: any) => ({
+      ...i,
+      quantity: Number(i.quantity),
+      unitPrice: Number(i.unitPrice),
+      subtotal: Number(i.subtotal),
+      reformItem: i.reformItem
+        ? {
+            ...i.reformItem,
+            priceLow: Number(i.reformItem.priceLow),
+            priceMedium: Number(i.reformItem.priceMedium),
+            priceHigh: Number(i.reformItem.priceHigh),
+          }
+        : undefined,
+    })),
+    extraItems: b.extraItems?.map((e: any) => ({
+      ...e,
+      quantity: Number(e.quantity),
+      unitPrice: Number(e.unitPrice),
+      subtotal: Number(e.subtotal),
+    })),
+  };
+}

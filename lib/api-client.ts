@@ -144,6 +144,40 @@ export const api = {
       return request(`/reports/projects${qs}`);
     },
   },
+
+  // Reform Items (catálogo)
+  reformItems: {
+    list: (params?: Record<string, string>) => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return request(`/reform-items${qs}`);
+    },
+    get: (id: string) => request(`/reform-items/${id}`),
+    create: (data: unknown) =>
+      request("/reform-items", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: unknown) =>
+      request(`/reform-items/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request(`/reform-items/${id}`, { method: "DELETE" }),
+  },
+
+  // Budgets (orçamentos)
+  budgets: {
+    list: (params?: Record<string, string>) => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return request(`/budgets${qs}`);
+    },
+    get: (id: string) => request(`/budgets/${id}`),
+    create: (data: unknown) =>
+      request("/budgets", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: unknown) =>
+      request(`/budgets/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request(`/budgets/${id}`, { method: "DELETE" }),
+    duplicate: (id: string) =>
+      request(`/budgets/${id}/duplicate`, { method: "POST" }),
+    updateStatus: (id: string, status: string) =>
+      request(`/budgets/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
+  },
 };
 
 export { ApiError };

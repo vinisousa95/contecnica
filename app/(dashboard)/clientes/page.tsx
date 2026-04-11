@@ -137,8 +137,8 @@ export default function ClientesPage() {
                   <TableRow key={client.id}>
                     <TableCell>
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-[#0F2D52]/10 flex items-center justify-center flex-shrink-0">
-                          <span className="text-[#0F2D52] text-xs font-semibold">
+                        <div className="w-8 h-8 rounded-full bg-[#EA580C]/10 flex items-center justify-center flex-shrink-0">
+                          <span className="text-[#EA580C] text-xs font-semibold">
                             {client.name.charAt(0).toUpperCase()}
                           </span>
                         </div>

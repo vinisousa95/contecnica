@@ -99,20 +99,20 @@ export function PrintView({ budget }: { budget: any }) {
         .page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 14mm 14mm 18mm 14mm; }
 
         /* Header */
-        .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 10px; border-bottom: 3px solid #0F2D52; margin-bottom: 14px; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 10px; border-bottom: 3px solid #EA580C; margin-bottom: 14px; }
         .logo-block { display: flex; align-items: center; gap: 10px; }
-        .logo-icon { width: 44px; height: 44px; background: #F59E0B; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; color: white; flex-shrink: 0; }
-        .logo-text h1 { font-size: 18px; font-weight: 800; color: #0F2D52; letter-spacing: -0.5px; }
+        .logo-icon { width: 44px; height: 44px; background: #EA580C; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; color: white; flex-shrink: 0; }
+        .logo-text h1 { font-size: 18px; font-weight: 800; color: #EA580C; letter-spacing: -0.5px; }
         .logo-text p { font-size: 9px; color: #6b7280; margin-top: 1px; }
         .company-info { text-align: right; color: #4b5563; font-size: 9.5px; line-height: 1.6; }
-        .company-info strong { color: #0F2D52; font-size: 10px; }
+        .company-info strong { color: #EA580C; font-size: 10px; }
 
         /* Budget meta */
-        .budget-meta { background: #0F2D52; color: white; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .budget-meta { background: #EA580C; color: white; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
         .budget-meta-left h2 { font-size: 13px; font-weight: 700; }
         .budget-meta-left .code { font-size: 10px; opacity: 0.75; margin-top: 2px; font-family: monospace; }
         .budget-meta-right { text-align: right; font-size: 9.5px; opacity: 0.85; line-height: 1.8; }
-        .status-badge { display: inline-block; background: #F59E0B; color: #0F2D52; font-weight: 700; font-size: 9px; padding: 2px 8px; border-radius: 99px; margin-top: 4px; }
+        .status-badge { display: inline-block; background: white; color: #EA580C; font-weight: 700; font-size: 9px; padding: 2px 8px; border-radius: 99px; margin-top: 4px; }
 
         /* Info grid */
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
@@ -123,7 +123,7 @@ export function PrintView({ budget }: { budget: any }) {
         .info-value { color: #111827; font-weight: 500; }
 
         /* Section title */
-        .section-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #0F2D52; border-bottom: 1.5px solid #0F2D52; padding-bottom: 4px; margin-bottom: 8px; margin-top: 14px; }
+        .section-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #EA580C; border-bottom: 1.5px solid #EA580C; padding-bottom: 4px; margin-bottom: 8px; margin-top: 14px; }
 
         /* Items table */
         table { width: 100%; border-collapse: collapse; }
@@ -134,7 +134,7 @@ export function PrintView({ budget }: { budget: any }) {
         tr:last-child td { border-bottom: none; }
 
         /* Category row */
-        .cat-row td { background: #f0f4f8; font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #0F2D52; padding: 4px 8px; }
+        .cat-row td { background: #FFF4EE; font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #EA580C; padding: 4px 8px; }
 
         /* Item name */
         .item-name { font-weight: 600; color: #111827; }
@@ -143,7 +143,7 @@ export function PrintView({ budget }: { budget: any }) {
         /* Totals */
         .totals-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
         .totals-table td { padding: 4px 8px; font-size: 10px; }
-        .totals-table .total-row td { font-weight: 800; font-size: 13px; color: #0F2D52; border-top: 2px solid #0F2D52; padding-top: 6px; }
+        .totals-table .total-row td { font-weight: 800; font-size: 13px; color: #EA580C; border-top: 2px solid #EA580C; padding-top: 6px; }
         .totals-table .sub-row td { color: #4b5563; }
 
         /* Notes */
@@ -172,9 +172,9 @@ export function PrintView({ budget }: { budget: any }) {
 
         /* Screen only: show print button */
         @media screen {
-          .print-bar { position: fixed; top: 0; left: 0; right: 0; background: #0F2D52; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-size: 13px; }
-          .print-bar button { background: #F59E0B; color: #0F2D52; font-weight: 700; border: none; padding: 7px 20px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-          .print-bar button:hover { background: #d97706; }
+          .print-bar { position: fixed; top: 0; left: 0; right: 0; background: #EA580C; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-size: 13px; }
+          .print-bar button { background: white; color: #EA580C; font-weight: 700; border: none; padding: 7px 20px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+          .print-bar button:hover { background: #f3f4f6; }
           .page { margin-top: 50px; box-shadow: 0 4px 24px rgba(0,0,0,0.12); }
         }
       `}</style>
@@ -189,10 +189,23 @@ export function PrintView({ budget }: { budget: any }) {
         {/* ── Header ── */}
         <div className="header">
           <div className="logo-block">
-            <div className="logo-icon">C</div>
-            <div className="logo-text">
-              <h1>Contécnica</h1>
-              <p>Gestão de Reformas e Construções</p>
+            <img
+              src="/logo.png"
+              alt="Contécnica"
+              style={{ height: 52, width: "auto", objectFit: "contain" }}
+              onError={(e) => {
+                const t = e.currentTarget;
+                t.style.display = "none";
+                const fallback = t.nextElementSibling as HTMLElement | null;
+                if (fallback) fallback.style.display = "flex";
+              }}
+            />
+            <div style={{ display: "none", alignItems: "center", gap: 8 }}>
+              <div className="logo-icon">C</div>
+              <div className="logo-text">
+                <h1>Contécnica</h1>
+                <p>Gestão de Reformas e Construções</p>
+              </div>
             </div>
           </div>
           <div className="company-info">

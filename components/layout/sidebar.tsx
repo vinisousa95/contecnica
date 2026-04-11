@@ -127,7 +127,7 @@ function NavItemComponent({ item, depth = 0 }: { item: NavItem; depth?: number }
     >
       <item.icon className="h-4 w-4 flex-shrink-0" />
       <span>{item.label}</span>
-      {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />}
+      {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#EA580C]" />}
     </Link>
   );
 }
@@ -145,13 +145,28 @@ export function Sidebar({ user }: SidebarProps) {
   return (
     <aside className="flex flex-col w-64 bg-sidebar min-h-screen border-r border-sidebar-border">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-sidebar-border">
-        <div className="w-9 h-9 bg-[#F59E0B] rounded-xl flex items-center justify-center flex-shrink-0">
-          <Building2 className="h-5 w-5 text-white" />
-        </div>
-        <div>
-          <p className="text-white font-bold text-sm leading-tight">Contécnica</p>
-          <p className="text-sidebar-foreground text-xs">Gestão de Reformas</p>
+      <div className="flex items-center justify-center px-4 py-4 border-b border-sidebar-border">
+        <div className="bg-white rounded-xl px-3 py-2 flex items-center justify-center w-full">
+          <img
+            src="/logo.png"
+            alt="Contécnica"
+            className="h-10 w-auto object-contain"
+            onError={(e) => {
+              const t = e.currentTarget;
+              t.style.display = "none";
+              const fallback = t.nextElementSibling as HTMLElement | null;
+              if (fallback) fallback.style.display = "flex";
+            }}
+          />
+          <div className="hidden items-center gap-2">
+            <div className="w-8 h-8 bg-[#EA580C] rounded-lg flex items-center justify-center flex-shrink-0">
+              <Building2 className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <p className="text-white font-bold text-sm leading-tight">Contécnica</p>
+              <p className="text-sidebar-foreground text-xs">Gestão de Reformas</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -165,7 +180,7 @@ export function Sidebar({ user }: SidebarProps) {
       {/* User footer */}
       <div className="px-3 py-4 border-t border-sidebar-border">
         <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1">
-          <div className="w-8 h-8 bg-[#1e4a84] rounded-full flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 bg-[#EA580C] rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-white text-xs font-semibold">
               {user.name.charAt(0).toUpperCase()}
             </span>

@@ -37,7 +37,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Link from "next/link";
 
-const CHART_COLORS = ["#0F2D52", "#F59E0B", "#10B981", "#EF4444", "#8B5CF6", "#06B6D4"];
+const CHART_COLORS = ["#EA580C", "#6B7280", "#10B981", "#EF4444", "#8B5CF6", "#06B6D4"];
 
 function AlertItem({
   icon: Icon,
@@ -191,7 +191,7 @@ export default function DashboardPage() {
                   dataKey="value"
                 >
                   {cashflowData.map((_, index) => (
-                    <Cell key={index} fill={index === 0 ? "#10B981" : "#F59E0B"} />
+                    <Cell key={index} fill={index === 0 ? "#10B981" : "#EA580C"} />
                   ))}
                 </Pie>
                 <Tooltip formatter={(v) => formatCurrency(Number(v))} />

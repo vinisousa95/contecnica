@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 
-const PIE_COLORS = ["#0F2D52", "#F59E0B", "#10B981", "#EF4444", "#8B5CF6", "#06B6D4"];
+const PIE_COLORS = ["#EA580C", "#6B7280", "#10B981", "#EF4444", "#8B5CF6", "#06B6D4"];
 
 export default function FluxoDeCaixaPage() {
   const [from, setFrom] = useState(format(startOfMonth(new Date()), "yyyy-MM-dd"));
@@ -151,7 +151,7 @@ export default function FluxoDeCaixaPage() {
                   formatter={(v) => (v === "inflow" ? "Entradas" : "Saídas")}
                 />
                 <Bar dataKey="inflow" fill="#10B981" radius={[4, 4, 0, 0]} name="inflow" />
-                <Bar dataKey="outflow" fill="#F59E0B" radius={[4, 4, 0, 0]} name="outflow" />
+                <Bar dataKey="outflow" fill="#EA580C" radius={[4, 4, 0, 0]} name="outflow" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

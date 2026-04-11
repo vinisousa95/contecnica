@@ -38,15 +38,30 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0F2D52] via-[#0a2240] to-[#061628] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#1F2937] via-[#111827] to-[#0a0f16] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-[#F59E0B] rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-            <Building2 className="h-8 w-8 text-white" />
+          <div className="bg-white rounded-2xl px-6 py-4 mb-4 shadow-lg">
+            <img
+              src="/logo.png"
+              alt="Contécnica"
+              className="h-14 w-auto object-contain"
+              onError={(e) => {
+                const t = e.currentTarget;
+                t.style.display = "none";
+                const fallback = t.nextElementSibling as HTMLElement | null;
+                if (fallback) fallback.style.display = "flex";
+              }}
+            />
+            <div className="hidden items-center gap-2">
+              <div className="w-10 h-10 bg-[#EA580C] rounded-xl flex items-center justify-center">
+                <Building2 className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-xl font-bold text-gray-900">Contécnica</span>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-white">Contécnica</h1>
-          <p className="text-blue-300 text-sm mt-1">Sistema de Gestão de Reformas</p>
+          <p className="text-gray-400 text-sm">Sistema de Gestão de Reformas</p>
         </div>
 
         {/* Card */}

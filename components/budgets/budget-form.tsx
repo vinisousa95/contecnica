@@ -392,7 +392,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
               </label>
               <select
                 {...register("clientId")}
-                className="flex h-9 w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F2D52]"
+                className="flex h-9 w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]"
               >
                 <option value="">Selecione um cliente...</option>
                 {clients.map((c) => (
@@ -410,7 +410,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
               </label>
               <select
                 {...register("tier")}
-                className="flex h-9 w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F2D52]"
+                className="flex h-9 w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]"
               >
                 <option value="LOW">Padrão Baixo</option>
                 <option value="MEDIUM">Padrão Médio</option>
@@ -427,7 +427,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
               <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
               <select
                 {...register("status")}
-                className="flex h-9 w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F2D52]"
+                className="flex h-9 w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]"
               >
                 <option value="DRAFT">Rascunho</option>
                 <option value="UNDER_REVIEW">Em Revisão</option>

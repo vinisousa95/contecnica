@@ -146,7 +146,7 @@ export default function RelatoriosPage() {
                     <Tooltip formatter={(v) => formatCurrency(Number(v))} />
                     <Legend />
                     <Bar dataKey="receitas" fill="#10B981" name="Receitas" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="custos" fill="#F59E0B" name="Custos" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="custos" fill="#EA580C" name="Custos" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>

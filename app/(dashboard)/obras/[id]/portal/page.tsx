@@ -35,15 +35,12 @@ async function uploadFile(file: File, type: "photo" | "document"): Promise<strin
 }
 
 type Tab = "updates" | "photos" | "documents";
-
 const updateSchema = z.object({ title: z.string().min(2), description: z.string().optional() });
 type UpdateForm = z.infer<typeof updateSchema>;
-
 const DOC_TYPE_LABELS: Record<string, string> = {
   CONTRACT: "Contrato", BUDGET: "Orçamento", INVOICE: "Nota Fiscal", REPORT: "Relatório", OTHER: "Outro",
 };
 
-// ── Update Form ───────────────────────────────────
 function AddUpdateForm({ projectId, onSuccess }: { projectId: string; onSuccess: () => void }) {
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<UpdateForm>({ resolver: zodResolver(updateSchema) });
   const onSubmit = async (data: UpdateForm) => {
@@ -60,26 +57,19 @@ function AddUpdateForm({ projectId, onSuccess }: { projectId: string; onSuccess:
         <label className="block text-xs font-medium text-gray-600 mb-1">Descrição (opcional)</label>
         <textarea {...register("description")} rows={3} className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA580C] resize-none" placeholder="Descreva o que foi feito..." />
       </div>
-      <Button type="submit" loading={isSubmitting} className="w-full">
-        <Plus className="h-4 w-4 mr-1" /> Adicionar
-      </Button>
+      <Button type="submit" loading={isSubmitting} className="w-full"><Plus className="h-4 w-4 mr-1" /> Adicionar</Button>
     </form>
   );
 }
 
-// ── Photo Upload Form ─────────────────────────────
-function AddPhotoForm({ projectId, onSuccess }: { projectId: string; onSuccess: () => void }) {
+// tasks passed as prop from parent — no nested query
+function AddPhotoForm({ projectId, tasks, onSuccess }: { projectId: string; tasks: any[]; onSuccess: () => void }) {
   const [files, setFiles] = useState<File[]>([]);
   const [description, setDescription] = useState("");
   const [taskId, setTaskId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const { data: tasks = [] } = useQuery({
-    queryKey: ["project-tasks-portal", projectId],
-    queryFn: () => apiFetch(`/api/v1/projects/${projectId}/tasks`),
-  });
 
   const handleFiles = (selected: FileList | null) => {
     if (!selected) return;
@@ -106,10 +96,7 @@ function AddPhotoForm({ projectId, onSuccess }: { projectId: string; onSuccess: 
         });
       }
       toast({ title: `${files.length} foto(s) adicionada(s)` });
-      setFiles([]);
-      setPreviews([]);
-      setDescription("");
-      setTaskId("");
+      setFiles([]); setPreviews([]); setDescription(""); setTaskId("");
       onSuccess();
     } catch (err: any) {
       toast({ title: "Erro no upload", description: err.message, variant: "error" });
@@ -122,7 +109,6 @@ function AddPhotoForm({ projectId, onSuccess }: { projectId: string; onSuccess: 
     <form onSubmit={handleSubmit} className="bg-gray-50 rounded-xl p-5 border border-dashed border-gray-200 space-y-3">
       <p className="text-sm font-semibold text-gray-700">Nova(s) Foto(s)</p>
 
-      {/* Drop zone */}
       <div
         onClick={() => inputRef.current?.click()}
         onDragOver={e => e.preventDefault()}
@@ -135,7 +121,6 @@ function AddPhotoForm({ projectId, onSuccess }: { projectId: string; onSuccess: 
         <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handleFiles(e.target.files)} />
       </div>
 
-      {/* Previews */}
       {previews.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
           {previews.map((src, i) => (
@@ -149,9 +134,10 @@ function AddPhotoForm({ projectId, onSuccess }: { projectId: string; onSuccess: 
         </div>
       )}
 
-      {/* Task link — always visible */}
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">Vincular ao item de execução (opcional)</label>
+        <label className="block text-xs font-medium text-gray-600 mb-1">
+          Vincular ao item de execução {tasks.length === 0 ? "(nenhum item cadastrado)" : "(opcional)"}
+        </label>
         <select
           value={taskId}
           onChange={e => setTaskId(e.target.value)}
@@ -159,7 +145,7 @@ function AddPhotoForm({ projectId, onSuccess }: { projectId: string; onSuccess: 
         >
           <option value="">— Sem vínculo —</option>
           {tasks.map((t: any) => (
-            <option key={t.id} value={t.id}>{t.name}{t.isCompleted ? " ✓" : ""}</option>
+            <option key={t.id} value={t.id}>{t.isCompleted ? "✓ " : ""}{t.name}</option>
           ))}
         </select>
       </div>
@@ -177,7 +163,6 @@ function AddPhotoForm({ projectId, onSuccess }: { projectId: string; onSuccess: 
   );
 }
 
-// ── Document Upload Form ──────────────────────────
 function AddDocForm({ projectId, onSuccess }: { projectId: string; onSuccess: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
@@ -203,9 +188,7 @@ function AddDocForm({ projectId, onSuccess }: { projectId: string; onSuccess: ()
         body: JSON.stringify({ name: name.trim(), fileUrl: url, type: docType }),
       });
       toast({ title: "Documento adicionado" });
-      setFile(null);
-      setName("");
-      setDocType("OTHER");
+      setFile(null); setName(""); setDocType("OTHER");
       onSuccess();
     } catch (err: any) {
       toast({ title: "Erro no upload", description: err.message, variant: "error" });
@@ -217,8 +200,6 @@ function AddDocForm({ projectId, onSuccess }: { projectId: string; onSuccess: ()
   return (
     <form onSubmit={handleSubmit} className="bg-gray-50 rounded-xl p-5 border border-dashed border-gray-200 space-y-3">
       <p className="text-sm font-semibold text-gray-700">Novo Documento</p>
-
-      {/* Drop zone */}
       <div
         onClick={() => inputRef.current?.click()}
         onDragOver={e => e.preventDefault()}
@@ -229,9 +210,7 @@ function AddDocForm({ projectId, onSuccess }: { projectId: string; onSuccess: ()
           <div className="flex items-center justify-center gap-2">
             <FileText className="h-5 w-5 text-[#EA580C]" />
             <span className="text-sm font-medium text-gray-700 truncate max-w-[180px]">{file.name}</span>
-            <button type="button" onClick={e => { e.stopPropagation(); setFile(null); }} className="text-gray-400 hover:text-red-500">
-              <X className="h-4 w-4" />
-            </button>
+            <button type="button" onClick={e => { e.stopPropagation(); setFile(null); }} className="text-gray-400 hover:text-red-500"><X className="h-4 w-4" /></button>
           </div>
         ) : (
           <>
@@ -240,21 +219,9 @@ function AddDocForm({ projectId, onSuccess }: { projectId: string; onSuccess: ()
             <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG — máx 10MB</p>
           </>
         )}
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".pdf,image/*"
-          className="hidden"
-          onChange={e => handleFile(e.target.files?.[0] ?? null)}
-        />
+        <input ref={inputRef} type="file" accept=".pdf,image/*" className="hidden" onChange={e => handleFile(e.target.files?.[0] ?? null)} />
       </div>
-
-      <Input
-        label="Nome do documento *"
-        placeholder="Ex: Contrato de Serviço"
-        value={name}
-        onChange={e => setName(e.target.value)}
-      />
+      <Input label="Nome do documento *" placeholder="Ex: Contrato de Serviço" value={name} onChange={e => setName(e.target.value)} />
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">Tipo *</label>
         <select value={docType} onChange={e => setDocType(e.target.value)} className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA580C]">
@@ -268,56 +235,25 @@ function AddDocForm({ projectId, onSuccess }: { projectId: string; onSuccess: ()
   );
 }
 
-// ── Main Page ─────────────────────────────────────
 export default function ProjectPortalPage({ params }: { params: { id: string } }) {
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>("updates");
 
-  const { data: updates = [], isLoading: loadingUpdates } = useQuery({
-    queryKey: ["project-updates", params.id],
-    queryFn: () => apiFetch(`/api/v1/projects/${params.id}/updates`),
-  });
-  const { data: photos = [], isLoading: loadingPhotos } = useQuery({
-    queryKey: ["project-photos", params.id],
-    queryFn: () => apiFetch(`/api/v1/projects/${params.id}/photos`),
-  });
-  const { data: documents = [], isLoading: loadingDocs } = useQuery({
-    queryKey: ["project-documents", params.id],
-    queryFn: () => apiFetch(`/api/v1/projects/${params.id}/documents`),
-  });
+  const { data: updates = [] } = useQuery({ queryKey: ["project-updates", params.id], queryFn: () => apiFetch(`/api/v1/projects/${params.id}/updates`) });
+  const { data: photos = [] } = useQuery({ queryKey: ["project-photos", params.id], queryFn: () => apiFetch(`/api/v1/projects/${params.id}/photos`) });
+  const { data: documents = [] } = useQuery({ queryKey: ["project-documents", params.id], queryFn: () => apiFetch(`/api/v1/projects/${params.id}/documents`) });
+  const { data: tasks = [] } = useQuery({ queryKey: ["project-tasks", params.id], queryFn: () => apiFetch(`/api/v1/projects/${params.id}/tasks`) });
 
-  const deleteUpdate = async (updateId: string) => {
-    await apiFetch(`/api/v1/projects/${params.id}/updates/${updateId}`, { method: "DELETE" });
-    qc.invalidateQueries({ queryKey: ["project-updates", params.id] });
-    toast({ title: "Atualização removida" });
-  };
+  const deleteUpdate = async (id: string) => { await apiFetch(`/api/v1/projects/${params.id}/updates/${id}`, { method: "DELETE" }); qc.invalidateQueries({ queryKey: ["project-updates", params.id] }); toast({ title: "Atualização removida" }); };
+  const togglePhotoVisible = async (id: string, visible: boolean) => { await apiFetch(`/api/v1/projects/${params.id}/photos/${id}`, { method: "PUT", body: JSON.stringify({ visible: !visible }) }); qc.invalidateQueries({ queryKey: ["project-photos", params.id] }); };
+  const deletePhoto = async (id: string) => { await apiFetch(`/api/v1/projects/${params.id}/photos/${id}`, { method: "DELETE" }); qc.invalidateQueries({ queryKey: ["project-photos", params.id] }); toast({ title: "Foto removida" }); };
+  const toggleDocVisible = async (id: string, visible: boolean) => { await apiFetch(`/api/v1/projects/${params.id}/documents/${id}`, { method: "PUT", body: JSON.stringify({ visible: !visible }) }); qc.invalidateQueries({ queryKey: ["project-documents", params.id] }); };
+  const deleteDoc = async (id: string) => { await apiFetch(`/api/v1/projects/${params.id}/documents/${id}`, { method: "DELETE" }); qc.invalidateQueries({ queryKey: ["project-documents", params.id] }); toast({ title: "Documento removido" }); };
 
-  const togglePhotoVisible = async (photoId: string, visible: boolean) => {
-    await apiFetch(`/api/v1/projects/${params.id}/photos/${photoId}`, { method: "PUT", body: JSON.stringify({ visible: !visible }) });
-    qc.invalidateQueries({ queryKey: ["project-photos", params.id] });
-  };
-
-  const deletePhoto = async (photoId: string) => {
-    await apiFetch(`/api/v1/projects/${params.id}/photos/${photoId}`, { method: "DELETE" });
-    qc.invalidateQueries({ queryKey: ["project-photos", params.id] });
-    toast({ title: "Foto removida" });
-  };
-
-  const toggleDocVisible = async (docId: string, visible: boolean) => {
-    await apiFetch(`/api/v1/projects/${params.id}/documents/${docId}`, { method: "PUT", body: JSON.stringify({ visible: !visible }) });
-    qc.invalidateQueries({ queryKey: ["project-documents", params.id] });
-  };
-
-  const deleteDoc = async (docId: string) => {
-    await apiFetch(`/api/v1/projects/${params.id}/documents/${docId}`, { method: "DELETE" });
-    qc.invalidateQueries({ queryKey: ["project-documents", params.id] });
-    toast({ title: "Documento removido" });
-  };
-
-  const tabs: { key: Tab; label: string; icon: any; count: number }[] = [
-    { key: "updates", label: "Atualizações", icon: Clock, count: updates.length },
-    { key: "photos", label: "Fotos", icon: Image, count: photos.length },
-    { key: "documents", label: "Documentos", icon: FileText, count: documents.length },
+  const tabs = [
+    { key: "updates" as Tab, label: "Atualizações", icon: Clock, count: updates.length },
+    { key: "photos" as Tab, label: "Fotos", icon: Image, count: photos.length },
+    { key: "documents" as Tab, label: "Documentos", icon: FileText, count: documents.length },
   ];
 
   return (
@@ -329,28 +265,21 @@ export default function ProjectPortalPage({ params }: { params: { id: string } }
         <PageHeader title="Portal do Cliente — Conteúdo" description="Gerencie atualizações, fotos e documentos visíveis ao cliente" />
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
         {tabs.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t.key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-          >
+          <button key={t.key} onClick={() => setTab(t.key)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t.key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
             <t.icon className="h-4 w-4" />
             {t.label}
-            <span className={`text-xs px-1.5 py-0.5 rounded-full ${tab === t.key ? "bg-[#EA580C] text-white" : "bg-gray-200 text-gray-600"}`}>
-              {t.count}
-            </span>
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${tab === t.key ? "bg-[#EA580C] text-white" : "bg-gray-200 text-gray-600"}`}>{t.count}</span>
           </button>
         ))}
       </div>
 
-      {/* Updates Tab */}
       {tab === "updates" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-3">
-            {loadingUpdates ? <LoadingPage /> : updates.length === 0 ? (
+            {updates.length === 0 ? (
               <div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-sm text-gray-400">Nenhuma atualização ainda</div>
             ) : (
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
@@ -362,9 +291,7 @@ export default function ProjectPortalPage({ params }: { params: { id: string } }
                       {u.description && <p className="text-xs text-gray-500 mt-0.5">{u.description}</p>}
                       <p className="text-xs text-gray-400 mt-1">{formatDate(u.createdAt)}</p>
                     </div>
-                    <button onClick={() => deleteUpdate(u.id)} className="text-gray-300 hover:text-red-500 transition-colors">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <button onClick={() => deleteUpdate(u.id)} className="text-gray-300 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 ))}
               </div>
@@ -374,29 +301,22 @@ export default function ProjectPortalPage({ params }: { params: { id: string } }
         </div>
       )}
 
-      {/* Photos Tab */}
       {tab === "photos" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            {loadingPhotos ? <LoadingPage /> : photos.length === 0 ? (
+            {photos.length === 0 ? (
               <div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-sm text-gray-400">Nenhuma foto ainda</div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {photos.map((p: any) => (
                   <div key={p.id} className="relative bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm aspect-square group">
                     <img src={p.imageUrl} alt={p.description ?? "Foto"} className="w-full h-full object-cover" />
-                    {!p.visible && (
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <EyeOff className="h-6 w-6 text-white" />
-                      </div>
-                    )}
+                    {!p.visible && <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><EyeOff className="h-6 w-6 text-white" /></div>}
                     <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button onClick={() => togglePhotoVisible(p.id, p.visible)} className="bg-white rounded-lg p-1.5 shadow hover:bg-gray-50">
                         {p.visible ? <Eye className="h-3.5 w-3.5 text-gray-600" /> : <EyeOff className="h-3.5 w-3.5 text-gray-600" />}
                       </button>
-                      <button onClick={() => deletePhoto(p.id)} className="bg-white rounded-lg p-1.5 shadow hover:bg-red-50">
-                        <Trash2 className="h-3.5 w-3.5 text-red-500" />
-                      </button>
+                      <button onClick={() => deletePhoto(p.id)} className="bg-white rounded-lg p-1.5 shadow hover:bg-red-50"><Trash2 className="h-3.5 w-3.5 text-red-500" /></button>
                     </div>
                     {(p.description || p.task) && (
                       <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
@@ -409,15 +329,18 @@ export default function ProjectPortalPage({ params }: { params: { id: string } }
               </div>
             )}
           </div>
-          <AddPhotoForm projectId={params.id} onSuccess={() => qc.invalidateQueries({ queryKey: ["project-photos", params.id] })} />
+          <AddPhotoForm
+            projectId={params.id}
+            tasks={tasks}
+            onSuccess={() => qc.invalidateQueries({ queryKey: ["project-photos", params.id] })}
+          />
         </div>
       )}
 
-      {/* Documents Tab */}
       {tab === "documents" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            {loadingDocs ? <LoadingPage /> : documents.length === 0 ? (
+            {documents.length === 0 ? (
               <div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-sm text-gray-400">Nenhum documento ainda</div>
             ) : (
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
@@ -432,9 +355,7 @@ export default function ProjectPortalPage({ params }: { params: { id: string } }
                       <button onClick={() => toggleDocVisible(d.id, d.visible)} className={`p-1.5 rounded-lg transition-colors ${d.visible ? "text-green-600 hover:bg-green-50" : "text-gray-400 hover:bg-gray-50"}`}>
                         {d.visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                       </button>
-                      <button onClick={() => deleteDoc(d.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      <button onClick={() => deleteDoc(d.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" /></button>
                     </div>
                   </div>
                 ))}

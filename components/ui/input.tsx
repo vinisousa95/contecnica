@@ -24,7 +24,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {props.required && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
-        <div className="relative">
+        <div className="relative" suppressHydrationWarning>
           {leftIcon && (
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               {leftIcon}

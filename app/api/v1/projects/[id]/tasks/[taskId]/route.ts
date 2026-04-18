@@ -14,6 +14,17 @@ const schema = z.object({
   order: z.number().int().optional(),
 });
 
+async function recalcProgress(projectId: string) {
+  const tasks = await prisma.projectTask.findMany({
+    where: { projectId },
+    select: { isCompleted: true },
+  });
+  if (tasks.length === 0) return;
+  const done = tasks.filter((t) => t.isCompleted).length;
+  const progress = Math.round((done / tasks.length) * 100);
+  await prisma.project.update({ where: { id: projectId }, data: { progress } });
+}
+
 export async function PUT(request: NextRequest, { params }: { params: { id: string; taskId: string } }) {
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
@@ -23,7 +34,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   if (!parsed.success) return apiError(parsed.error.errors[0].message, 400);
 
   const { startDate, endDate, isCompleted, ...rest } = parsed.data;
-
   const completedAt = isCompleted === true ? new Date() : isCompleted === false ? null : undefined;
 
   const task = await prisma.projectTask.update({
@@ -35,6 +45,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       ...(isCompleted !== undefined ? { isCompleted, completedAt } : {}),
     },
   });
+
+  if (isCompleted !== undefined) await recalcProgress(params.id);
+
   return apiSuccess(task);
 }
 
@@ -43,5 +56,6 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   if (!session) return apiError("Não autorizado", 401);
 
   await prisma.projectTask.delete({ where: { id: params.taskId, projectId: params.id } });
+  await recalcProgress(params.id);
   return apiSuccess({ deleted: true });
 }

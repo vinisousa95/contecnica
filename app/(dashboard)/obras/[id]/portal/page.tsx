@@ -26,7 +26,10 @@ async function uploadFile(file: File, type: "photo" | "document"): Promise<strin
   fd.append("file", file);
   fd.append("type", type);
   const res = await fetch("/api/v1/upload", { method: "POST", body: fd });
-  const json = await res.json();
+  const text = await res.text();
+  if (!text) throw new Error(`Servidor retornou resposta vazia (status ${res.status})`);
+  let json: any;
+  try { json = JSON.parse(text); } catch { throw new Error(`Resposta inválida do servidor (status ${res.status})`); }
   if (!res.ok) throw new Error(json.error ?? "Erro no upload");
   return json.data.url;
 }

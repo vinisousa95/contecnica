@@ -9,26 +9,25 @@ const ALLOWED_IMAGE = ["image/jpeg", "image/jpg", "image/png", "image/webp", "im
 const ALLOWED_DOC = ["application/pdf", "image/jpeg", "image/png", ...ALLOWED_IMAGE];
 
 export async function POST(request: NextRequest) {
-  const session = await getSessionFromRequest(request);
-  if (!session) return apiError("Não autorizado", 401);
-
   try {
+    const session = await getSessionFromRequest(request);
+    if (!session) return apiError("Não autorizado", 401);
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
-    const type = formData.get("type") as string | null; // "photo" | "document"
+    const type = formData.get("type") as string | null;
 
     if (!file) return apiError("Nenhum arquivo enviado", 400);
     if (file.size > MAX_SIZE) return apiError("Arquivo muito grande (máx 10MB)", 400);
 
     const allowed = type === "document" ? ALLOWED_DOC : ALLOWED_IMAGE;
     if (!allowed.includes(file.type)) {
-      return apiError("Tipo de arquivo não permitido", 400);
+      return apiError(`Tipo de arquivo não permitido: ${file.type}`, 400);
     }
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Sanitize filename
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
     const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const subdir = type === "document" ? "documents" : "photos";
@@ -38,9 +37,9 @@ export async function POST(request: NextRequest) {
     await writeFile(join(uploadDir, safeName), buffer);
 
     const url = `/uploads/${subdir}/${safeName}`;
-
     return NextResponse.json({ success: true, data: { url } }, { status: 200 });
-  } catch {
-    return apiError("Erro ao fazer upload", 500);
+  } catch (err: any) {
+    console.error("[upload]", err);
+    return NextResponse.json({ success: false, error: err?.message ?? "Erro ao fazer upload" }, { status: 500 });
   }
 }

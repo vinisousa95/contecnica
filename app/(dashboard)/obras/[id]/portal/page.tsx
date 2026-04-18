@@ -117,6 +117,23 @@ function AddPhotoForm({ projectId, tasks: tasksProp, onSuccess }: { projectId: s
     <form onSubmit={handleSubmit} className="bg-gray-50 rounded-xl p-5 border border-dashed border-gray-200 space-y-3">
       <p className="text-sm font-semibold text-gray-700">Nova(s) Foto(s)</p>
 
+      {/* task selector FIRST — always visible */}
+      <div style={{ background: "#fff7ed", border: "1px solid #fb923c", borderRadius: 8, padding: 12 }}>
+        <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#c2410c", marginBottom: 6 }}>
+          Vincular ao item de execução {tasks.length === 0 ? "(nenhum item cadastrado)" : `(${tasks.length} disponíveis)`}
+        </label>
+        <select
+          value={taskId}
+          onChange={e => setTaskId(e.target.value)}
+          style={{ width: "100%", fontSize: 14, border: "1px solid #fdba74", borderRadius: 8, padding: "6px 10px", background: "#fff" }}
+        >
+          <option value="">— Sem vínculo —</option>
+          {tasks.map((t: any) => (
+            <option key={t.id} value={t.id}>{t.isCompleted ? "✓ " : ""}{t.name}</option>
+          ))}
+        </select>
+      </div>
+
       <div
         onClick={() => inputRef.current?.click()}
         onDragOver={e => e.preventDefault()}
@@ -141,22 +158,6 @@ function AddPhotoForm({ projectId, tasks: tasksProp, onSuccess }: { projectId: s
           ))}
         </div>
       )}
-
-      <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
-        <label className="block text-xs font-semibold text-orange-700 mb-1.5">
-          Vincular ao item de execução {tasks.length === 0 ? "(nenhum item cadastrado)" : `(${tasks.length} disponíveis)`}
-        </label>
-        <select
-          value={taskId}
-          onChange={e => setTaskId(e.target.value)}
-          className="w-full text-sm border border-orange-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA580C] bg-white"
-        >
-          <option value="">— Sem vínculo —</option>
-          {tasks.map((t: any) => (
-            <option key={t.id} value={t.id}>{t.isCompleted ? "✓ " : ""}{t.name}</option>
-          ))}
-        </select>
-      </div>
 
       <Input
         label="Descrição (opcional)"
@@ -270,7 +271,7 @@ export default function ProjectPortalPage({ params }: { params: { id: string } }
         <Link href={`/obras/${params.id}`}>
           <Button variant="outline" size="sm"><ArrowLeft className="h-4 w-4 mr-1" /> Voltar</Button>
         </Link>
-        <PageHeader title="Portal do Cliente — Conteúdo" description="Gerencie atualizações, fotos e documentos visíveis ao cliente" />
+        <PageHeader title="Portal do Cliente — Conteúdo" description="Gerencie atualizações, fotos e documentos visíveis ao cliente [v3]" />
       </div>
 
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">

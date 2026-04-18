@@ -46,7 +46,19 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     },
   });
 
-  if (isCompleted !== undefined) await recalcProgress(params.id);
+  if (isCompleted !== undefined) {
+    await recalcProgress(params.id);
+
+    if (isCompleted === true && task.showInPortal) {
+      await prisma.projectUpdate.create({
+        data: {
+          projectId: params.id,
+          title: `${task.name} concluído`,
+          description: task.description ?? undefined,
+        },
+      });
+    }
+  }
 
   return apiSuccess(task);
 }

@@ -5,7 +5,7 @@ import { apiSuccess, apiError } from "@/lib/utils";
 import { z } from "zod";
 
 const schema = z.object({
-  imageUrl: z.string().url(),
+  imageUrl: z.string().min(1),
   description: z.string().optional(),
   visible: z.boolean().default(true),
 });

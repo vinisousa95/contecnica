@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const schema = z.object({
   name: z.string().min(2),
-  fileUrl: z.string().url(),
+  fileUrl: z.string().min(1),
   type: z.enum(["CONTRACT", "BUDGET", "INVOICE", "REPORT", "OTHER"]).default("OTHER"),
   visible: z.boolean().default(true),
 });

@@ -18,13 +18,15 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
   const existing = await prisma.budget.findUnique({
     where: { id: params.id },
-    select: { status: true },
+    include: {
+      items: { include: { reformItem: true } },
+      extraItems: true,
+    },
   });
   if (!existing) return apiError("Orçamento não encontrado", 404);
 
   const body = await request.json();
   const { status } = body;
-
   if (!status) return apiError("Status é obrigatório");
 
   const allowed = VALID_TRANSITIONS[existing.status] ?? [];
@@ -37,6 +39,45 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     data: { status },
     select: { id: true, status: true, code: true },
   });
+
+  // Auto-create project when budget is approved
+  if (status === "APPROVED") {
+    const alreadyLinked = await prisma.project.findFirst({ where: { linkedBudgetId: params.id } });
+
+    if (!alreadyLinked) {
+      const allItems = [
+        ...existing.items.map((it, i) => ({ name: it.reformItem.name, description: it.reformItem.description, order: i })),
+        ...existing.extraItems.map((it, i) => ({ name: it.name, description: it.description ?? null, order: existing.items.length + i })),
+      ];
+
+      const project = await prisma.project.create({
+        data: {
+          name: existing.title,
+          clientId: existing.clientId,
+          status: "PLANNING",
+          budget: existing.totalAmount,
+          linkedBudgetId: existing.id,
+          zipCode: existing.zipCode,
+          street: existing.street,
+          number: existing.number,
+          complement: existing.complement,
+          neighborhood: existing.neighborhood,
+          city: existing.city,
+          state: existing.state,
+          tasks: {
+            create: allItems.map((it) => ({
+              name: it.name,
+              description: it.description,
+              order: it.order,
+              showInPortal: true,
+            })),
+          },
+        },
+      });
+
+      return apiSuccess({ ...budget, projectCreated: true, projectId: project.id });
+    }
+  }
 
   return apiSuccess(budget);
 }

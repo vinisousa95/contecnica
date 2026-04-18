@@ -225,7 +225,6 @@ export function PrintView({ budget }: { budget: any }) {
             <div className="code">{budget.code}</div>
           </div>
           <div className="budget-meta-right">
-            <div>{TIER_LABELS[budget.tier]}</div>
             <div>Emitido em {fmtDate(budget.createdAt)}</div>
             {budget.validUntil && <div>Válido até {fmtDate(budget.validUntil)}</div>}
             <div className="status-badge">{STATUS_LABELS[budget.status]}</div>

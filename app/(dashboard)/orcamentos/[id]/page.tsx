@@ -88,6 +88,7 @@ const NEXT_STATUS: Record<string, { label: string; next: string; variant: Button
     { label: "Aprovar", next: "APPROVED", variant: "success" },
     { label: "Recusar", next: "REJECTED", variant: "destructive" },
   ],
+  APPROVED: [{ label: "Reverter para Enviado", next: "SENT", variant: "outline" }],
   REJECTED: [{ label: "Reabrir como Rascunho", next: "DRAFT", variant: "outline" }],
   CANCELLED: [{ label: "Reabrir como Rascunho", next: "DRAFT", variant: "outline" }],
 };

@@ -38,32 +38,39 @@ export function PortalSidebar({ user }: PortalSidebarProps) {
   return (
     <aside className="flex flex-col w-60 bg-[#1F2937] min-h-screen border-r border-[#374151]">
       {/* Logo */}
-      <div className="flex items-center justify-center px-4 py-4 border-b border-[#374151]">
-        <div className="bg-white rounded-xl px-4 py-2.5 w-full flex items-center justify-center">
-        <img
-          src="/logo.png"
-          alt="Contécnica"
-          className="w-full max-w-[150px] h-auto object-contain"
-          onError={(e) => {
-            const t = e.currentTarget;
-            t.style.display = "none";
-            const fb = t.nextElementSibling as HTMLElement | null;
-            if (fb) fb.style.display = "flex";
-          }}
-        />
-        <div className="hidden items-center gap-2">
-          <div className="w-8 h-8 bg-[#EA580C] rounded-lg flex items-center justify-center flex-shrink-0">
-            <Building2 className="h-4 w-4 text-white" />
+      <div className="px-4 pt-5 pb-4 border-b border-[#374151]">
+        <div className="relative flex flex-col items-center">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#EA580C] to-transparent" />
+          <div className="w-full flex items-center justify-center py-2 px-2">
+            <img
+              src="/logo.png"
+              alt="Contécnica"
+              className="w-full max-w-[150px] h-auto object-contain"
+              style={{ filter: "brightness(0) invert(1)" }}
+              onError={(e) => {
+                const t = e.currentTarget;
+                t.style.display = "none";
+                const fb = t.nextElementSibling as HTMLElement | null;
+                if (fb) fb.style.display = "flex";
+              }}
+            />
+            <div className="hidden items-center gap-2">
+              <div className="w-8 h-8 bg-[#EA580C] rounded-lg flex items-center justify-center flex-shrink-0">
+                <Building2 className="h-4 w-4 text-white" />
+              </div>
+              <p className="text-white font-bold text-sm">Contécnica</p>
+            </div>
           </div>
-          <p className="text-gray-900 font-bold text-sm">Contécnica</p>
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#EA580C] to-transparent" />
         </div>
-        </div>
+        <p className="text-center text-[10px] font-semibold tracking-[0.18em] uppercase text-[#EA580C]/60 mt-3">
+          Portal do Cliente
+        </p>
       </div>
 
-      {/* Portal label */}
+      {/* Client name */}
       <div className="px-4 py-3 border-b border-[#374151]">
-        <p className="text-[#EA580C] text-xs font-semibold uppercase tracking-widest">Portal do Cliente</p>
-        <p className="text-white text-sm font-medium mt-0.5 truncate">{user.clientName}</p>
+        <p className="text-white text-sm font-medium truncate">{user.clientName}</p>
       </div>
 
       {/* Navigation */}

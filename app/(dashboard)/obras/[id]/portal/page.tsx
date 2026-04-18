@@ -71,9 +71,15 @@ function AddUpdateForm({ projectId, onSuccess }: { projectId: string; onSuccess:
 function AddPhotoForm({ projectId, onSuccess }: { projectId: string; onSuccess: () => void }) {
   const [files, setFiles] = useState<File[]>([]);
   const [description, setDescription] = useState("");
+  const [taskId, setTaskId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["project-tasks-portal", projectId],
+    queryFn: () => apiFetch(`/api/v1/projects/${projectId}/tasks`),
+  });
 
   const handleFiles = (selected: FileList | null) => {
     if (!selected) return;
@@ -96,13 +102,14 @@ function AddPhotoForm({ projectId, onSuccess }: { projectId: string; onSuccess: 
         const url = await uploadFile(file, "photo");
         await apiFetch(`/api/v1/projects/${projectId}/photos`, {
           method: "POST",
-          body: JSON.stringify({ imageUrl: url, description: description || undefined }),
+          body: JSON.stringify({ imageUrl: url, description: description || undefined, taskId: taskId || null }),
         });
       }
       toast({ title: `${files.length} foto(s) adicionada(s)` });
       setFiles([]);
       setPreviews([]);
       setDescription("");
+      setTaskId("");
       onSuccess();
     } catch (err: any) {
       toast({ title: "Erro no upload", description: err.message, variant: "error" });
@@ -125,14 +132,7 @@ function AddPhotoForm({ projectId, onSuccess }: { projectId: string; onSuccess: 
         <Upload className="h-8 w-8 text-gray-300 mx-auto mb-2" />
         <p className="text-sm text-gray-500">Clique ou arraste as fotos aqui</p>
         <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP — máx 10MB cada</p>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          onChange={e => handleFiles(e.target.files)}
-        />
+        <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handleFiles(e.target.files)} />
       </div>
 
       {/* Previews */}
@@ -141,15 +141,28 @@ function AddPhotoForm({ projectId, onSuccess }: { projectId: string; onSuccess: 
           {previews.map((src, i) => (
             <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
               <img src={src} alt="" className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={() => removeFile(i)}
-                className="absolute top-1 right-1 bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-500"
-              >
+              <button type="button" onClick={() => removeFile(i)} className="absolute top-1 right-1 bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-500">
                 <X className="h-3 w-3" />
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Task link */}
+      {tasks.length > 0 && (
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Vincular ao item de execução (opcional)</label>
+          <select
+            value={taskId}
+            onChange={e => setTaskId(e.target.value)}
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+          >
+            <option value="">— Sem vínculo —</option>
+            {tasks.map((t: any) => (
+              <option key={t.id} value={t.id}>{t.name}{t.isCompleted ? " ✓" : ""}</option>
+            ))}
+          </select>
         </div>
       )}
 
@@ -387,9 +400,10 @@ export default function ProjectPortalPage({ params }: { params: { id: string } }
                         <Trash2 className="h-3.5 w-3.5 text-red-500" />
                       </button>
                     </div>
-                    {p.description && (
+                    {(p.description || p.task) && (
                       <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
-                        <p className="text-white text-xs truncate">{p.description}</p>
+                        {p.task && <p className="text-[#EA580C] text-[10px] font-semibold truncate">{p.task.name}</p>}
+                        {p.description && <p className="text-white text-xs truncate">{p.description}</p>}
                       </div>
                     )}
                   </div>

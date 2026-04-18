@@ -8,6 +8,7 @@ const schema = z.object({
   imageUrl: z.string().min(1),
   description: z.string().optional(),
   visible: z.boolean().default(true),
+  taskId: z.string().optional().nullable(),
 });
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
@@ -16,6 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
   const photos = await prisma.projectPhoto.findMany({
     where: { projectId: params.id },
+    include: { task: { select: { id: true, name: true } } },
     orderBy: { createdAt: "desc" },
   });
 
@@ -30,10 +32,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   if (!project) return apiError("Obra não encontrada", 404);
 
   const body = await request.json();
-  const data = schema.parse(body);
+  const { taskId, ...data } = schema.parse(body);
 
   const photo = await prisma.projectPhoto.create({
-    data: { projectId: params.id, ...data },
+    data: { projectId: params.id, ...data, ...(taskId ? { taskId } : {}) },
+    include: { task: { select: { id: true, name: true } } },
   });
 
   return apiSuccess(photo, 201);

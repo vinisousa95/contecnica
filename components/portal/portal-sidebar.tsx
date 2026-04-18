@@ -38,11 +38,12 @@ export function PortalSidebar({ user }: PortalSidebarProps) {
   return (
     <aside className="flex flex-col w-60 bg-[#1F2937] min-h-screen border-r border-[#374151]">
       {/* Logo */}
-      <div className="flex items-center justify-center px-4 py-5 border-b border-[#374151]">
+      <div className="flex items-center justify-center px-4 py-4 border-b border-[#374151]">
+        <div className="bg-white rounded-xl px-4 py-2.5 w-full flex items-center justify-center">
         <img
           src="/logo.png"
           alt="Contécnica"
-          className="w-full max-w-[160px] h-auto object-contain"
+          className="w-full max-w-[150px] h-auto object-contain"
           onError={(e) => {
             const t = e.currentTarget;
             t.style.display = "none";
@@ -54,7 +55,8 @@ export function PortalSidebar({ user }: PortalSidebarProps) {
           <div className="w-8 h-8 bg-[#EA580C] rounded-lg flex items-center justify-center flex-shrink-0">
             <Building2 className="h-4 w-4 text-white" />
           </div>
-          <p className="text-white font-bold text-sm">Contécnica</p>
+          <p className="text-gray-900 font-bold text-sm">Contécnica</p>
+        </div>
         </div>
       </div>
 

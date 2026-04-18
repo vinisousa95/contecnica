@@ -149,22 +149,20 @@ function AddPhotoForm({ projectId, onSuccess }: { projectId: string; onSuccess: 
         </div>
       )}
 
-      {/* Task link */}
-      {tasks.length > 0 && (
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Vincular ao item de execução (opcional)</label>
-          <select
-            value={taskId}
-            onChange={e => setTaskId(e.target.value)}
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
-          >
-            <option value="">— Sem vínculo —</option>
-            {tasks.map((t: any) => (
-              <option key={t.id} value={t.id}>{t.name}{t.isCompleted ? " ✓" : ""}</option>
-            ))}
-          </select>
-        </div>
-      )}
+      {/* Task link — always visible */}
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1">Vincular ao item de execução (opcional)</label>
+        <select
+          value={taskId}
+          onChange={e => setTaskId(e.target.value)}
+          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+        >
+          <option value="">— Sem vínculo —</option>
+          {tasks.map((t: any) => (
+            <option key={t.id} value={t.id}>{t.name}{t.isCompleted ? " ✓" : ""}</option>
+          ))}
+        </select>
+      </div>
 
       <Input
         label="Descrição (opcional)"

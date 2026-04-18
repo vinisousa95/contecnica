@@ -45,6 +45,7 @@ export function ProjectForm({
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<ProjectInput>({
     resolver: zodResolver(projectSchema),
@@ -136,6 +137,24 @@ export function ProjectForm({
             error={errors.budget?.message}
             {...register("budget")}
           />
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1.5">
+              Progresso da Obra (%) — exibido no portal do cliente
+            </label>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={5}
+              className="w-full accent-[#EA580C]"
+              {...register("progress", { valueAsNumber: true })}
+            />
+            <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <span>0%</span>
+              <span className="font-medium text-[#EA580C]">{watch("progress") ?? 0}%</span>
+              <span>100%</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyToken } from "@/lib/auth";
+import { verifyPortalToken } from "@/lib/portal-auth";
 
-const PUBLIC_PATHS = ["/login", "/api/v1/auth/login"];
+const ADMIN_PUBLIC = ["/login", "/api/v1/auth/login"];
+const PORTAL_PUBLIC = ["/portal/login", "/api/portal/v1/auth/login"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  // Allow public paths
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
-  }
 
   // Allow static files
   if (
@@ -21,15 +18,46 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check session
-  const token = request.cookies.get("contecnica_session")?.value;
+  // ── Portal routes ──────────────────────────────────────────
+  if (pathname.startsWith("/portal") || pathname.startsWith("/api/portal/")) {
+    if (PORTAL_PUBLIC.some((p) => pathname.startsWith(p))) {
+      return NextResponse.next();
+    }
 
+    const token = request.cookies.get("contecnica_portal_session")?.value;
+    if (!token) {
+      if (pathname.startsWith("/api/portal/")) {
+        return NextResponse.json({ success: false, error: "Não autorizado" }, { status: 401 });
+      }
+      const url = request.nextUrl.clone();
+      url.pathname = "/portal/login";
+      return NextResponse.redirect(url);
+    }
+
+    const session = await verifyPortalToken(token);
+    if (!session) {
+      if (pathname.startsWith("/api/portal/")) {
+        return NextResponse.json({ success: false, error: "Sessão inválida ou expirada" }, { status: 401 });
+      }
+      const url = request.nextUrl.clone();
+      url.pathname = "/portal/login";
+      const response = NextResponse.redirect(url);
+      response.cookies.delete("contecnica_portal_session");
+      return response;
+    }
+
+    return NextResponse.next();
+  }
+
+  // ── Admin routes ───────────────────────────────────────────
+  if (ADMIN_PUBLIC.some((p) => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
+  const token = request.cookies.get("contecnica_session")?.value;
   if (!token) {
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json(
-        { success: false, error: "Não autorizado" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Não autorizado" }, { status: 401 });
     }
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -37,13 +65,9 @@ export async function middleware(request: NextRequest) {
   }
 
   const session = await verifyToken(token);
-
   if (!session) {
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json(
-        { success: false, error: "Sessão inválida ou expirada" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Sessão inválida ou expirada" }, { status: 401 });
     }
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -52,7 +76,6 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // Redirect root to dashboard
   if (pathname === "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";

@@ -55,6 +55,11 @@ export default function ObraDetailPage({ params }: { params: { id: string } }) {
                 Voltar
               </Link>
             </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/obras/${params.id}/portal`}>
+                Portal do Cliente
+              </Link>
+            </Button>
             <Button size="sm" asChild>
               <Link href={`/obras/${params.id}/editar`}>
                 <Pencil className="h-4 w-4" />

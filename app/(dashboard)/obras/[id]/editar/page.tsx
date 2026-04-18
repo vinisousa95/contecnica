@@ -46,6 +46,7 @@ export default function EditarObraPage({ params }: { params: { id: string } }) {
       ? format(new Date(project.expectedEndDate), "yyyy-MM-dd")
       : undefined,
     budget: project.budget ? String(project.budget) : undefined,
+    progress: project.progress ?? 0,
   };
 
   return (

@@ -5,8 +5,8 @@ import { usePortalProject } from "@/hooks/use-portal-project";
 import { LoadingPage } from "@/components/ui/loading";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import {
-  HardHat, TrendingUp, DollarSign, Calendar, ChevronRight,
-  CheckCircle2, Clock, AlertTriangle, BarChart3,
+  HardHat, TrendingUp, Calendar, ChevronRight,
+  Clock, BarChart3, DollarSign,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -115,7 +115,7 @@ export default function PortalDashboardPage() {
           </div>
 
           {/* KPI cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <StatCard
               label="Orçamento"
               value={project.budget ? formatCurrency(project.budget) : "—"}
@@ -131,22 +131,6 @@ export default function PortalDashboardPage() {
               icon={TrendingUp}
               iconBg="bg-amber-50"
               iconColor="text-amber-600"
-            />
-            <StatCard
-              label="Recebido"
-              value={formatCurrency(project.totalReceived)}
-              sub="Pagamentos recebidos"
-              icon={DollarSign}
-              iconBg="bg-green-50"
-              iconColor="text-green-600"
-            />
-            <StatCard
-              label="Saldo restante"
-              value={project.remaining !== null ? formatCurrency(project.remaining) : "—"}
-              sub={project.remaining !== null && project.remaining < 0 ? "Acima do orçamento" : "Dentro do orçamento"}
-              icon={project.remaining !== null && project.remaining < 0 ? AlertTriangle : CheckCircle2}
-              iconBg={project.remaining !== null && project.remaining < 0 ? "bg-red-50" : "bg-green-50"}
-              iconColor={project.remaining !== null && project.remaining < 0 ? "text-red-600" : "text-green-600"}
             />
           </div>
 

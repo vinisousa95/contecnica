@@ -13,6 +13,40 @@ const updateSchema = z.object({
   dueDate: z.string().optional().nullable(),
 });
 
+async function syncProjectTask(taskId: string, completed: boolean) {
+  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  if (!task) return;
+
+  const match = await prisma.projectTask.findFirst({
+    where: {
+      projectId: task.projectId,
+      name: { equals: task.name, mode: "insensitive" },
+    },
+  });
+  if (!match) return;
+
+  await prisma.projectTask.update({
+    where: { id: match.id },
+    data: {
+      isCompleted: completed,
+      completedAt: completed ? new Date() : null,
+      ...(completed && !match.endDate ? { endDate: new Date() } : {}),
+    },
+  });
+
+  const tasks = await prisma.projectTask.findMany({
+    where: { projectId: task.projectId },
+    select: { isCompleted: true },
+  });
+  if (tasks.length > 0) {
+    const done = tasks.filter((t) => t.isCompleted).length;
+    await prisma.project.update({
+      where: { id: task.projectId },
+      data: { progress: Math.round((done / tasks.length) * 100) },
+    });
+  }
+}
+
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
@@ -38,6 +72,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       children: { include: { assignee: { select: { id: true, name: true } } } },
     },
   });
+
+  if (status !== undefined) {
+    await syncProjectTask(params.id, status === "COMPLETED");
+  }
 
   return apiSuccess(task);
 }

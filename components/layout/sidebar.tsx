@@ -145,35 +145,32 @@ export function Sidebar({ user }: SidebarProps) {
   return (
     <aside className="flex flex-col w-64 bg-sidebar min-h-screen border-r border-sidebar-border">
       {/* Logo */}
-      <div className="px-4 pt-5 pb-4 border-b border-sidebar-border">
-        <div className="h-px bg-gradient-to-r from-transparent via-[#EA580C]/70 to-transparent mb-3" />
-        <div className="flex items-center justify-center">
-          <img
-            src="/logo.png"
-            alt="Contécnica"
-            className="w-full max-w-[150px] h-auto object-contain"
-            style={{ mixBlendMode: "screen" }}
-            onError={(e) => {
-              const t = e.currentTarget;
-              t.style.display = "none";
-              const fallback = t.nextElementSibling as HTMLElement | null;
-              if (fallback) fallback.style.display = "flex";
-            }}
-          />
-          <div className="hidden items-center gap-2.5">
-            <div className="w-9 h-9 bg-[#EA580C] rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#EA580C]/30">
+      <div className="px-5 pt-6 pb-5 border-b border-sidebar-border relative overflow-hidden">
+        {/* ambient glow */}
+        <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-32 h-16 bg-[#EA580C]/10 blur-2xl rounded-full pointer-events-none" />
+
+        <div className="relative flex items-center gap-3">
+          {/* icon block */}
+          <div className="relative flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#EA580C] to-[#C2410C] flex items-center justify-center shadow-lg shadow-[#EA580C]/25">
               <Building2 className="h-5 w-5 text-white" />
             </div>
-            <div>
-              <p className="text-white font-bold text-sm leading-none">Contécnica</p>
-              <p className="text-[#EA580C]/70 text-[10px] font-medium tracking-widest uppercase mt-1">Sistema</p>
-            </div>
+            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-sidebar shadow-sm" />
+          </div>
+
+          {/* text */}
+          <div>
+            <p className="text-[15px] font-extrabold tracking-tight leading-none text-white">
+              Con<span className="text-[#EA580C]">técnica</span>
+            </p>
+            <p className="text-[9px] font-semibold tracking-[0.22em] uppercase text-gray-500 mt-1">
+              Sistema de Gestão
+            </p>
           </div>
         </div>
-        <div className="h-px bg-gradient-to-r from-transparent via-[#EA580C]/70 to-transparent mt-3" />
-        <p className="text-center text-[10px] font-semibold tracking-[0.18em] uppercase text-[#EA580C]/50 mt-3">
-          Sistema de Gestão
-        </p>
+
+        {/* bottom rule */}
+        <div className="absolute bottom-0 left-5 right-5 h-px bg-gradient-to-r from-transparent via-[#EA580C]/30 to-transparent" />
       </div>
 
       {/* Navigation */}

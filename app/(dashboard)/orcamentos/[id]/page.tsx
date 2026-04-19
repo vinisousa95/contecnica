@@ -252,7 +252,7 @@ export default function OrcamentoDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                {Object.entries(itemsByCategory).map(([cat, items]: [string, any[]]) => (
+                {(Object.entries(itemsByCategory) as [string, any[]][]).map(([cat, items]) => (
                   <div key={cat}>
                     <div className="px-5 py-2 bg-gray-50 border-y border-gray-100">
                       <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">

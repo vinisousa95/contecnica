@@ -19,6 +19,7 @@ import {
   Search,
   Package,
 } from "lucide-react";
+import { useCepLookup } from "@/hooks/use-cep-lookup";
 
 // ── Constants ─────────────────────────────────────────────────
 const TIER_LABELS: Record<string, string> = {
@@ -294,6 +295,8 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
 
   const { register, control, watch, setValue, formState: { errors }, handleSubmit } = form;
 
+  const { lookupCep, isLookingUp: isLookingUpCep } = useCepLookup(setValue);
+
   const { fields: itemFields, append: appendItem, remove: removeItem } = useFieldArray({
     control,
     name: "items",
@@ -459,7 +462,13 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-6">
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">CEP</label>
-              <Input {...register("zipCode")} placeholder="00000-000" />
+              <Input
+                disabled={isLookingUpCep}
+                placeholder="00000-000"
+                {...register("zipCode", {
+                  onChange: (e) => lookupCep(e.target.value),
+                })}
+              />
             </div>
             <div className="sm:col-span-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Rua / Logradouro</label>

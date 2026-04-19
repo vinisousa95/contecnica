@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HardHat, MapPin, DollarSign, ImagePlus, X, Loader2 } from "lucide-react";
+import { useCepLookup } from "@/hooks/use-cep-lookup";
 
 interface ProjectFormProps {
   defaultValues?: Partial<ProjectInput>;
@@ -61,6 +62,8 @@ export function ProjectForm({
       ...defaultValues,
     },
   });
+
+  const { lookupCep, isLookingUp } = useCepLookup(setValue);
 
   const handlePhotoUpload = async (file: File) => {
     setUploading(true);
@@ -209,7 +212,10 @@ export function ProjectForm({
           <Input
             label="CEP"
             placeholder="00000-000"
-            {...register("zipCode")}
+            disabled={isLookingUp}
+            {...register("zipCode", {
+              onChange: (e) => lookupCep(e.target.value),
+            })}
           />
           <div className="md:col-span-2">
             <Input

@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, MapPin, Phone } from "lucide-react";
+import { useCepLookup } from "@/hooks/use-cep-lookup";
 
 interface ClientFormProps {
   defaultValues?: Partial<ClientInput>;
@@ -26,6 +27,7 @@ export function ClientForm({
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<ClientInput>({
     resolver: zodResolver(clientSchema),
@@ -34,6 +36,8 @@ export function ClientForm({
       ...defaultValues,
     },
   });
+
+  const { lookupCep, isLookingUp } = useCepLookup(setValue);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -111,7 +115,10 @@ export function ClientForm({
             label="CEP"
             placeholder="00000-000"
             error={errors.zipCode?.message}
-            {...register("zipCode")}
+            disabled={isLookingUp}
+            {...register("zipCode", {
+              onChange: (e) => lookupCep(e.target.value),
+            })}
           />
           <div className="md:col-span-2">
             <Input

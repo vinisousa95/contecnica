@@ -57,6 +57,7 @@ export const projectSchema = z.object({
   budget: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   progress: z.number().int().min(0).max(100).default(0),
+  coverPhoto: z.string().optional().nullable(),
 });
 
 // ── Expenses ──────────────────────────────────────────────────

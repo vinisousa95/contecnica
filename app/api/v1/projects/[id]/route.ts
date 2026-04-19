@@ -65,13 +65,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return apiError(parsed.error.errors[0].message);
     }
 
-    const { startDate, expectedEndDate, budget, progress, ...rest } = parsed.data;
+    const { startDate, expectedEndDate, budget, progress, coverPhoto, ...rest } = parsed.data;
 
     const project = await prisma.project.update({
       where: { id: params.id },
       data: {
         ...rest,
         progress: progress ?? 0,
+        coverPhoto: coverPhoto ?? null,
         startDate: startDate ? new Date(startDate) : null,
         expectedEndDate: expectedEndDate ? new Date(expectedEndDate) : null,
         actualEndDate:

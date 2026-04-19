@@ -155,16 +155,8 @@ function ProjectCard({ project, onDelete }: { project: any; onDelete: () => void
 
   return (
     <Card className="flex flex-col hover:shadow-md transition-shadow overflow-hidden">
-      {project.coverPhoto && (
-        <div className="h-40 w-full overflow-hidden bg-gray-100">
-          <img
-            src={project.coverPhoto}
-            alt={project.name}
-            className="w-full h-full object-cover"
-          />
-        </div>
-      )}
-      <div className="p-5 flex-1">
+      <div className="flex flex-1 min-h-0">
+        <div className="p-5 flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="flex-1 min-w-0">
             <Link
@@ -254,6 +246,17 @@ function ProjectCard({ project, onDelete }: { project: any; onDelete: () => void
             {project.expectedEndDate && (
               <span>Previsão: {formatDate(project.expectedEndDate)}</span>
             )}
+          </div>
+        )}
+        </div>
+
+        {project.coverPhoto && (
+          <div className="w-28 flex-shrink-0 overflow-hidden bg-gray-100">
+            <img
+              src={project.coverPhoto}
+              alt={project.name}
+              className="w-full h-full object-cover"
+            />
           </div>
         )}
       </div>

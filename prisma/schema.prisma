@@ -97,6 +97,7 @@ model Project {
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
   progress         Int           @default(0)
+  coverPhoto       String?       @map("cover_photo")
   linkedBudgetId   String?       @map("linked_budget_id")
   linkedBudget     Budget?       @relation(fields: [linkedBudgetId], references: [id])
   expenses         Expense[]

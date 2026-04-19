@@ -38,7 +38,6 @@ export async function GET(request: NextRequest) {
         _count: { select: { expenses: true, revenues: true } },
         expenses: { select: { amount: true } },
         revenues: { select: { amount: true } },
-        photos: { select: { imageUrl: true }, orderBy: { createdAt: "asc" }, take: 1 },
       },
     }),
     prisma.project.count({ where }),
@@ -51,7 +50,6 @@ export async function GET(request: NextRequest) {
     margin:
       p.revenues.reduce((sum, r) => sum + Number(r.amount), 0) -
       p.expenses.reduce((sum, e) => sum + Number(e.amount), 0),
-    coverPhoto: p.photos[0]?.imageUrl ?? null,
   }));
 
   return apiSuccess(enriched, {

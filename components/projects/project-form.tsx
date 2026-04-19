@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRef, useState } from "react";
 import { projectSchema, type ProjectInput } from "@/lib/validations";
 import { api } from "@/lib/api-client";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { HardHat, MapPin, DollarSign, User } from "lucide-react";
+import { HardHat, MapPin, DollarSign, ImagePlus, X, Loader2 } from "lucide-react";
 
 interface ProjectFormProps {
   defaultValues?: Partial<ProjectInput>;
@@ -42,10 +43,15 @@ export function ProjectForm({
 
   const clients = Array.isArray(clientsData) ? clientsData : [];
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(defaultValues?.coverPhoto ?? null);
+
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<ProjectInput>({
     resolver: zodResolver(projectSchema),
@@ -55,6 +61,22 @@ export function ProjectForm({
       ...defaultValues,
     },
   });
+
+  const handlePhotoUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("type", "photo");
+      const res = await fetch("/api/v1/upload", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Erro no upload");
+      setPreviewUrl(json.data.url);
+      setValue("coverPhoto", json.data.url);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const clientOptions = clients.map((c: any) => ({
     value: c.id,
@@ -116,6 +138,38 @@ export function ProjectForm({
               {...register("description")}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Cover Photo */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <ImagePlus className="h-4 w-4 text-gray-500" />
+            Foto da Obra
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(f); }} />
+          {previewUrl ? (
+            <div className="relative w-40 h-28 rounded-lg overflow-hidden border border-gray-200">
+              <img src={previewUrl} alt="Capa" className="w-full h-full object-cover" />
+              <button type="button"
+                onClick={() => { setPreviewUrl(null); setValue("coverPhoto", null); }}
+                className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 hover:bg-black/80">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-dashed border-gray-300 rounded-lg hover:border-orange-400 hover:text-orange-600 transition-colors disabled:opacity-50">
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+              {uploading ? "Enviando..." : "Selecionar foto de capa"}
+            </button>
+          )}
+          <p className="text-xs text-gray-400 mt-2">Aparece no card da obra na lista de obras.</p>
         </CardContent>
       </Card>
 

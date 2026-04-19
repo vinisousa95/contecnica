@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@/lib/api-client";
 import { reformItemSchema, type ReformItemInput } from "@/lib/validations";
@@ -69,11 +69,15 @@ export default function ItensReformaPage() {
 
   const items = Array.isArray(data) ? data : [];
 
+  const [pctMedium, setPctMedium] = useState<string>("");
+  const [pctHigh, setPctHigh] = useState<string>("");
+
   const {
     register,
     handleSubmit,
     reset,
     setValue,
+    control,
     formState: { errors },
   } = useForm<ReformItemInput>({
     resolver: zodResolver(reformItemSchema),
@@ -83,6 +87,16 @@ export default function ItensReformaPage() {
       sortOrder: 0,
     },
   });
+
+  const watchedPriceLow = useWatch({ control, name: "priceLow" });
+
+  const applyPct = useCallback((pct: string, field: "priceMedium" | "priceHigh") => {
+    const base = parseFloat(String(watchedPriceLow));
+    const p = parseFloat(pct);
+    if (!isNaN(base) && base > 0 && !isNaN(p) && p >= 0) {
+      setValue(field, String((base * (1 + p / 100)).toFixed(2)));
+    }
+  }, [watchedPriceLow, setValue]);
 
   const createMutation = useMutation({
     mutationFn: (data: ReformItemInput) => api.reformItems.create(data),
@@ -123,6 +137,8 @@ export default function ItensReformaPage() {
 
   const handleEdit = (item: any) => {
     setEditItem(item);
+    setPctMedium("");
+    setPctHigh("");
     reset({
       name: item.name,
       description: item.description ?? "",
@@ -140,6 +156,8 @@ export default function ItensReformaPage() {
   const handleCloseForm = () => {
     setShowForm(false);
     setEditItem(null);
+    setPctMedium("");
+    setPctHigh("");
     reset({
       name: "",
       description: "",
@@ -367,6 +385,22 @@ export default function ItensReformaPage() {
                   placeholder="0,00"
                   error={errors.priceMedium?.message}
                 />
+                <div className="flex items-center gap-1 mt-1">
+                  <input
+                    type="number"
+                    min="0"
+                    max="999"
+                    step="0.1"
+                    value={pctMedium}
+                    onChange={(e) => {
+                      setPctMedium(e.target.value);
+                      applyPct(e.target.value, "priceMedium");
+                    }}
+                    placeholder="%"
+                    className="w-16 h-7 px-2 rounded border border-gray-300 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#EA580C]"
+                  />
+                  <span className="text-xs text-gray-400">% acima do baixo</span>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -380,6 +414,22 @@ export default function ItensReformaPage() {
                   placeholder="0,00"
                   error={errors.priceHigh?.message}
                 />
+                <div className="flex items-center gap-1 mt-1">
+                  <input
+                    type="number"
+                    min="0"
+                    max="999"
+                    step="0.1"
+                    value={pctHigh}
+                    onChange={(e) => {
+                      setPctHigh(e.target.value);
+                      applyPct(e.target.value, "priceHigh");
+                    }}
+                    placeholder="%"
+                    className="w-16 h-7 px-2 rounded border border-gray-300 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#EA580C]"
+                  />
+                  <span className="text-xs text-gray-400">% acima do baixo</span>
+                </div>
               </div>
             </div>
 

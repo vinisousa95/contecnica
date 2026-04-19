@@ -86,6 +86,9 @@ export default function ServicosExtrasPage() {
                   {s.description && (
                     <p className="text-sm text-gray-500 mt-1">{s.description}</p>
                   )}
+                  {s.requestedBy && (
+                    <p className="text-xs text-gray-400 mt-0.5">Solicitante: {s.requestedBy}</p>
+                  )}
                   <p className="text-xl font-bold text-gray-900 mt-3">
                     {formatCurrency(s.amount)}
                   </p>

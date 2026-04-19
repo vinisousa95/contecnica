@@ -7,6 +7,7 @@ import { z } from "zod";
 const schema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   description: z.string().optional().nullable(),
+  requestedBy: z.string().optional().nullable(),
   amount: z.string().min(1, "Valor é obrigatório"),
 });
 
@@ -35,6 +36,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       projectId: params.id,
       name: parsed.data.name,
       description: parsed.data.description,
+      requestedBy: parsed.data.requestedBy ?? null,
       amount: parsed.data.amount,
     },
   });

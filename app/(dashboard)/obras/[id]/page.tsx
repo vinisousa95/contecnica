@@ -277,6 +277,7 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
   const [showForm, setShowForm] = useState(false);
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
+  const [formRequestedBy, setFormRequestedBy] = useState("");
   const [formAmount, setFormAmount] = useState("");
   const [saving, setSaving] = useState(false);
   const [itemSearch, setItemSearch] = useState("");
@@ -315,6 +316,7 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
         body: JSON.stringify({
           name: formName.trim(),
           description: formDescription.trim() || null,
+          requestedBy: formRequestedBy.trim() || null,
           amount: formAmount.trim(),
         }),
       });
@@ -322,6 +324,7 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
       qc.invalidateQueries({ queryKey: ["project-extra-services", projectId] });
       setFormName("");
       setFormDescription("");
+      setFormRequestedBy("");
       setFormAmount("");
       setItemSearch("");
       setShowForm(false);
@@ -411,13 +414,23 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
                 </div>
               )}
             </div>
-            <div className="flex-1 min-w-[180px]">
+            <div className="flex-1 min-w-[160px]">
               <label className="block text-xs font-medium text-gray-600 mb-1">Descrição</label>
               <input
                 type="text"
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
                 placeholder="Opcional"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+              />
+            </div>
+            <div className="w-40">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Solicitante</label>
+              <input
+                type="text"
+                value={formRequestedBy}
+                onChange={(e) => setFormRequestedBy(e.target.value)}
+                placeholder="Nome (opcional)"
                 className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
               />
             </div>
@@ -470,6 +483,9 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
                   <p className="text-sm font-medium text-gray-800 truncate">{s.name}</p>
                   {s.description && (
                     <p className="text-xs text-gray-400 truncate">{s.description}</p>
+                  )}
+                  {s.requestedBy && (
+                    <p className="text-xs text-gray-400 truncate">Solicitante: {s.requestedBy}</p>
                   )}
                 </div>
                 <span className="text-sm font-semibold text-gray-700">

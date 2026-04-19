@@ -573,6 +573,7 @@ model ExtraService {
   project     Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
   name        String
   description String?
+  requestedBy String?            @map("requested_by")
   amount      Decimal            @db.Decimal(12, 2)
   status      ExtraServiceStatus @default(PENDING_APPROVAL)
   acceptedAt  DateTime?          @map("accepted_at")

@@ -34,18 +34,37 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     data: updateData,
   });
 
-  // When marking as paid, create a ProjectTask in execução da obra (if not already there)
   if (markPaid === true && !existing.paidAt) {
-    const taskCount = await prisma.projectTask.count({ where: { projectId: params.id } });
-    await prisma.projectTask.create({
-      data: {
-        projectId: params.id,
-        name: existing.name,
-        description: existing.description,
-        order: taskCount,
-        showInPortal: true,
-      },
+    const project = await prisma.project.findUnique({
+      where: { id: params.id },
+      select: { clientId: true },
     });
+
+    await prisma.$transaction([
+      // Add to Receita total as RECEIVED revenue
+      prisma.revenue.create({
+        data: {
+          projectId: params.id,
+          clientId: project?.clientId ?? null,
+          description: `Serviço extra: ${existing.name}`,
+          amount: existing.amount,
+          dueDate: new Date(),
+          receivedDate: new Date(),
+          status: "RECEIVED",
+          createdById: session.userId,
+        },
+      }),
+      // Add to Execução da Obra
+      prisma.projectTask.create({
+        data: {
+          projectId: params.id,
+          name: existing.name,
+          description: existing.description,
+          order: 999,
+          showInPortal: true,
+        },
+      }),
+    ]);
   }
 
   return apiSuccess({ ...service, amount: Number(service.amount) });

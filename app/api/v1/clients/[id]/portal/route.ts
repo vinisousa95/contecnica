@@ -58,7 +58,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     select: { id: true, name: true, email: true, isActive: true, createdAt: true },
   });
 
-  return apiSuccess(clientUser, 201);
+  return apiSuccess(clientUser);
 }
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {

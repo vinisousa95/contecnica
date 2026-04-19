@@ -7,7 +7,6 @@ export async function GET(request: NextRequest) {
   const session = await getPortalSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 
-  // Get all projects for this client
   const projects = await prisma.project.findMany({
     where: { clientId: session.clientId },
     select: { id: true, name: true },
@@ -16,7 +15,9 @@ export async function GET(request: NextRequest) {
   const projectIds = projects.map((p) => p.id);
   const projectMap = Object.fromEntries(projects.map((p) => [p.id, p.name]));
 
-  // Fetch all material expenses across all client projects
+  // Fetch ALL material expenses — admin "PAID" means admin paid the supplier,
+  // NOT that the client reimbursed. All appear as pending reimbursement until
+  // a future gateway integration marks clientPaid = true.
   const expenses = await prisma.expense.findMany({
     where: {
       projectId: { in: projectIds },
@@ -26,11 +27,7 @@ export async function GET(request: NextRequest) {
     orderBy: { dueDate: "asc" },
   });
 
-  const pending = expenses.filter((e) => e.status === "PENDING" || e.status === "OVERDUE");
-  const paid = expenses.filter((e) => e.status === "PAID");
-
-  const totalPending = pending.reduce((s, e) => s + Number(e.amount), 0);
-  const totalPaid = paid.reduce((s, e) => s + Number(e.amount), 0);
+  const totalPending = expenses.reduce((s, e) => s + Number(e.amount), 0);
 
   const mapExpense = (e: typeof expenses[0]) => ({
     id: e.id,
@@ -40,13 +37,11 @@ export async function GET(request: NextRequest) {
     projectName: e.projectId ? projectMap[e.projectId] : null,
     amount: Number(e.amount),
     dueDate: e.dueDate,
-    status: e.status,
-    isOverdue: e.status === "OVERDUE" || (e.status === "PENDING" && new Date(e.dueDate) < new Date()),
+    isOverdue: new Date(e.dueDate) < new Date(),
   });
 
   return apiSuccess({
-    summary: { totalPending, totalPaid, count: pending.length },
-    pending: pending.map(mapExpense),
-    paid: paid.map(mapExpense),
+    summary: { totalPending, count: expenses.length },
+    pending: expenses.map(mapExpense),
   });
 }

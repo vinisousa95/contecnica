@@ -5,8 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { LoadingPage } from "@/components/ui/loading";
 import {
-  ShoppingCart, CheckCircle2, Clock, AlertCircle,
-  X, CreditCard, QrCode, Copy, Check,
+  ShoppingCart, CheckCircle2, AlertCircle,
+  X, CreditCard, QrCode, Copy, Check, Clock,
 } from "lucide-react";
 
 async function fetchBilling() {
@@ -27,32 +27,22 @@ function PaymentModal({ expense, onClose }: { expense: any; onClose: () => void 
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div>
             <h2 className="text-lg font-bold text-gray-900">Realizar Pagamento</h2>
             <p className="text-sm text-gray-500 mt-0.5">{expense.description}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X className="h-5 w-5" />
-          </button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="h-5 w-5" /></button>
         </div>
 
-        {/* Amount */}
         <div className="px-6 py-5 bg-gray-50 border-b border-gray-100">
-          <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">Valor a pagar</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">Valor a reembolsar</p>
           <p className="text-3xl font-black text-gray-900">{formatCurrency(expense.amount)}</p>
-          {expense.projectName && (
-            <p className="text-xs text-gray-400 mt-1">Obra: {expense.projectName}</p>
-          )}
-          <p className="text-xs text-gray-400">Vencimento: {formatDate(expense.dueDate)}</p>
+          {expense.projectName && <p className="text-xs text-gray-400 mt-1">Obra: {expense.projectName}</p>}
+          <p className="text-xs text-gray-400">Referência: {formatDate(expense.dueDate)}</p>
         </div>
 
-        {/* Gateway placeholder */}
         <div className="p-6 space-y-4">
           <div className="flex items-center gap-2 text-amber-600 bg-amber-50 rounded-xl px-4 py-3">
             <Clock className="h-4 w-4 flex-shrink-0" />
@@ -70,9 +60,7 @@ function PaymentModal({ expense, onClose }: { expense: any; onClose: () => void 
 
           <div className="bg-blue-50 rounded-xl px-4 py-3 space-y-2">
             <p className="text-xs font-semibold text-blue-800 uppercase tracking-wide">Enquanto isso</p>
-            <p className="text-sm text-blue-700">
-              Entre em contato com a Contécnica para realizar o pagamento via transferência ou PIX:
-            </p>
+            <p className="text-sm text-blue-700">Entre em contato com a Contécnica para combinar o pagamento:</p>
             <button
               onClick={copyAmount}
               className="flex items-center gap-2 text-sm text-blue-700 font-semibold hover:text-blue-900 transition-colors"
@@ -102,7 +90,7 @@ export default function CobrancasPage() {
   if (isLoading) return <LoadingPage message="Carregando cobranças..." />;
   if (!data) return null;
 
-  const { summary, pending, paid } = data;
+  const { summary, pending } = data;
 
   return (
     <div className="space-y-6">
@@ -111,40 +99,29 @@ export default function CobrancasPage() {
         <p className="text-sm text-gray-500 mt-0.5">Materiais de construção adquiridos para sua obra</p>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">A pagar</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(summary.totalPending)}</p>
-              <p className="text-xs text-gray-400 mt-1">{summary.count} cobrança{summary.count !== 1 ? "s" : ""} pendente{summary.count !== 1 ? "s" : ""}</p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-              <ShoppingCart className="h-5 w-5 text-amber-600" />
-            </div>
+      {/* Summary */}
+      <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Total a reembolsar</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(summary.totalPending)}</p>
+            <p className="text-xs text-gray-400 mt-1">
+              {summary.count} item{summary.count !== 1 ? "s" : ""} de material
+            </p>
           </div>
-        </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Total pago</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(summary.totalPaid)}</p>
-              <p className="text-xs text-gray-400 mt-1">{paid.length} pagamento{paid.length !== 1 ? "s" : ""} realizado{paid.length !== 1 ? "s" : ""}</p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
-            </div>
+          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+            <ShoppingCart className="h-5 w-5 text-amber-600" />
           </div>
         </div>
       </div>
 
-      {/* Pending */}
+      {/* List */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
           <AlertCircle className="h-4 w-4 text-amber-500" />
-          <h2 className="font-semibold text-gray-900">Pendentes de pagamento</h2>
+          <h2 className="font-semibold text-gray-900">Materiais adquiridos</h2>
         </div>
+
         {pending.length === 0 ? (
           <div className="px-6 py-10 text-center text-sm text-gray-400">
             <CheckCircle2 className="h-8 w-8 text-green-300 mx-auto mb-2" />
@@ -159,7 +136,7 @@ export default function CobrancasPage() {
                   <p className="text-sm font-medium text-gray-900 truncate">{e.description}</p>
                   <p className="text-xs text-gray-400 mt-0.5">
                     {e.projectName && <span>{e.projectName} · </span>}
-                    Vence: {formatDate(e.dueDate)}
+                    {e.category}
                     {e.isOverdue && <span className="text-red-500 font-medium ml-1">· Vencido</span>}
                   </p>
                 </div>
@@ -176,29 +153,6 @@ export default function CobrancasPage() {
           </div>
         )}
       </div>
-
-      {/* Paid history */}
-      {paid.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-            <h2 className="font-semibold text-gray-900">Histórico de pagamentos</h2>
-          </div>
-          <div className="divide-y divide-gray-50">
-            {paid.map((e: any) => (
-              <div key={e.id} className="flex items-center gap-4 px-6 py-3 opacity-70">
-                <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{e.description}</p>
-                  <p className="text-xs text-gray-400">{e.projectName}</p>
-                </div>
-                <p className="text-sm font-semibold text-gray-500">{formatCurrency(e.amount)}</p>
-                <span className="text-xs bg-green-100 text-green-700 font-medium px-2 py-0.5 rounded-full">Pago</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {selected && <PaymentModal expense={selected} onClose={() => setSelected(null)} />}
     </div>

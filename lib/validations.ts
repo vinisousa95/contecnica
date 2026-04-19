@@ -114,6 +114,7 @@ export const reformItemSchema = z.object({
     "DEMOLITION","PAINTING","MASONRY","ELECTRICAL","PLUMBING",
     "FINISHING","CLEANING","JOINERY","TILING","CARPENTRY","OTHERS",
   ]),
+  customCategory: z.string().optional().nullable(),
   unit: z.enum(["UNIT","SQM","M","ML","DAILY","SERVICE","POINT","HOUR"]).default("UNIT"),
   priceLow: z.string().min(1, "Preço padrão baixo é obrigatório"),
   priceMedium: z.string().min(1, "Preço padrão médio é obrigatório"),

@@ -247,18 +247,19 @@ enum SubmissionStatus {
 // REFORM ITEMS — Catálogo de itens/serviços
 // ─────────────────────────────────────────────
 model ReformItem {
-  id          String       @id @default(cuid())
-  name        String
-  description String?
-  category    ItemCategory
-  unit        ItemUnit     @default(UNIT)
-  priceLow    Decimal      @db.Decimal(10, 2) @map("price_low")
-  priceMedium Decimal      @db.Decimal(10, 2) @map("price_medium")
-  priceHigh   Decimal      @db.Decimal(10, 2) @map("price_high")
-  isActive    Boolean      @default(true) @map("is_active")
-  sortOrder   Int          @default(0) @map("sort_order")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  category       ItemCategory
+  customCategory String?      @map("custom_category")
+  unit           ItemUnit     @default(UNIT)
+  priceLow       Decimal      @db.Decimal(10, 2) @map("price_low")
+  priceMedium    Decimal      @db.Decimal(10, 2) @map("price_medium")
+  priceHigh      Decimal      @db.Decimal(10, 2) @map("price_high")
+  isActive       Boolean      @default(true) @map("is_active")
+  sortOrder      Int          @default(0) @map("sort_order")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
 
   budgetItems BudgetItem[]
 

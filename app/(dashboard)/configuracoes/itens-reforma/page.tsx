@@ -90,6 +90,7 @@ export default function ItensReformaPage() {
   });
 
   const watchedPriceLow = useWatch({ control, name: "priceLow" });
+  const watchedCategory = useWatch({ control, name: "category" });
 
   const applyPct = useCallback((pct: string, field: "priceMedium" | "priceHigh") => {
     const base = parseFloat(String(watchedPriceLow));
@@ -144,6 +145,7 @@ export default function ItensReformaPage() {
       name: item.name,
       description: item.description ?? "",
       category: item.category,
+      customCategory: item.customCategory ?? "",
       unit: item.unit,
       priceLow: String(item.priceLow),
       priceMedium: String(item.priceMedium),
@@ -269,7 +271,7 @@ export default function ItensReformaPage() {
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-gray-600">
-                        {CATEGORY_LABELS[item.category]}
+                        {item.customCategory || CATEGORY_LABELS[item.category]}
                       </span>
                     </TableCell>
                     <TableCell className="text-sm text-gray-600">
@@ -359,6 +361,18 @@ export default function ItensReformaPage() {
                 />
               </div>
             </div>
+
+            {watchedCategory === "OTHERS" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome da categoria <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  {...register("customCategory")}
+                  placeholder="Ex: Impermeabilização, Gesso, Serralheria..."
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-3 gap-3">
               <div>

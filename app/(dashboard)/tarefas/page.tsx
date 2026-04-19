@@ -97,9 +97,9 @@ export default function TarefasPage() {
     queryFn: () => apiFetch("/api/v1/projects?limit=200"),
   });
 
-  const { data: users = [] } = useQuery({
-    queryKey: ["users-employees"],
-    queryFn: () => apiFetch("/api/v1/users?limit=100"),
+  const { data: employees = [] } = useQuery({
+    queryKey: ["employees-active"],
+    queryFn: () => apiFetch("/api/v1/employees?status=ACTIVE&limit=200"),
   });
 
   const deleteMutation = useMutation({
@@ -338,7 +338,7 @@ export default function TarefasPage() {
         onClose={() => { setShowModal(false); setEditTask(null); }}
         editTask={editTask}
         projects={Array.isArray(projects) ? projects : []}
-        users={Array.isArray(users) ? users : []}
+        employees={Array.isArray(employees) ? employees : []}
         onSaved={() => {
           qc.invalidateQueries({ queryKey: ["admin-tasks"] });
           setShowModal(false);
@@ -353,19 +353,21 @@ export default function TarefasPage() {
 interface SubtaskInput { name: string; assigneeId: string; }
 
 function TaskModal({
-  open, onClose, editTask, projects, users, onSaved,
+  open, onClose, editTask, projects, employees, onSaved,
 }: {
   open: boolean;
   onClose: () => void;
   editTask: any | null;
   projects: any[];
-  users: any[];
+  employees: any[];
   onSaved: () => void;
 }) {
   const isEdit = editTask && !editTask._addSubtask && !editTask.parentId;
   const isSubtask = !!editTask?.parentId;
 
   const [name, setName] = useState("");
+  const [nameSuggestions, setNameSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [description, setDescription] = useState("");
   const [projectId, setProjectId] = useState("");
   const [priority, setPriority] = useState("MEDIUM");
@@ -374,17 +376,11 @@ function TaskModal({
   const [subtasks, setSubtasks] = useState<SubtaskInput[]>([]);
   const [saving, setSaving] = useState(false);
 
-  // Reset form when modal opens
-  useState(() => {
-    if (open) {
-      setName(editTask?.name ?? "");
-      setDescription(editTask?.description ?? "");
-      setProjectId(editTask?.projectId ?? "");
-      setPriority(editTask?.priority ?? "MEDIUM");
-      setAssigneeId(editTask?.assigneeId ?? "");
-      setDueDate(editTask?.dueDate ? editTask.dueDate.substring(0, 10) : "");
-      setSubtasks([]);
-    }
+  // Fetch project tasks when projectId changes
+  const { data: projectTasks = [] } = useQuery({
+    queryKey: ["project-exec-tasks", projectId],
+    queryFn: () => projectId ? apiFetch(`/api/v1/projects/${projectId}/tasks`) : Promise.resolve([]),
+    enabled: !!projectId,
   });
 
   // Re-populate when editTask changes
@@ -400,6 +396,10 @@ function TaskModal({
     setInitialized(true);
   }
   if (!open && initialized) setInitialized(false);
+
+  const filteredSuggestions = (Array.isArray(projectTasks) ? projectTasks : []).filter((t: any) =>
+    !name || t.name.toLowerCase().includes(name.toLowerCase())
+  ).slice(0, 6);
 
   const addSubtask = () => setSubtasks((p) => [...p, { name: "", assigneeId: "" }]);
   const removeSubtask = (i: number) => setSubtasks((p) => p.filter((_, idx) => idx !== i));
@@ -424,7 +424,6 @@ function TaskModal({
         await apiFetch(`/api/v1/tasks/${editTask.id}`, { method: "PUT", body: JSON.stringify(payload) });
       } else {
         const parentTask = await apiFetch("/api/v1/tasks", { method: "POST", body: JSON.stringify(payload) });
-        // Create subtasks
         for (const st of subtasks.filter((s) => s.name.trim())) {
           await apiFetch("/api/v1/tasks", {
             method: "POST",
@@ -451,9 +450,9 @@ function TaskModal({
     { value: "", label: "Selecione a obra" },
     ...projects.map((p) => ({ value: p.id, label: p.name })),
   ];
-  const userOptions = [
+  const employeeOptions = [
     { value: "", label: "Sem responsável" },
-    ...users.map((u: any) => ({ value: u.id, label: u.name })),
+    ...employees.map((e: any) => ({ value: e.id, label: e.name })),
   ];
   const priorityOptions = [
     { value: "LOW", label: "Baixa" },
@@ -472,18 +471,40 @@ function TaskModal({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <Input
-            label="Nome da tarefa *"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ex: Instalar elétrica sala"
-          />
+          {/* Name with suggestions from execução da obra */}
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nome da tarefa *</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => { setName(e.target.value); setShowSuggestions(true); }}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              placeholder={projectId ? "Buscar item da execução ou digitar..." : "Ex: Instalar elétrica sala"}
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+            />
+            {showSuggestions && filteredSuggestions.length > 0 && (
+              <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-44 overflow-y-auto">
+                {filteredSuggestions.map((t: any) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onMouseDown={() => { setName(t.name); setDescription(t.description ?? ""); setShowSuggestions(false); }}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-orange-50 flex flex-col"
+                  >
+                    <span className="font-medium text-gray-800">{t.name}</span>
+                    {t.description && <span className="text-xs text-gray-400 truncate">{t.description}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {!isSubtask && (
             <Select
               label="Obra *"
               value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
+              onChange={(e) => { setProjectId(e.target.value); setName(""); }}
               options={projectOptions}
             />
           )}
@@ -496,10 +517,10 @@ function TaskModal({
               options={priorityOptions}
             />
             <Select
-              label="Responsável"
+              label="Responsável (Funcionário)"
               value={assigneeId}
               onChange={(e) => setAssigneeId(e.target.value)}
-              options={userOptions}
+              options={employeeOptions}
             />
           </div>
 
@@ -554,7 +575,7 @@ function TaskModal({
                         onChange={(e) => updateSubtask(i, "assigneeId", e.target.value)}
                         className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
                       >
-                        {userOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        {employeeOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                       </select>
                     </div>
                     <button onClick={() => removeSubtask(i)} className="text-gray-400 hover:text-red-500 mt-1.5">

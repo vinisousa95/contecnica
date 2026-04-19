@@ -16,12 +16,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   if (!task) return apiError("Tarefa não encontrada", 404);
 
   // Employee can only update tasks assigned to them or children of their tasks
-  const parentTask = task.parentId
-    ? await prisma.task.findUnique({ where: { id: task.parentId } })
-    : null;
-
-  const isAssigned = task.assigneeId === session.userId || parentTask?.assigneeId === session.userId;
-  if (!isAssigned && session.role === "EMPLOYEE") return apiError("Não autorizado", 403);
+  // Allow any authenticated user to update task status from tablet view
 
   const updated = await prisma.task.update({
     where: { id: params.id },

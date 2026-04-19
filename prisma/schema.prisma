@@ -27,7 +27,6 @@ model User {
   appSubmissions      AppSubmission[]
   reviewedSubmissions AppSubmission[] @relation("ReviewedBy")
   budgets             Budget[]
-  assignedTasks       Task[]          @relation("TaskAssignee")
   createdTasks        Task[]          @relation("TaskCreator")
 
   @@map("users")
@@ -466,7 +465,8 @@ model Employee {
   notes       String?
   createdAt   DateTime       @default(now()) @map("created_at")
   updatedAt   DateTime       @updatedAt @map("updated_at")
-  assignments WorkAssignment[]
+  assignments   WorkAssignment[]
+  assignedTasks Task[]           @relation("TaskAssignee")
 
   @@map("employees")
 }
@@ -488,7 +488,7 @@ model Task {
   priority    TaskPriority @default(MEDIUM)
   status      TaskStatus   @default(PENDING)
   assigneeId  String?      @map("assignee_id")
-  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  assignee    Employee?    @relation("TaskAssignee", fields: [assigneeId], references: [id])
   parentId    String?      @map("parent_id")
   parent      Task?        @relation("TaskChildren", fields: [parentId], references: [id])
   children    Task[]       @relation("TaskChildren")

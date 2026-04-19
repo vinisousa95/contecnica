@@ -296,7 +296,7 @@ export function PrintView({ budget }: { budget: any }) {
                 </tr>
               </thead>
               <tbody>
-                {Object.entries(itemsByCategory).map(([cat, items]: [string, any[]]) => (
+                {(Object.entries(itemsByCategory) as [string, any[]][]).map(([cat, items]) => (
                   <>
                     <tr key={`cat-${cat}`} className="cat-row">
                       <td colSpan={5}>{CATEGORY_LABELS[cat]}</td>

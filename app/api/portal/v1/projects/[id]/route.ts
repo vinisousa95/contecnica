@@ -18,7 +18,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   const project = await prisma.project.findFirst({
     where: { id: params.id, clientId: session.clientId },
     include: {
-      expenses: { select: { amount: true, status: true } },
+      expenses: {
+        where: { category: { name: { contains: "material", mode: "insensitive" } } },
+        select: { amount: true, status: true },
+      },
       revenues: { select: { amount: true, status: true } },
       _count: { select: { updates: true, photos: true, documents: true } },
     },

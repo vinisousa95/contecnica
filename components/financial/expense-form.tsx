@@ -58,7 +58,6 @@ export function ExpenseForm({
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<ExpenseInput>({
     resolver: zodResolver(expenseSchema),
@@ -164,19 +163,6 @@ export function ExpenseForm({
             />
           </div>
 
-          <div className="md:col-span-2">
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <input
-                type="checkbox"
-                className="w-4 h-4 rounded border-gray-300 text-[#EA580C] focus:ring-[#EA580C]"
-                {...register("visibleInPortal")}
-              />
-              <div>
-                <span className="text-sm font-medium text-gray-700">Visível no portal do cliente</span>
-                <p className="text-xs text-gray-400">Marque para que o cliente veja esta despesa (ex: materiais)</p>
-              </div>
-            </label>
-          </div>
         </CardContent>
       </Card>
 

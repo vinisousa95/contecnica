@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Circle, AlertTriangle, Clock, LogOut, RefreshCw } from "lucide-react";
+import { CheckCircle2, Circle, AlertTriangle, Clock, LogOut, RefreshCw, User } from "lucide-react";
 
 const PRIORITY_LABELS: Record<string, string> = {
   URGENT: "URGENTE",
@@ -231,6 +231,12 @@ function TaskCard({
               <p className="text-sm text-gray-500 mt-1">{task.description}</p>
             )}
             <div className="flex items-center gap-3 mt-2 flex-wrap">
+              {task.assignee && (
+                <span className="text-xs font-semibold text-orange-600 flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  {task.assignee.name}
+                </span>
+              )}
               {task.dueDate && (
                 <span className="text-xs text-gray-400 flex items-center gap-1">
                   <Clock className="h-3 w-3" />

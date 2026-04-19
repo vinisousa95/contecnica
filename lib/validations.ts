@@ -72,6 +72,7 @@ export const expenseSchema = z.object({
   paymentMethod: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   visibleInPortal: z.boolean().default(false).optional(),
+  attachmentUrl: z.string().optional().nullable(),
 });
 
 // ── Revenues ──────────────────────────────────────────────────

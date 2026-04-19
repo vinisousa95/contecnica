@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Upload, FileText, X, ExternalLink, Loader2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface ExpenseFormProps {
   defaultValues?: Partial<ExpenseInput>;
@@ -46,7 +49,6 @@ export function ExpenseForm({
     queryKey: ["projects", "", ""],
     queryFn: () => api.projects.list({ limit: "100" }) as Promise<any>,
   });
-
   const { data: categoriesData } = useQuery({
     queryKey: ["categories", "EXPENSE"],
     queryFn: () => api.categories.list({ type: "EXPENSE" }) as Promise<any>,
@@ -54,6 +56,29 @@ export function ExpenseForm({
 
   const projects = Array.isArray(projectsData) ? projectsData : [];
   const categories = Array.isArray(categoriesData) ? categoriesData : [];
+
+  const [attachmentUrl, setAttachmentUrl] = useState<string>(defaultValues?.attachmentUrl ?? "");
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File | null) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("type", "document");
+      const res = await fetch("/api/v1/upload", { method: "POST", body: fd });
+      const text = await res.text();
+      const json = JSON.parse(text);
+      if (!res.ok) throw new Error(json.error ?? "Erro no upload");
+      setAttachmentUrl(json.data.url);
+    } catch (err: any) {
+      toast({ title: "Erro no upload", description: err.message, variant: "error" });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const {
     register,
@@ -78,8 +103,12 @@ export function ExpenseForm({
     ...categories.map((c: any) => ({ value: c.id, label: c.name })),
   ];
 
+  const handleSubmitWithAttachment = async (data: ExpenseInput) => {
+    await onSubmit({ ...data, attachmentUrl: attachmentUrl || null });
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+    <form onSubmit={handleSubmit(handleSubmitWithAttachment)} className="space-y-5">
       <Card>
         <CardContent className="pt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
@@ -163,6 +192,50 @@ export function ExpenseForm({
             />
           </div>
 
+          {/* Nota Fiscal upload */}
+          <div className="md:col-span-2">
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Nota Fiscal / Comprovante</label>
+            {attachmentUrl ? (
+              <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <FileText className="h-5 w-5 text-green-600 flex-shrink-0" />
+                <span className="flex-1 text-sm text-green-700 font-medium truncate">Arquivo anexado</span>
+                <a
+                  href={attachmentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-green-700 hover:text-green-900"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setAttachmentUrl("")}
+                  className="text-green-600 hover:text-red-500"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="w-full flex items-center gap-3 p-3 border border-dashed border-gray-300 rounded-lg hover:border-[#EA580C] hover:bg-orange-50 transition-colors text-sm text-gray-500 hover:text-gray-700"
+              >
+                {uploading
+                  ? <Loader2 className="h-4 w-4 animate-spin text-[#EA580C]" />
+                  : <Upload className="h-4 w-4 text-gray-400" />}
+                {uploading ? "Enviando..." : "Clique para anexar PDF ou imagem da nota fiscal"}
+              </button>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".pdf,image/*"
+              className="hidden"
+              onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+            />
+          </div>
         </CardContent>
       </Card>
 

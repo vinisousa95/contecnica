@@ -6,7 +6,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { LoadingPage } from "@/components/ui/loading";
 import {
   ShoppingCart, CheckCircle2, AlertCircle,
-  X, CreditCard, QrCode, Copy, Check, Clock,
+  X, CreditCard, QrCode, Copy, Check, Clock, FileText, ExternalLink,
 } from "lucide-react";
 
 async function fetchBilling() {
@@ -41,6 +41,18 @@ function PaymentModal({ expense, onClose }: { expense: any; onClose: () => void 
           <p className="text-3xl font-black text-gray-900">{formatCurrency(expense.amount)}</p>
           {expense.projectName && <p className="text-xs text-gray-400 mt-1">Obra: {expense.projectName}</p>}
           <p className="text-xs text-gray-400">Referência: {formatDate(expense.dueDate)}</p>
+          {expense.attachmentUrl && (
+            <a
+              href={expense.attachmentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 mt-2 text-xs text-[#EA580C] font-medium hover:underline"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Ver nota fiscal
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
         </div>
 
         <div className="p-6 space-y-4">
@@ -139,6 +151,17 @@ export default function CobrancasPage() {
                     {e.category}
                     {e.isOverdue && <span className="text-red-500 font-medium ml-1">· Vencido</span>}
                   </p>
+                  {e.attachmentUrl && (
+                    <a
+                      href={e.attachmentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 mt-0.5 text-xs text-[#EA580C] hover:underline"
+                    >
+                      <FileText className="h-3 w-3" />
+                      Nota fiscal
+                    </a>
+                  )}
                 </div>
                 <p className="text-sm font-bold text-gray-900 flex-shrink-0">{formatCurrency(e.amount)}</p>
                 <button

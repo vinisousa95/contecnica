@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
     projectName: e.projectId ? projectMap[e.projectId] : null,
     amount: Number(e.amount),
     dueDate: e.dueDate,
+    attachmentUrl: e.attachmentUrl ?? null,
     isOverdue: new Date(e.dueDate) < new Date(),
   });
 

@@ -23,7 +23,7 @@ import { toast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Pencil, MapPin, Calendar, DollarSign,
   ArrowDownCircle, ArrowUpCircle, Plus, CheckCircle2,
-  Circle, Eye, EyeOff, Trash2, Link2, ListChecks, RefreshCw,
+  Circle, Eye, EyeOff, Trash2, Link2, ListChecks, RefreshCw, Wrench,
 } from "lucide-react";
 
 async function apiFetch(url: string, options?: RequestInit) {
@@ -257,6 +257,184 @@ function TaskRow({
   );
 }
 
+// ── Extra Services Section ────────────────────────────────────
+const EXTRA_SERVICE_STATUS_LABELS: Record<string, string> = {
+  PENDING_APPROVAL: "Aguardando cliente",
+  ACCEPTED: "Aceito",
+  REJECTED: "Recusado",
+};
+
+const EXTRA_SERVICE_STATUS_COLORS: Record<string, string> = {
+  PENDING_APPROVAL: "bg-amber-100 text-amber-700",
+  ACCEPTED: "bg-green-100 text-green-700",
+  REJECTED: "bg-red-100 text-red-700",
+};
+
+function ExtraServicesSection({ projectId }: { projectId: string }) {
+  const qc = useQueryClient();
+  const [showForm, setShowForm] = useState(false);
+  const [formName, setFormName] = useState("");
+  const [formDescription, setFormDescription] = useState("");
+  const [formAmount, setFormAmount] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const { data: services = [], isLoading } = useQuery({
+    queryKey: ["project-extra-services", projectId],
+    queryFn: () => apiFetch(`/api/v1/projects/${projectId}/extra-services`),
+  });
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formName.trim() || !formAmount.trim()) return;
+    setSaving(true);
+    try {
+      await apiFetch(`/api/v1/projects/${projectId}/extra-services`, {
+        method: "POST",
+        body: JSON.stringify({
+          name: formName.trim(),
+          description: formDescription.trim() || null,
+          amount: formAmount.trim(),
+        }),
+      });
+      toast({ title: "Serviço extra adicionado" });
+      qc.invalidateQueries({ queryKey: ["project-extra-services", projectId] });
+      setFormName("");
+      setFormDescription("");
+      setFormAmount("");
+      setShowForm(false);
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (serviceId: string) => {
+    if (!window.confirm("Remover este serviço extra?")) return;
+    try {
+      await apiFetch(`/api/v1/projects/${projectId}/extra-services/${serviceId}`, {
+        method: "DELETE",
+      });
+      toast({ title: "Serviço removido" });
+      qc.invalidateQueries({ queryKey: ["project-extra-services", projectId] });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Wrench className="h-4 w-4 text-[#EA580C]" />
+            Serviços Extras
+            <span className="text-xs font-normal text-gray-400 ml-1">({services.length} {services.length === 1 ? "serviço" : "serviços"})</span>
+          </CardTitle>
+          <Button size="sm" variant="outline" onClick={() => setShowForm((v) => !v)}>
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            Adicionar Serviço Extra
+          </Button>
+        </div>
+      </CardHeader>
+
+      {showForm && (
+        <div className="px-5 pb-4 border-b border-gray-100">
+          <form onSubmit={handleAdd} className="flex flex-wrap gap-3 items-end">
+            <div className="flex-1 min-w-[180px]">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Nome *</label>
+              <input
+                type="text"
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="Ex: Impermeabilização extra"
+                required
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+              />
+            </div>
+            <div className="flex-1 min-w-[180px]">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Descrição</label>
+              <input
+                type="text"
+                value={formDescription}
+                onChange={(e) => setFormDescription(e.target.value)}
+                placeholder="Opcional"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+              />
+            </div>
+            <div className="w-36">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Valor (R$) *</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={formAmount}
+                onChange={(e) => setFormAmount(e.target.value)}
+                placeholder="0,00"
+                required
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button type="submit" size="sm" disabled={saving}>
+                {saving ? "Salvando…" : "Salvar"}
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => setShowForm(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <CardContent className="p-0">
+        {isLoading ? (
+          <p className="text-sm text-gray-400 text-center py-8">Carregando…</p>
+        ) : services.length === 0 ? (
+          <div className="text-center py-10 text-sm text-gray-400 space-y-2">
+            <Wrench className="h-8 w-8 mx-auto text-gray-200" />
+            <p>Nenhum serviço extra adicionado.</p>
+            <p className="text-xs">Adicione serviços extras que precisam de aprovação do cliente.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            <div className="grid grid-cols-[2fr_1fr_1fr_auto] gap-3 px-5 py-2.5 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <span>Serviço</span>
+              <span>Valor</span>
+              <span>Status</span>
+              <span></span>
+            </div>
+            {services.map((s: any) => (
+              <div key={s.id} className="grid grid-cols-[2fr_1fr_1fr_auto] gap-3 items-center px-5 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">{s.name}</p>
+                  {s.description && (
+                    <p className="text-xs text-gray-400 truncate">{s.description}</p>
+                  )}
+                </div>
+                <span className="text-sm font-semibold text-gray-700">
+                  {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(s.amount)}
+                </span>
+                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium w-fit ${EXTRA_SERVICE_STATUS_COLORS[s.status]}`}>
+                  {EXTRA_SERVICE_STATUS_LABELS[s.status] ?? s.status}
+                </span>
+                <button
+                  onClick={() => handleDelete(s.id)}
+                  disabled={s.status === "ACCEPTED"}
+                  title={s.status === "ACCEPTED" ? "Serviço aceito não pode ser removido" : "Remover"}
+                  className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-gray-300 disabled:hover:bg-transparent"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ObraDetailPage({ params }: { params: { id: string } }) {
   const { data: project, isLoading } = useQuery({
     queryKey: ["project", params.id],
@@ -358,6 +536,9 @@ export default function ObraDetailPage({ params }: { params: { id: string } }) {
 
       {/* Execução da Obra */}
       <ExecucaoSection projectId={params.id} />
+
+      {/* Serviços Extras */}
+      <ExtraServicesSection projectId={params.id} />
 
       {/* Expenses */}
       <Card>

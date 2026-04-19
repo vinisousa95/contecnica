@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePortal } from "@/components/portal/portal-provider";
 import { usePortalProject } from "@/hooks/use-portal-project";
 import { LoadingPage } from "@/components/ui/loading";
 import { formatDate } from "@/lib/utils";
-import { MapPin, Calendar, FileText, HardHat } from "lucide-react";
+import { MapPin, Calendar, FileText, HardHat, Wrench, CheckCircle2, XCircle } from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
   PLANNING: "Planejamento",

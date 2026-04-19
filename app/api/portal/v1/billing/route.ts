@@ -27,10 +27,18 @@ export async function GET(request: NextRequest) {
     orderBy: { dueDate: "asc" },
   });
 
-  const totalPending = expenses.reduce((s, e) => s + Number(e.amount), 0);
+  // Fetch ACCEPTED extra services — client has approved, awaiting payment
+  const extraServices = await prisma.extraService.findMany({
+    where: {
+      projectId: { in: projectIds },
+      status: "ACCEPTED",
+    },
+    orderBy: { acceptedAt: "asc" },
+  });
 
   const mapExpense = (e: typeof expenses[0]) => ({
     id: e.id,
+    type: "material" as const,
     description: e.description,
     category: e.category?.name ?? "Material",
     projectId: e.projectId,
@@ -41,8 +49,28 @@ export async function GET(request: NextRequest) {
     isOverdue: new Date(e.dueDate) < new Date(),
   });
 
+  const mapExtraService = (s: typeof extraServices[0]) => ({
+    id: s.id,
+    type: "extra_service" as const,
+    description: s.name,
+    category: "Serviço Extra",
+    projectId: s.projectId,
+    projectName: projectMap[s.projectId] ?? null,
+    amount: Number(s.amount),
+    dueDate: s.acceptedAt ?? s.createdAt,
+    attachmentUrl: null,
+    isOverdue: false,
+  });
+
+  const allPending = [
+    ...expenses.map(mapExpense),
+    ...extraServices.map(mapExtraService),
+  ].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+  const totalPending = allPending.reduce((s, e) => s + e.amount, 0);
+
   return apiSuccess({
-    summary: { totalPending, count: expenses.length },
-    pending: expenses.map(mapExpense),
+    summary: { totalPending, count: allPending.length },
+    pending: allPending,
   });
 }

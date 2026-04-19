@@ -24,10 +24,29 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   if (markPaid === true) updateData.paidAt = new Date();
   if (markPaid === false) updateData.paidAt = null;
 
+  const existing = await prisma.extraService.findUnique({
+    where: { id: params.serviceId, projectId: params.id },
+  });
+  if (!existing) return apiError("Serviço não encontrado", 404);
+
   const service = await prisma.extraService.update({
     where: { id: params.serviceId, projectId: params.id },
     data: updateData,
   });
+
+  // When marking as paid, create a ProjectTask in execução da obra (if not already there)
+  if (markPaid === true && !existing.paidAt) {
+    const taskCount = await prisma.projectTask.count({ where: { projectId: params.id } });
+    await prisma.projectTask.create({
+      data: {
+        projectId: params.id,
+        name: existing.name,
+        description: existing.description,
+        order: taskCount,
+        showInPortal: true,
+      },
+    });
+  }
 
   return apiSuccess({ ...service, amount: Number(service.amount) });
 }

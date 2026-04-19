@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Clock,
-  DollarSign,
+  ShoppingCart,
   Image,
   FileText,
   HardHat,
@@ -17,7 +17,7 @@ import {
 const navigation = [
   { label: "Resumo", href: "/portal/dashboard", icon: LayoutDashboard },
   { label: "Andamento", href: "/portal/andamento", icon: Clock },
-  { label: "Financeiro", href: "/portal/financeiro", icon: DollarSign },
+  { label: "Cobranças", href: "/portal/cobrancas", icon: ShoppingCart },
   { label: "Fotos", href: "/portal/fotos", icon: Image },
   { label: "Documentos", href: "/portal/documentos", icon: FileText },
   { label: "Informações", href: "/portal/obra", icon: HardHat },

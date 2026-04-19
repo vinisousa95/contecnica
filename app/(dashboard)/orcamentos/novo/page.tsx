@@ -42,7 +42,7 @@ export default function NovoOrcamentoPage() {
         }
       />
       <BudgetForm
-        onSubmit={mutation.mutateAsync}
+        onSubmit={(data) => mutation.mutateAsync(data).then(() => {})}
         isLoading={mutation.isPending}
         submitLabel="Criar Orçamento"
       />

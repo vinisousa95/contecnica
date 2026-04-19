@@ -65,7 +65,7 @@ export default function EditarObraPage({ params }: { params: { id: string } }) {
       />
       <ProjectForm
         defaultValues={defaultValues}
-        onSubmit={mutation.mutateAsync}
+        onSubmit={(data) => mutation.mutateAsync(data).then(() => {})}
         isLoading={mutation.isPending}
         submitLabel="Salvar Alterações"
       />

@@ -45,7 +45,7 @@ export default function NovaObraPage() {
       />
       <ProjectForm
         defaultClientId={defaultClientId}
-        onSubmit={mutation.mutateAsync}
+        onSubmit={(data) => mutation.mutateAsync(data).then(() => {})}
         isLoading={mutation.isPending}
         submitLabel="Cadastrar Obra"
       />

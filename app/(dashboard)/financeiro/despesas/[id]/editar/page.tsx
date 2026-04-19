@@ -63,7 +63,7 @@ export default function EditarDespesaPage({ params }: { params: { id: string } }
       />
       <ExpenseForm
         defaultValues={defaultValues}
-        onSubmit={mutation.mutateAsync}
+        onSubmit={(data) => mutation.mutateAsync(data).then(() => {})}
         isLoading={mutation.isPending}
         submitLabel="Salvar Alterações"
       />

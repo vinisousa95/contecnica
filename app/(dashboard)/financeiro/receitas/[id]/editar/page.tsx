@@ -64,7 +64,7 @@ export default function EditarReceitaPage({ params }: { params: { id: string } }
       />
       <RevenueForm
         defaultValues={defaultValues}
-        onSubmit={mutation.mutateAsync}
+        onSubmit={(data) => mutation.mutateAsync(data).then(() => {})}
         isLoading={mutation.isPending}
         submitLabel="Salvar Alterações"
       />

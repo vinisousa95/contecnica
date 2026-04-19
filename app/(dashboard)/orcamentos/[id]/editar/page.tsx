@@ -88,7 +88,7 @@ export default function EditarOrcamentoPage() {
       />
       <BudgetForm
         defaultValues={defaultValues}
-        onSubmit={mutation.mutateAsync}
+        onSubmit={(data) => mutation.mutateAsync(data).then(() => {})}
         isLoading={mutation.isPending}
         submitLabel="Salvar Alterações"
       />

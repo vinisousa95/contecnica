@@ -42,7 +42,7 @@ export default function NovoClientePage() {
         }
       />
       <ClientForm
-        onSubmit={mutation.mutateAsync}
+        onSubmit={(data) => mutation.mutateAsync(data).then(() => {})}
         isLoading={mutation.isPending}
         submitLabel="Cadastrar Cliente"
       />

@@ -46,7 +46,7 @@ export default function NovaDespesaPage() {
       />
       <ExpenseForm
         defaultProjectId={defaultProjectId}
-        onSubmit={mutation.mutateAsync}
+        onSubmit={(data) => mutation.mutateAsync(data).then(() => {})}
         isLoading={mutation.isPending}
         submitLabel="Cadastrar Despesa"
       />

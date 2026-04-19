@@ -4,9 +4,9 @@ import { useEffect } from "react";
 
 // ── Constants ─────────────────────────────────────────────────
 const TIER_LABELS: Record<string, string> = {
-  HIGH: "Padrão Alto",
-  MEDIUM: "Padrão Médio",
-  LOW: "Padrão Baixo",
+  HIGH: "Preço Alto",
+  MEDIUM: "Preço Médio",
+  LOW: "Preço Baixo",
 };
 
 const STATUS_LABELS: Record<string, string> = {

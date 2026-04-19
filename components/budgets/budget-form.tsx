@@ -22,9 +22,9 @@ import {
 
 // ── Constants ─────────────────────────────────────────────────
 const TIER_LABELS: Record<string, string> = {
-  HIGH: "Padrão Alto",
-  MEDIUM: "Padrão Médio",
-  LOW: "Padrão Baixo",
+  HIGH: "Preço Alto",
+  MEDIUM: "Preço Médio",
+  LOW: "Preço Baixo",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -410,15 +410,15 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Padrão de Acabamento <span className="text-red-500">*</span>
+                Nível de Preço <span className="text-red-500">*</span>
               </label>
               <select
                 {...register("tier")}
                 className="flex h-9 w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]"
               >
-                <option value="LOW">Padrão Baixo</option>
-                <option value="MEDIUM">Padrão Médio</option>
-                <option value="HIGH">Padrão Alto</option>
+                <option value="LOW">Preço Baixo</option>
+                <option value="MEDIUM">Preço Médio</option>
+                <option value="HIGH">Preço Alto</option>
               </select>
             </div>
 

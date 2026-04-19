@@ -49,9 +49,9 @@ const STATUS_VARIANTS: Record<string, "default" | "success" | "warning" | "dange
 };
 
 const TIER_LABELS: Record<string, string> = {
-  HIGH: "Padrão Alto",
-  MEDIUM: "Padrão Médio",
-  LOW: "Padrão Baixo",
+  HIGH: "Preço Alto",
+  MEDIUM: "Preço Médio",
+  LOW: "Preço Baixo",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {

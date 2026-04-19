@@ -145,9 +145,9 @@ export default function OrcamentosPage() {
               onChange={(e) => { setTier(e.target.value); setPage(1); }}
               options={[
                 { value: "", label: "Todos os padrões" },
-                { value: "LOW", label: "Padrão Baixo" },
-                { value: "MEDIUM", label: "Padrão Médio" },
-                { value: "HIGH", label: "Padrão Alto" },
+                { value: "LOW", label: "Preço Baixo" },
+                { value: "MEDIUM", label: "Preço Médio" },
+                { value: "HIGH", label: "Preço Alto" },
               ]}
             />
           </div>

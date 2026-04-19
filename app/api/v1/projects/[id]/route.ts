@@ -94,17 +94,14 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 
-  const hasFinancials = await prisma.$transaction([
-    prisma.expense.count({ where: { projectId: params.id } }),
-    prisma.revenue.count({ where: { projectId: params.id } }),
-  ]);
-
-  if (hasFinancials[0] > 0 || hasFinancials[1] > 0) {
-    return apiError("Não é possível excluir obra com movimentações financeiras.");
-  }
-
   try {
-    await prisma.project.delete({ where: { id: params.id } });
+    await prisma.$transaction([
+      prisma.expense.deleteMany({ where: { projectId: params.id } }),
+      prisma.revenue.deleteMany({ where: { projectId: params.id } }),
+      prisma.workAssignment.deleteMany({ where: { projectId: params.id } }),
+      prisma.appSubmission.deleteMany({ where: { projectId: params.id } }),
+      prisma.project.delete({ where: { id: params.id } }),
+    ]);
     return apiSuccess({ message: "Obra excluída com sucesso" });
   } catch {
     return apiError("Erro ao excluir obra", 500);

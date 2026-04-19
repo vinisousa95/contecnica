@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
   const [expenses, revenues] = await Promise.all([
     prisma.expense.findMany({
-      where: { projectId: params.id, visibleInPortal: true },
+      where: { projectId: params.id },
       include: { category: { select: { name: true } } },
       orderBy: { dueDate: "desc" },
     }),
@@ -37,7 +37,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }),
   ]);
 
-  const totalExpenses = expenses.reduce((s, e) => s + Number(e.amount), 0);
+  // Filter visible expenses in JS — safe even if column not yet in DB (defaults to showing all)
+  const visibleExpenses = expenses.filter((e: any) => e.visibleInPortal !== false);
+
+  const totalExpenses = visibleExpenses.reduce((s, e) => s + Number(e.amount), 0);
   const totalReceived = revenues
     .filter((r) => r.status === "RECEIVED")
     .reduce((s, r) => s + Number(r.amount), 0);
@@ -53,7 +56,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       totalPending,
       balance: totalReceived - totalExpenses,
     },
-    expenses: expenses.map((e) => ({
+    expenses: visibleExpenses.map((e: any) => ({
       id: e.id,
       description: e.description,
       category: e.category?.name ?? "—",

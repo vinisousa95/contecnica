@@ -37,5 +37,5 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     data: { projectId: params.id, ...data },
   });
 
-  return apiSuccess(doc, 201);
+  return apiSuccess(doc);
 }

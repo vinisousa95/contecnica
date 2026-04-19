@@ -279,11 +279,31 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
   const [formDescription, setFormDescription] = useState("");
   const [formAmount, setFormAmount] = useState("");
   const [saving, setSaving] = useState(false);
+  const [itemSearch, setItemSearch] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const { data: services = [], isLoading } = useQuery({
     queryKey: ["project-extra-services", projectId],
     queryFn: () => apiFetch(`/api/v1/projects/${projectId}/extra-services`),
   });
+
+  const { data: reformItems = [] } = useQuery({
+    queryKey: ["reform-items-all"],
+    queryFn: () => apiFetch(`/api/v1/reform-items?activeOnly=true&limit=500`),
+    staleTime: 60000,
+  });
+
+  const filteredItems = (reformItems as any[]).filter((item: any) =>
+    !itemSearch || item.name.toLowerCase().includes(itemSearch.toLowerCase())
+  ).slice(0, 8);
+
+  const selectItem = (item: any) => {
+    setFormName(item.name);
+    setFormDescription(item.description ?? "");
+    setFormAmount(item.priceMedium ? String(item.priceMedium) : "");
+    setItemSearch(item.name);
+    setShowSuggestions(false);
+  };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -303,6 +323,7 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
       setFormName("");
       setFormDescription("");
       setFormAmount("");
+      setItemSearch("");
       setShowForm(false);
     } catch (e: any) {
       toast({ title: "Erro", description: e.message, variant: "error" });
@@ -356,16 +377,39 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
       {showForm && (
         <div className="px-5 pb-4 border-b border-gray-100">
           <form onSubmit={handleAdd} className="flex flex-wrap gap-3 items-end">
-            <div className="flex-1 min-w-[180px]">
-              <label className="block text-xs font-medium text-gray-600 mb-1">Nome *</label>
+            <div className="flex-1 min-w-[200px] relative">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Serviço *</label>
               <input
                 type="text"
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder="Ex: Impermeabilização extra"
+                value={itemSearch}
+                onChange={(e) => {
+                  setItemSearch(e.target.value);
+                  setFormName(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                placeholder="Buscar ou digitar nome..."
                 required
                 className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
               />
+              {showSuggestions && filteredItems.length > 0 && (
+                <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {filteredItems.map((item: any) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onMouseDown={() => selectItem(item)}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-orange-50 flex justify-between items-center gap-2"
+                    >
+                      <span className="font-medium text-gray-800 truncate">{item.name}</span>
+                      {item.priceMedium && (
+                        <span className="text-xs text-gray-400 flex-shrink-0">{formatCurrency(item.priceMedium)}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="flex-1 min-w-[180px]">
               <label className="block text-xs font-medium text-gray-600 mb-1">Descrição</label>
@@ -394,7 +438,7 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
               <Button type="submit" size="sm" disabled={saving}>
                 {saving ? "Salvando…" : "Salvar"}
               </Button>
-              <Button type="button" size="sm" variant="outline" onClick={() => setShowForm(false)}>
+              <Button type="button" size="sm" variant="outline" onClick={() => { setShowForm(false); setItemSearch(""); }}>
                 Cancelar
               </Button>
             </div>

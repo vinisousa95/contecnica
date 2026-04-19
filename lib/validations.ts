@@ -113,7 +113,7 @@ export const reformItemSchema = z.object({
     "DEMOLITION","PAINTING","MASONRY","ELECTRICAL","PLUMBING",
     "FINISHING","CLEANING","JOINERY","TILING","CARPENTRY","OTHERS",
   ]),
-  unit: z.enum(["UNIT","SQM","M","DAILY","SERVICE","POINT","HOUR"]).default("UNIT"),
+  unit: z.enum(["UNIT","SQM","M","ML","DAILY","SERVICE","POINT","HOUR"]).default("UNIT"),
   priceLow: z.string().min(1, "Preço padrão baixo é obrigatório"),
   priceMedium: z.string().min(1, "Preço padrão médio é obrigatório"),
   priceHigh: z.string().min(1, "Preço padrão alto é obrigatório"),
@@ -126,7 +126,7 @@ export const budgetExtraItemSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   description: z.string().optional().nullable(),
   quantity: z.number().min(0.001, "Quantidade deve ser maior que 0"),
-  unit: z.enum(["UNIT","SQM","M","DAILY","SERVICE","POINT","HOUR"]).default("UNIT"),
+  unit: z.enum(["UNIT","SQM","M","ML","DAILY","SERVICE","POINT","HOUR"]).default("UNIT"),
   unitPrice: z.number().min(0, "Valor deve ser maior ou igual a 0"),
   subtotal: z.number(),
 });

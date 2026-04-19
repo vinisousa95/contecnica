@@ -39,5 +39,5 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     include: { task: { select: { id: true, name: true } } },
   });
 
-  return apiSuccess(photo, 201);
+  return apiSuccess(photo);
 }

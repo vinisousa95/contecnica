@@ -161,3 +161,40 @@ export type ReformItemInput = z.infer<typeof reformItemSchema>;
 export type BudgetInput = z.infer<typeof budgetSchema>;
 export type BudgetItemInput = z.infer<typeof budgetItemSchema>;
 export type BudgetExtraItemInput = z.infer<typeof budgetExtraItemSchema>;
+
+// ── Employees ─────────────────────────────────────────────────
+export const employeeSchema = z.object({
+  name: z.string().min(2, "Nome é obrigatório"),
+  phone: z.string().optional().nullable(),
+  role: z.string().optional().nullable(),
+  status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
+  notes: z.string().optional().nullable(),
+});
+
+// ── Vehicles ──────────────────────────────────────────────────
+export const vehicleSchema = z.object({
+  name: z.string().min(2, "Nome é obrigatório"),
+  model: z.string().optional().nullable(),
+  plate: z.string().optional().nullable(),
+  type: z.string().optional().nullable(),
+  color: z.string().optional().nullable(),
+  year: z.number().int().optional().nullable(),
+  status: z.enum(["ACTIVE", "MAINTENANCE", "INACTIVE"]).default("ACTIVE"),
+  notes: z.string().optional().nullable(),
+});
+
+// ── Assignments ───────────────────────────────────────────────
+export const assignmentSchema = z.object({
+  employeeId: z.string().min(1, "Funcionário é obrigatório"),
+  vehicleId: z.string().optional().nullable(),
+  projectId: z.string().min(1, "Obra é obrigatória"),
+  date: z.string().min(1, "Data é obrigatória"),
+  departureTime: z.string().optional().nullable(),
+  returnTime: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  status: z.enum(["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]).default("SCHEDULED"),
+});
+
+export type EmployeeInput = z.infer<typeof employeeSchema>;
+export type VehicleInput = z.infer<typeof vehicleSchema>;
+export type AssignmentInput = z.infer<typeof assignmentSchema>;

@@ -191,6 +191,51 @@ export const api = {
       request(`/reform-items/${id}`, { method: "DELETE" }),
   },
 
+  // Employees (funcionários)
+  employees: {
+    list: (params?: Record<string, string>) => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return requestPaginated(`/employees${qs}`);
+    },
+    get: (id: string) => request(`/employees/${id}`),
+    create: (data: unknown) =>
+      request("/employees", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: unknown) =>
+      request(`/employees/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request(`/employees/${id}`, { method: "DELETE" }),
+  },
+
+  // Vehicles (veículos)
+  vehicles: {
+    list: (params?: Record<string, string>) => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return requestPaginated(`/vehicles${qs}`);
+    },
+    get: (id: string) => request(`/vehicles/${id}`),
+    create: (data: unknown) =>
+      request("/vehicles", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: unknown) =>
+      request(`/vehicles/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request(`/vehicles/${id}`, { method: "DELETE" }),
+  },
+
+  // Assignments (deslocamentos)
+  assignments: {
+    list: (params?: Record<string, string>) => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return requestPaginated(`/assignments${qs}`);
+    },
+    get: (id: string) => request(`/assignments/${id}`),
+    create: (data: unknown) =>
+      request("/assignments", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: unknown) =>
+      request(`/assignments/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request(`/assignments/${id}`, { method: "DELETE" }),
+  },
+
   // Budgets (orçamentos)
   budgets: {
     list: (params?: Record<string, string>) => {

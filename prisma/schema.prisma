@@ -106,6 +106,7 @@ model Project {
   photos           ProjectPhoto[]
   documents        ProjectDocument[]
   tasks            ProjectTask[]
+  assignments      WorkAssignment[]
 
   @@map("projects")
 }
@@ -444,4 +445,75 @@ model BudgetExtraItem {
   sortOrder   Int      @default(0) @map("sort_order")
 
   @@map("budget_extra_items")
+}
+
+// ─────────────────────────────────────────────
+// OPERATIONAL — Employees, Vehicles, Assignments
+// ─────────────────────────────────────────────
+model Employee {
+  id          String         @id @default(cuid())
+  name        String
+  phone       String?
+  role        String?
+  status      EmployeeStatus @default(ACTIVE)
+  notes       String?
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  assignments WorkAssignment[]
+
+  @@map("employees")
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Vehicle {
+  id          String        @id @default(cuid())
+  name        String
+  model       String?
+  plate       String?       @unique
+  type        String?
+  color       String?
+  year        Int?
+  status      VehicleStatus @default(ACTIVE)
+  notes       String?
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  assignments WorkAssignment[]
+
+  @@map("vehicles")
+}
+
+enum VehicleStatus {
+  ACTIVE
+  MAINTENANCE
+  INACTIVE
+}
+
+model WorkAssignment {
+  id            String           @id @default(cuid())
+  employeeId    String           @map("employee_id")
+  employee      Employee         @relation(fields: [employeeId], references: [id])
+  vehicleId     String?          @map("vehicle_id")
+  vehicle       Vehicle?         @relation(fields: [vehicleId], references: [id])
+  projectId     String           @map("project_id")
+  project       Project          @relation(fields: [projectId], references: [id])
+  date          DateTime
+  departureTime String?          @map("departure_time")
+  returnTime    String?          @map("return_time")
+  notes         String?
+  status        AssignmentStatus @default(SCHEDULED)
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  @@map("work_assignments")
+}
+
+enum AssignmentStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 }

@@ -115,10 +115,19 @@ function ItemRow({ item, onPay }: { item: any; onPay: () => void }) {
 }
 
 export default function CobrancasPage() {
-  const { data, isLoading } = useQuery({ queryKey: ["portal-billing"], queryFn: fetchBilling });
+  const { data, isLoading, isError, error } = useQuery({ queryKey: ["portal-billing"], queryFn: fetchBilling });
   const [selected, setSelected] = useState<any>(null);
 
   if (isLoading) return <LoadingPage message="Carregando cobranças..." />;
+  if (isError) return (
+    <div className="space-y-4">
+      <h1 className="text-xl font-bold text-gray-900">Cobranças</h1>
+      <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-4 text-sm text-red-700">
+        Erro ao carregar cobranças. Tente recarregar a página.
+        {error instanceof Error && <p className="text-xs mt-1 text-red-500">{error.message}</p>}
+      </div>
+    </div>
+  );
   if (!data) return null;
 
   const { pending } = data;

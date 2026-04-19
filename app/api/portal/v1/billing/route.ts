@@ -28,14 +28,23 @@ export async function GET(request: NextRequest) {
   });
 
   // Fetch ACCEPTED extra services not yet paid — client approved, awaiting payment
-  const extraServices = await prisma.extraService.findMany({
-    where: {
-      projectId: { in: projectIds },
-      status: "ACCEPTED",
-      paidAt: null,
-    },
-    orderBy: { acceptedAt: "asc" },
-  });
+  let extraServices: any[] = [];
+  try {
+    extraServices = await prisma.extraService.findMany({
+      where: {
+        projectId: { in: projectIds },
+        status: "ACCEPTED",
+        paidAt: null,
+      },
+      orderBy: { acceptedAt: "asc" },
+    });
+  } catch {
+    // paidAt column may not exist yet if migration hasn't run — fallback without filter
+    extraServices = await (prisma.extraService.findMany as any)({
+      where: { projectId: { in: projectIds }, status: "ACCEPTED" },
+      orderBy: { acceptedAt: "asc" },
+    });
+  }
 
   const mapExpense = (e: typeof expenses[0]) => ({
     id: e.id,

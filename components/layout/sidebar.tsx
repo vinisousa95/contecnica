@@ -20,6 +20,7 @@ import {
   FileText,
   Truck,
   MapPin,
+  ClipboardList,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -59,6 +60,11 @@ const navigation: NavItem[] = [
     label: "Orçamentos",
     href: "/orcamentos",
     icon: FileText,
+  },
+  {
+    label: "Execução de Tarefas",
+    href: "/tarefas",
+    icon: ClipboardList,
   },
   {
     label: "Operacional",

@@ -27,6 +27,8 @@ model User {
   appSubmissions      AppSubmission[]
   reviewedSubmissions AppSubmission[] @relation("ReviewedBy")
   budgets             Budget[]
+  assignedTasks       Task[]          @relation("TaskAssignee")
+  createdTasks        Task[]          @relation("TaskCreator")
 
   @@map("users")
 }
@@ -107,6 +109,7 @@ model Project {
   photos           ProjectPhoto[]
   documents        ProjectDocument[]
   tasks            ProjectTask[]
+  workTasks        Task[]
   assignments      WorkAssignment[]
   extraServices    ExtraService[]
 
@@ -471,6 +474,45 @@ model Employee {
 enum EmployeeStatus {
   ACTIVE
   INACTIVE
+}
+
+// ─────────────────────────────────────────────
+// TASK EXECUTION (Execução de Tarefas)
+// ─────────────────────────────────────────────
+model Task {
+  id          String       @id @default(cuid())
+  projectId   String       @map("project_id")
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  priority    TaskPriority @default(MEDIUM)
+  status      TaskStatus   @default(PENDING)
+  assigneeId  String?      @map("assignee_id")
+  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  parentId    String?      @map("parent_id")
+  parent      Task?        @relation("TaskChildren", fields: [parentId], references: [id])
+  children    Task[]       @relation("TaskChildren")
+  dueDate     DateTime?    @map("due_date")
+  completedAt DateTime?    @map("completed_at")
+  createdById String       @map("created_by_id")
+  createdBy   User         @relation("TaskCreator", fields: [createdById], references: [id])
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@map("tasks")
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
 }
 
 model Vehicle {

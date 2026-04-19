@@ -44,7 +44,7 @@ export function PortalSidebar({ user }: PortalSidebarProps) {
         <div className="relative flex items-center gap-3">
           <div className="relative flex-shrink-0">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#EA580C] to-[#C2410C] flex items-center justify-center shadow-lg shadow-[#EA580C]/25">
-              <Building2 className="h-5 w-5 text-white" />
+              <span className="text-white font-black text-xl leading-none">C</span>
             </div>
             <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#1F2937]" />
           </div>

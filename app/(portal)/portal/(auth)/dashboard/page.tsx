@@ -6,9 +6,10 @@ import { LoadingPage } from "@/components/ui/loading";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import {
   HardHat, TrendingUp, Calendar, ChevronRight,
-  Clock, BarChart3, DollarSign,
+  Clock, BarChart3, DollarSign, Wrench, AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 
 const STATUS_COLORS: Record<string, string> = {
   PLANNING: "bg-blue-100 text-blue-700",
@@ -38,6 +39,17 @@ function StatCard({ label, value, sub, icon: Icon, iconBg, iconColor }: any) {
 export default function PortalDashboardPage() {
   const { projectId, projects, isLoading: projectsLoading, setProjectId } = usePortal();
   const { data: project, isLoading } = usePortalProject(projectId ?? "");
+
+  const { data: extraServices = [] } = useQuery({
+    queryKey: ["portal-extra-services", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/portal/v1/projects/${projectId}/extra-services`);
+      const json = await res.json();
+      return (json.data ?? []) as any[];
+    },
+    enabled: !!projectId,
+  });
+  const pendingServices = extraServices.filter((s: any) => s.status === "PENDING_APPROVAL");
 
   if (projectsLoading) return <LoadingPage message="Carregando..." />;
 
@@ -71,6 +83,23 @@ export default function PortalDashboardPage() {
           </select>
         )}
       </div>
+
+      {/* Pending extra services alert */}
+      {pendingServices.length > 0 && (
+        <Link
+          href="/portal/servicos-extras"
+          className="flex items-center gap-3 bg-amber-50 border-2 border-amber-300 rounded-xl px-5 py-4 hover:bg-amber-100 transition-colors"
+        >
+          <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-bold text-amber-800">
+              {pendingServices.length} serviço{pendingServices.length > 1 ? "s" : ""} extra{pendingServices.length > 1 ? "s" : ""} aguardando sua aprovação
+            </p>
+            <p className="text-xs text-amber-600 mt-0.5">Clique para ver e responder</p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-amber-600 flex-shrink-0" />
+        </Link>
+      )}
 
       {isLoading && <LoadingPage message="Carregando obra..." />}
       {!isLoading && project && (

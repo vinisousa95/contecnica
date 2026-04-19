@@ -45,6 +45,7 @@ export default function EditarOrcamentoPage() {
     tier: budget.tier,
     status: budget.status,
     notes: budget.notes ?? "",
+    discount: Number(budget.discount ?? 0),
     validUntil: budget.validUntil
       ? new Date(budget.validUntil).toISOString().split("T")[0]
       : "",

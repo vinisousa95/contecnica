@@ -153,6 +153,7 @@ export const budgetSchema = z.object({
   neighborhood: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
   state: z.string().optional().nullable(),
+  discount: z.number().min(0).max(100).default(0).optional(),
   items: z.array(budgetItemSchema).default([]),
   extraItems: z.array(budgetExtraItemSchema).default([]),
 });

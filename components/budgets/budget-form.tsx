@@ -277,6 +277,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
       tier: "MEDIUM",
       status: "DRAFT",
       notes: "",
+      discount: 0,
       validUntil: "",
       zipCode: "",
       street: "",
@@ -306,6 +307,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
   const watchedTier = watch("tier");
   const watchedItems = watch("items");
   const watchedExtras = watch("extraItems");
+  const watchedDiscount = watch("discount") ?? 0;
 
   // Re-price items when tier changes
   const repricedRef = useRef(false);
@@ -327,7 +329,9 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
   // Calculate totals
   const itemsTotal = watchedItems.reduce((s, i) => s + (i.subtotal ?? 0), 0);
   const extrasTotal = watchedExtras.reduce((s, e) => s + (e.subtotal ?? 0), 0);
-  const grandTotal = itemsTotal + extrasTotal;
+  const subtotalBeforeDiscount = itemsTotal + extrasTotal;
+  const discountAmount = subtotalBeforeDiscount * ((watchedDiscount ?? 0) / 100);
+  const grandTotal = subtotalBeforeDiscount - discountAmount;
 
   const selectedItemIds = new Set(watchedItems.map((i) => i.reformItemId));
 
@@ -705,20 +709,36 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
 
       {/* Total */}
       <Card className="border-blue-200 bg-blue-50">
-        <CardContent className="py-4">
+        <CardContent className="py-4 space-y-3">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-blue-700 font-medium">
-                Padrão: {TIER_LABELS[watchedTier]}
-              </p>
-              <p className="text-xs text-blue-600 mt-0.5">
-                {itemFields.length} item(ns) do catálogo + {extraFields.length} item(ns) extra(s)
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-blue-600 mb-0.5">Total do Orçamento</p>
-              <p className="text-2xl font-bold text-blue-800">{formatCurrency(grandTotal)}</p>
-            </div>
+            <p className="text-sm text-blue-700 font-medium">
+              Padrão: {TIER_LABELS[watchedTier]} · {itemFields.length} item(ns) + {extraFields.length} extra(s)
+            </p>
+          </div>
+          <div className="flex items-center justify-between text-sm text-blue-700">
+            <span>Subtotal</span>
+            <span className="font-medium">{formatCurrency(subtotalBeforeDiscount)}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <label className="text-sm text-blue-700 font-medium whitespace-nowrap">Desconto (%)</label>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step={0.1}
+              {...register("discount", { valueAsNumber: true })}
+              className="w-24 h-8 px-2 rounded-md border border-blue-300 bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+              placeholder="0"
+            />
+            {discountAmount > 0 && (
+              <span className="text-sm text-green-700 font-medium ml-auto">
+                − {formatCurrency(discountAmount)}
+              </span>
+            )}
+          </div>
+          <div className="border-t border-blue-200 pt-2 flex items-center justify-between">
+            <p className="text-sm text-blue-700 font-semibold">Total do Orçamento</p>
+            <p className="text-2xl font-bold text-blue-800">{formatCurrency(grandTotal)}</p>
           </div>
         </CardContent>
       </Card>

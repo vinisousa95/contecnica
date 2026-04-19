@@ -66,12 +66,13 @@ export async function POST(request: NextRequest) {
     const parsed = budgetSchema.safeParse(body);
     if (!parsed.success) return apiError(parsed.error.errors[0].message);
 
-    const { items, extraItems, validUntil, ...rest } = parsed.data;
+    const { items, extraItems, validUntil, discount = 0, ...rest } = parsed.data;
 
-    // Calculate total
+    // Calculate total with discount
     const itemsTotal = items.reduce((sum, i) => sum + i.subtotal, 0);
     const extrasTotal = extraItems.reduce((sum, i) => sum + i.subtotal, 0);
-    const totalAmount = itemsTotal + extrasTotal;
+    const subtotal = itemsTotal + extrasTotal;
+    const totalAmount = subtotal * (1 - (discount ?? 0) / 100);
 
     const code = await generateCode();
 
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
       data: {
         ...rest,
         code,
+        discount: discount ?? 0,
         validUntil: validUntil ? new Date(validUntil) : null,
         totalAmount,
         createdById: session.userId,
@@ -119,6 +121,7 @@ export async function POST(request: NextRequest) {
 export function serializeBudget(b: any) {
   return {
     ...b,
+    discount: Number(b.discount ?? 0),
     totalAmount: Number(b.totalAmount),
     items: b.items?.map((i: any) => ({
       ...i,

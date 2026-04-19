@@ -45,11 +45,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const parsed = budgetSchema.safeParse(body);
     if (!parsed.success) return apiError(parsed.error.errors[0].message);
 
-    const { items, extraItems, validUntil, ...rest } = parsed.data;
+    const { items, extraItems, validUntil, discount = 0, ...rest } = parsed.data;
 
-    const totalAmount =
+    const subtotal =
       items.reduce((s, i) => s + i.subtotal, 0) +
       extraItems.reduce((s, e) => s + e.subtotal, 0);
+    const totalAmount = subtotal * (1 - (discount ?? 0) / 100);
 
     const budget = await prisma.$transaction(async (tx) => {
       // Remove old items
@@ -60,6 +61,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         where: { id: params.id },
         data: {
           ...rest,
+          discount: discount ?? 0,
           validUntil: validUntil ? new Date(validUntil) : null,
           totalAmount,
           items: {

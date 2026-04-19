@@ -370,6 +370,29 @@ export default function OrcamentoDetailPage() {
                   )}
                 </span>
               </div>
+              {Number(budget.discount) > 0 && (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-blue-700">Subtotal:</span>
+                    <span className="font-medium text-blue-800">
+                      {formatCurrency(
+                        (budget.items ?? []).reduce((s: number, i: any) => s + Number(i.subtotal), 0) +
+                        (budget.extraItems ?? []).reduce((s: number, e: any) => s + Number(e.subtotal), 0)
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm text-green-700">
+                    <span>Desconto ({Number(budget.discount)}%):</span>
+                    <span className="font-medium">
+                      − {formatCurrency(
+                        ((budget.items ?? []).reduce((s: number, i: any) => s + Number(i.subtotal), 0) +
+                        (budget.extraItems ?? []).reduce((s: number, e: any) => s + Number(e.subtotal), 0)) *
+                        (Number(budget.discount) / 100)
+                      )}
+                    </span>
+                  </div>
+                </>
+              )}
               <div className="border-t border-blue-200 pt-3 flex justify-between">
                 <span className="font-semibold text-blue-800">Total:</span>
                 <span className="text-xl font-bold text-blue-900">

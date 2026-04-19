@@ -19,6 +19,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     where: { id: params.id, clientId: session.clientId },
     include: {
       expenses: {
+        where: { visibleInPortal: true },
         select: { amount: true, status: true },
       },
       revenues: {

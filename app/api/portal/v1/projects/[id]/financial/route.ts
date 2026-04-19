@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
   const [expenses, revenues] = await Promise.all([
     prisma.expense.findMany({
-      where: { projectId: params.id },
+      where: { projectId: params.id, visibleInPortal: true },
       include: { category: { select: { name: true } } },
       orderBy: { dueDate: "desc" },
     }),

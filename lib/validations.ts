@@ -71,6 +71,7 @@ export const expenseSchema = z.object({
   status: z.enum(["PENDING", "PAID", "OVERDUE"]).default("PENDING"),
   paymentMethod: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
+  visibleInPortal: z.boolean().default(false).optional(),
 });
 
 // ── Revenues ──────────────────────────────────────────────────

@@ -15,6 +15,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
   const photos = await prisma.projectPhoto.findMany({
     where: { projectId: params.id, visible: true },
+    include: { task: { select: { id: true, name: true, isCompleted: true } } },
     orderBy: { createdAt: "desc" },
   });
 

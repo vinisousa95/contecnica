@@ -35,7 +35,7 @@ export default function ServicosExtrasPage() {
       if (!res.ok) throw new Error(json.error ?? "Erro ao processar");
       qc.invalidateQueries({ queryKey: ["portal-extra-services", projectId] });
     } catch (e: any) {
-      setActionError(e.message);
+      setActionError(e.message === "Failed to fetch" ? "Erro de conexão. Recarregue a página e tente novamente." : e.message);
     } finally {
       setActionLoading(null);
     }

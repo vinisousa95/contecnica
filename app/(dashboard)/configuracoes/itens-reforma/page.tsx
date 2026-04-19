@@ -68,6 +68,16 @@ export default function ItensReformaPage() {
       }) as Promise<any>,
   });
 
+  const { data: customCatsData } = useQuery({
+    queryKey: ["reform-items-custom-cats"],
+    queryFn: async () => {
+      const res = await fetch("/api/v1/reform-items/categories");
+      const json = await res.json();
+      return json.data as string[];
+    },
+  });
+  const customCats: string[] = customCatsData ?? [];
+
   const items = Array.isArray(data) ? data : [];
 
   const [pctMedium, setPctMedium] = useState<string>("");
@@ -104,6 +114,7 @@ export default function ItensReformaPage() {
     mutationFn: (data: ReformItemInput) => api.reformItems.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reform-items"] });
+      queryClient.invalidateQueries({ queryKey: ["reform-items-custom-cats"] });
       toast({ title: "Item criado!", variant: "success" });
       handleCloseForm();
     },
@@ -117,6 +128,7 @@ export default function ItensReformaPage() {
       api.reformItems.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reform-items"] });
+      queryClient.invalidateQueries({ queryKey: ["reform-items-custom-cats"] });
       toast({ title: "Item atualizado!", variant: "success" });
       handleCloseForm();
     },
@@ -371,6 +383,20 @@ export default function ItensReformaPage() {
                   {...register("customCategory")}
                   placeholder="Ex: Impermeabilização, Gesso, Serralheria..."
                 />
+                {customCats.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {customCats.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setValue("customCategory", cat)}
+                        className="px-2.5 py-1 text-xs rounded-full border border-gray-300 bg-gray-50 text-gray-600 hover:border-[#EA580C] hover:text-[#EA580C] hover:bg-orange-50 transition-colors"
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

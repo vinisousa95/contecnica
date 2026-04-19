@@ -8,6 +8,7 @@ const schema = z.object({
   name: z.string().min(1).optional(),
   description: z.string().optional().nullable(),
   amount: z.string().optional(),
+  markPaid: z.boolean().optional(),
 });
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string; serviceId: string } }) {
@@ -18,9 +19,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   const parsed = schema.safeParse(body);
   if (!parsed.success) return apiError(parsed.error.errors[0].message);
 
+  const { markPaid, ...rest } = parsed.data;
+  const updateData: any = { ...rest };
+  if (markPaid === true) updateData.paidAt = new Date();
+  if (markPaid === false) updateData.paidAt = null;
+
   const service = await prisma.extraService.update({
     where: { id: params.serviceId, projectId: params.id },
-    data: parsed.data,
+    data: updateData,
   });
 
   return apiSuccess({ ...service, amount: Number(service.amount) });

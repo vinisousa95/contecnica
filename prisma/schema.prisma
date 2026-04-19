@@ -533,6 +533,7 @@ model ExtraService {
   status      ExtraServiceStatus @default(PENDING_APPROVAL)
   acceptedAt  DateTime?          @map("accepted_at")
   rejectedAt  DateTime?          @map("rejected_at")
+  paidAt      DateTime?          @map("paid_at")
   createdAt   DateTime           @default(now()) @map("created_at")
   updatedAt   DateTime           @updatedAt @map("updated_at")
 

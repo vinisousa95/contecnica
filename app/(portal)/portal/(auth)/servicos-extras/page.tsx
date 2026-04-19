@@ -130,9 +130,9 @@ export default function ServicosExtrasPage() {
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <span className="text-sm font-bold text-gray-800">{formatCurrency(s.amount)}</span>
-                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-700">
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${s.paidAt ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
                     <CheckCircle2 className="h-3 w-3" />
-                    Aceito — aguardando pagamento
+                    {s.paidAt ? "Pago" : "Aguardando pagamento"}
                   </span>
                 </div>
               </div>

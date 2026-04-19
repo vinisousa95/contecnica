@@ -27,11 +27,12 @@ export async function GET(request: NextRequest) {
     orderBy: { dueDate: "asc" },
   });
 
-  // Fetch ACCEPTED extra services — client has approved, awaiting payment
+  // Fetch ACCEPTED extra services not yet paid — client approved, awaiting payment
   const extraServices = await prisma.extraService.findMany({
     where: {
       projectId: { in: projectIds },
       status: "ACCEPTED",
+      paidAt: null,
     },
     orderBy: { acceptedAt: "asc" },
   });

@@ -258,17 +258,19 @@ function TaskRow({
 }
 
 // ── Extra Services Section ────────────────────────────────────
-const EXTRA_SERVICE_STATUS_LABELS: Record<string, string> = {
-  PENDING_APPROVAL: "Aguardando cliente",
-  ACCEPTED: "Aceito",
-  REJECTED: "Recusado",
-};
+function extraServiceLabel(s: any) {
+  if (s.status === "REJECTED") return "Recusado";
+  if (s.status === "PENDING_APPROVAL") return "Aguardando cliente";
+  if (s.paidAt) return "Pago";
+  return "Aguardando pagamento";
+}
 
-const EXTRA_SERVICE_STATUS_COLORS: Record<string, string> = {
-  PENDING_APPROVAL: "bg-amber-100 text-amber-700",
-  ACCEPTED: "bg-green-100 text-green-700",
-  REJECTED: "bg-red-100 text-red-700",
-};
+function extraServiceColor(s: any) {
+  if (s.status === "REJECTED") return "bg-red-100 text-red-700";
+  if (s.status === "PENDING_APPROVAL") return "bg-amber-100 text-amber-700";
+  if (s.paidAt) return "bg-green-100 text-green-700";
+  return "bg-blue-100 text-blue-700";
+}
 
 function ExtraServicesSection({ projectId }: { projectId: string }) {
   const qc = useQueryClient();
@@ -316,6 +318,19 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
         method: "DELETE",
       });
       toast({ title: "Serviço removido" });
+      qc.invalidateQueries({ queryKey: ["project-extra-services", projectId] });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    }
+  };
+
+  const handleMarkPaid = async (serviceId: string, paid: boolean) => {
+    try {
+      await apiFetch(`/api/v1/projects/${projectId}/extra-services/${serviceId}`, {
+        method: "PUT",
+        body: JSON.stringify({ markPaid: paid }),
+      });
+      toast({ title: paid ? "Marcado como pago" : "Pagamento desmarcado" });
       qc.invalidateQueries({ queryKey: ["project-extra-services", projectId] });
     } catch (e: any) {
       toast({ title: "Erro", description: e.message, variant: "error" });
@@ -398,14 +413,15 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
-            <div className="grid grid-cols-[2fr_1fr_1fr_auto] gap-3 px-5 py-2.5 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <div className="grid grid-cols-[2fr_1fr_1fr_auto_auto] gap-3 px-5 py-2.5 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
               <span>Serviço</span>
               <span>Valor</span>
               <span>Status</span>
               <span></span>
+              <span></span>
             </div>
             {services.map((s: any) => (
-              <div key={s.id} className="grid grid-cols-[2fr_1fr_1fr_auto] gap-3 items-center px-5 py-3">
+              <div key={s.id} className="grid grid-cols-[2fr_1fr_1fr_auto_auto] gap-3 items-center px-5 py-3">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-800 truncate">{s.name}</p>
                   {s.description && (
@@ -415,9 +431,28 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
                 <span className="text-sm font-semibold text-gray-700">
                   {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(s.amount)}
                 </span>
-                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium w-fit ${EXTRA_SERVICE_STATUS_COLORS[s.status]}`}>
-                  {EXTRA_SERVICE_STATUS_LABELS[s.status] ?? s.status}
+                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium w-fit ${extraServiceColor(s)}`}>
+                  {extraServiceLabel(s)}
                 </span>
+                {s.status === "ACCEPTED" && !s.paidAt && (
+                  <button
+                    onClick={() => handleMarkPaid(s.id, true)}
+                    title="Marcar como pago"
+                    className="text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-2 py-1 hover:bg-blue-100 transition-colors whitespace-nowrap"
+                  >
+                    Marcar pago
+                  </button>
+                )}
+                {s.status === "ACCEPTED" && s.paidAt && (
+                  <button
+                    onClick={() => handleMarkPaid(s.id, false)}
+                    title="Desfazer pagamento"
+                    className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 transition-colors whitespace-nowrap"
+                  >
+                    Desfazer
+                  </button>
+                )}
+                {s.status !== "ACCEPTED" && <span />}
                 <button
                   onClick={() => handleDelete(s.id)}
                   disabled={s.status === "ACCEPTED"}

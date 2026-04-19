@@ -30,7 +30,7 @@ export default function PortalFotosPage() {
     }
   }
 
-  for (const [, group] of taskMap) grouped.push(group);
+  taskMap.forEach((group) => grouped.push(group));
   if (ungrouped.length > 0) grouped.push({ taskName: null, photos: ungrouped });
 
   const allPhotos = photos; // flat list for lightbox

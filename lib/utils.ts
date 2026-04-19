@@ -112,6 +112,42 @@ export const CLIENT_STATUS_LABELS: Record<string, string> = {
   INACTIVE: "Inativo",
 };
 
+export const EMPLOYEE_STATUS_LABELS: Record<string, string> = {
+  ACTIVE: "Ativo",
+  INACTIVE: "Inativo",
+};
+
+export const EMPLOYEE_STATUS_COLORS: Record<string, string> = {
+  ACTIVE: "bg-green-100 text-green-700",
+  INACTIVE: "bg-gray-100 text-gray-500",
+};
+
+export const VEHICLE_STATUS_LABELS: Record<string, string> = {
+  ACTIVE: "Ativo",
+  MAINTENANCE: "Em Manutenção",
+  INACTIVE: "Inativo",
+};
+
+export const VEHICLE_STATUS_COLORS: Record<string, string> = {
+  ACTIVE: "bg-green-100 text-green-700",
+  MAINTENANCE: "bg-amber-100 text-amber-700",
+  INACTIVE: "bg-gray-100 text-gray-500",
+};
+
+export const ASSIGNMENT_STATUS_LABELS: Record<string, string> = {
+  SCHEDULED: "Agendado",
+  IN_PROGRESS: "Em Andamento",
+  COMPLETED: "Finalizado",
+  CANCELLED: "Cancelado",
+};
+
+export const ASSIGNMENT_STATUS_COLORS: Record<string, string> = {
+  SCHEDULED: "bg-blue-100 text-blue-700",
+  IN_PROGRESS: "bg-amber-100 text-amber-700",
+  COMPLETED: "bg-green-100 text-green-700",
+  CANCELLED: "bg-red-100 text-red-700",
+};
+
 // ── Pagination ────────────────────────────────────────────────
 export interface PaginationMeta {
   page: number;

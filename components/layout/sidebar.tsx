@@ -18,6 +18,8 @@ import {
   ArrowDownCircle,
   TrendingUp,
   FileText,
+  Truck,
+  MapPin,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -57,6 +59,15 @@ const navigation: NavItem[] = [
     label: "Orçamentos",
     href: "/orcamentos",
     icon: FileText,
+  },
+  {
+    label: "Operacional",
+    icon: Truck,
+    children: [
+      { label: "Deslocamentos", href: "/operacional", icon: MapPin },
+      { label: "Funcionários", href: "/operacional/funcionarios", icon: Users },
+      { label: "Veículos", href: "/operacional/veiculos", icon: Truck },
+    ],
   },
   {
     label: "Relatórios",

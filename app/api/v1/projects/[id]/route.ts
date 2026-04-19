@@ -48,6 +48,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       pendingRevenues: totalRevenues - receivedRevenues,
       margin: totalRevenues - totalExpenses,
       budgetUsed: project.budget ? (totalExpenses / Number(project.budget)) * 100 : null,
+      budgetVariance: project.budget ? Number(project.budget) - totalExpenses : null,
     },
   });
 }

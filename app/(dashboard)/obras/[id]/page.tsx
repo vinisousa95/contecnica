@@ -345,7 +345,7 @@ export default function ObraDetailPage({ params }: { params: { id: string } }) {
                 style={{ width: `${Math.min(100, fs.budgetUsed ?? 0)}%` }}
               />
             </div>
-            {fs.budgetVariance !== null && (
+            {fs.budgetVariance != null && (
               <p className={`text-xs mt-1 ${fs.budgetVariance >= 0 ? "text-green-600" : "text-red-600"}`}>
                 {fs.budgetVariance >= 0
                   ? `${formatCurrency(fs.budgetVariance)} abaixo do orçamento`

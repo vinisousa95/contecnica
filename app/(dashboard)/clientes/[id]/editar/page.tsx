@@ -53,7 +53,7 @@ export default function EditarClientePage({ params }: { params: { id: string } }
       />
       <ClientForm
         defaultValues={client}
-        onSubmit={mutation.mutateAsync}
+        onSubmit={(data) => { mutation.mutateAsync(data); }}
         isLoading={mutation.isPending}
         submitLabel="Salvar Alterações"
       />

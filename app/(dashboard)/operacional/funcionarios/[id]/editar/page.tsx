@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LoadingPage } from "@/components/ui/loading";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
+import { maskPhone } from "@/lib/masks";
 
 export default function EditarFuncionarioPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -127,8 +128,10 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
               <Input
                 label="Telefone"
                 placeholder="(11) 99999-9999"
+                inputMode="numeric"
+                maxLength={15}
                 value={form.phone ?? ""}
-                onChange={(e) => handleChange("phone", e.target.value)}
+                onChange={(e) => handleChange("phone", maskPhone(e.target.value))}
               />
               <Select
                 label="Status"

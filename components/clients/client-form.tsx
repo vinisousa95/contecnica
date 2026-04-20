@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, MapPin, Phone } from "lucide-react";
 import { useCepLookup } from "@/hooks/use-cep-lookup";
+import { maskCpfCnpj, maskPhone, maskCep } from "@/lib/masks";
 
 interface ClientFormProps {
   defaultValues?: Partial<ClientInput>;
@@ -62,8 +63,16 @@ export function ClientForm({
           <Input
             label="CPF / CNPJ"
             placeholder="000.000.000-00"
+            inputMode="numeric"
+            maxLength={18}
             error={errors.document?.message}
-            {...register("document")}
+            {...register("document", {
+              onChange: (e) => {
+                const masked = maskCpfCnpj(e.target.value);
+                e.target.value = masked;
+                setValue("document", masked);
+              },
+            })}
           />
           <Select
             label="Status"
@@ -89,8 +98,16 @@ export function ClientForm({
           <Input
             label="Telefone / WhatsApp"
             placeholder="(11) 99999-9999"
+            inputMode="numeric"
+            maxLength={15}
             error={errors.phone?.message}
-            {...register("phone")}
+            {...register("phone", {
+              onChange: (e) => {
+                const masked = maskPhone(e.target.value);
+                e.target.value = masked;
+                setValue("phone", masked);
+              },
+            })}
           />
           <Input
             label="E-mail"
@@ -114,10 +131,17 @@ export function ClientForm({
           <Input
             label="CEP"
             placeholder="00000-000"
+            inputMode="numeric"
+            maxLength={9}
             error={errors.zipCode?.message}
             disabled={isLookingUp}
             {...register("zipCode", {
-              onChange: (e) => lookupCep(e.target.value),
+              onChange: (e) => {
+                const masked = maskCep(e.target.value);
+                e.target.value = masked;
+                setValue("zipCode", masked);
+                lookupCep(masked);
+              },
             })}
           />
           <div className="md:col-span-2">

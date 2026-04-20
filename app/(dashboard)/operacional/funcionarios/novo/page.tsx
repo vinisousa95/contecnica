@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
+import { maskPhone } from "@/lib/masks";
 
 export default function NovoFuncionarioPage() {
   const router = useRouter();
@@ -103,8 +104,10 @@ export default function NovoFuncionarioPage() {
               <Input
                 label="Telefone"
                 placeholder="(11) 99999-9999"
+                inputMode="numeric"
+                maxLength={15}
                 value={form.phone ?? ""}
-                onChange={(e) => handleChange("phone", e.target.value)}
+                onChange={(e) => handleChange("phone", maskPhone(e.target.value))}
               />
               <Select
                 label="Status"

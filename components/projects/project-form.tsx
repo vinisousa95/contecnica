@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HardHat, MapPin, DollarSign, ImagePlus, X, Loader2 } from "lucide-react";
 import { useCepLookup } from "@/hooks/use-cep-lookup";
+import { maskCep } from "@/lib/masks";
 
 interface ProjectFormProps {
   defaultValues?: Partial<ProjectInput>;
@@ -212,9 +213,16 @@ export function ProjectForm({
           <Input
             label="CEP"
             placeholder="00000-000"
+            inputMode="numeric"
+            maxLength={9}
             disabled={isLookingUp}
             {...register("zipCode", {
-              onChange: (e) => lookupCep(e.target.value),
+              onChange: (e) => {
+                const masked = maskCep(e.target.value);
+                e.target.value = masked;
+                setValue("zipCode", masked);
+                lookupCep(masked);
+              },
             })}
           />
           <div className="md:col-span-2">

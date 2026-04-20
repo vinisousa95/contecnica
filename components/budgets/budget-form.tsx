@@ -20,6 +20,7 @@ import {
   Package,
 } from "lucide-react";
 import { useCepLookup } from "@/hooks/use-cep-lookup";
+import { maskCep } from "@/lib/masks";
 
 // ── Constants ─────────────────────────────────────────────────
 const TIER_LABELS: Record<string, string> = {
@@ -465,8 +466,15 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
               <Input
                 disabled={isLookingUpCep}
                 placeholder="00000-000"
+                inputMode="numeric"
+                maxLength={9}
                 {...register("zipCode", {
-                  onChange: (e) => lookupCep(e.target.value),
+                  onChange: (e) => {
+                    const masked = maskCep(e.target.value);
+                    e.target.value = masked;
+                    setValue("zipCode", masked);
+                    lookupCep(masked);
+                  },
                 })}
               />
             </div>

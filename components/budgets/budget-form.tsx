@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Search,
   Package,
+  LayoutGrid,
 } from "lucide-react";
 import { useCepLookup } from "@/hooks/use-cep-lookup";
 import { maskCep } from "@/lib/masks";
@@ -66,6 +67,17 @@ interface ReformItem {
   isActive: boolean;
 }
 
+interface ReformPackage {
+  id: string;
+  name: string;
+  description?: string | null;
+  priceLow: number;
+  priceMedium: number;
+  priceHigh: number;
+  isActive: boolean;
+  items?: Array<{ name: string; quantity: number; unit: string }>;
+}
+
 interface Client {
   id: string;
   name: string;
@@ -79,7 +91,7 @@ interface BudgetFormProps {
 }
 
 // ── Price helper ───────────────────────────────────────────────
-function getPriceForTier(item: ReformItem, tier: string): number {
+function getPriceForTier(item: { priceLow: number; priceMedium: number; priceHigh: number }, tier: string): number {
   if (tier === "HIGH") return item.priceHigh;
   if (tier === "MEDIUM") return item.priceMedium;
   return item.priceLow;
@@ -88,15 +100,21 @@ function getPriceForTier(item: ReformItem, tier: string): number {
 // ── Item Selector Modal ────────────────────────────────────────
 function ItemSelectorModal({
   reformItems,
+  reformPackages,
   selectedIds,
+  selectedPackageIds,
   tier,
   onSelect,
+  onSelectPackage,
   onClose,
 }: {
   reformItems: ReformItem[];
+  reformPackages: ReformPackage[];
   selectedIds: Set<string>;
+  selectedPackageIds: Set<string>;
   tier: string;
   onSelect: (item: ReformItem) => void;
+  onSelectPackage: (pkg: ReformPackage) => void;
   onClose: () => void;
 }) {
   const [search, setSearch] = useState("");
@@ -110,6 +128,15 @@ function ItemSelectorModal({
       item.description?.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = !categoryFilter || item.category === categoryFilter;
     return matchesSearch && matchesCategory;
+  });
+
+  const filteredPackages = reformPackages.filter((pkg) => {
+    if (categoryFilter) return false; // packages don't have categories
+    return (
+      !search ||
+      pkg.name.toLowerCase().includes(search.toLowerCase()) ||
+      pkg.description?.toLowerCase().includes(search.toLowerCase())
+    );
   });
 
   const grouped = filtered.reduce<Record<string, ReformItem[]>>((acc, item) => {
@@ -177,6 +204,70 @@ function ItemSelectorModal({
 
         {/* Item list */}
         <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
+          {/* Packages (Ambientes) */}
+          {filteredPackages.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 py-1.5">
+                <LayoutGrid className="h-4 w-4 text-orange-500" />
+                <span className="text-xs font-semibold text-orange-600 uppercase tracking-wide">
+                  Ambientes ({filteredPackages.length})
+                </span>
+              </div>
+              <div className="space-y-1 ml-6">
+                {filteredPackages.map((pkg) => {
+                  const price = getPriceForTier(pkg, tier);
+                  const isSelected = selectedPackageIds.has(pkg.id);
+                  return (
+                    <button
+                      key={pkg.id}
+                      type="button"
+                      onClick={() => onSelectPackage(pkg)}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2 rounded-lg border text-sm transition-colors text-left",
+                        isSelected
+                          ? "border-orange-300 bg-orange-50 text-orange-700"
+                          : "border-orange-100 bg-orange-50/30 hover:border-orange-300 hover:bg-orange-50"
+                      )}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">
+                          <LayoutGrid className="h-3.5 w-3.5 inline mr-1 -mt-0.5 text-orange-500" />
+                          {pkg.name}
+                        </p>
+                        {pkg.description ? (
+                          <p className="text-xs text-gray-500 truncate">{pkg.description}</p>
+                        ) : (
+                          pkg.items && pkg.items.length > 0 && (
+                            <p className="text-xs text-gray-500 truncate">
+                              {pkg.items.length} {pkg.items.length === 1 ? "item" : "itens"}: {pkg.items.slice(0, 3).map((i) => i.name).join(", ")}
+                              {pkg.items.length > 3 ? "…" : ""}
+                            </p>
+                          )
+                        )}
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-semibold">{formatCurrency(price)}</p>
+                        <p className="text-xs text-gray-500">total</p>
+                      </div>
+                      <div
+                        className={cn(
+                          "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0",
+                          isSelected ? "border-orange-600 bg-orange-600" : "border-gray-300"
+                        )}
+                      >
+                        {isSelected && (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {Object.entries(grouped).map(([category, items]) => (
             <div key={category}>
               <button
@@ -240,7 +331,7 @@ function ItemSelectorModal({
               )}
             </div>
           ))}
-          {Object.keys(grouped).length === 0 && (
+          {Object.keys(grouped).length === 0 && filteredPackages.length === 0 && (
             <p className="text-sm text-gray-500 text-center py-8">Nenhum item encontrado.</p>
           )}
         </div>
@@ -268,6 +359,12 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
   const { data: reformItems = [] } = useQuery<ReformItem[]>({
     queryKey: ["reform-items-active"],
     queryFn: () => api.reformItems.list({ activeOnly: "true" }) as Promise<ReformItem[]>,
+    select: (data: any) => (Array.isArray(data) ? data : []),
+  });
+
+  const { data: reformPackages = [] } = useQuery<ReformPackage[]>({
+    queryKey: ["reform-packages-active"],
+    queryFn: () => api.reformPackages.list({ activeOnly: "true" }) as Promise<ReformPackage[]>,
     select: (data: any) => (Array.isArray(data) ? data : []),
   });
 
@@ -313,7 +410,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
   const watchedExtras = watch("extraItems");
   const watchedDiscount = watch("discount") ?? 0;
 
-  // Re-price items when tier changes
+  // Re-price items and packages when tier changes
   const repricedRef = useRef(false);
   useEffect(() => {
     if (repricedRef.current) {
@@ -323,6 +420,14 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
           const newPrice = getPriceForTier(reformItem, watchedTier);
           setValue(`items.${idx}.unitPrice`, newPrice);
           setValue(`items.${idx}.subtotal`, newPrice * item.quantity);
+        }
+      });
+      watchedExtras.forEach((extra, idx) => {
+        const pkg = reformPackages.find((p) => `Ambiente: ${p.name}` === extra.name);
+        if (pkg) {
+          const newPrice = getPriceForTier(pkg, watchedTier);
+          setValue(`extraItems.${idx}.unitPrice`, newPrice);
+          setValue(`extraItems.${idx}.subtotal`, newPrice * (extra.quantity ?? 1));
         }
       });
     }
@@ -338,6 +443,17 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
   const grandTotal = subtotalBeforeDiscount - discountAmount;
 
   const selectedItemIds = new Set(watchedItems.map((i) => i.reformItemId));
+
+  // Track package selections via name marker (Ambiente: <name>) in extras
+  const packageMarker = (name: string) => `Ambiente: ${name}`;
+  const selectedPackageIds = new Set(
+    watchedExtras
+      .map((e) => {
+        const match = reformPackages.find((p) => packageMarker(p.name) === e.name);
+        return match?.id;
+      })
+      .filter(Boolean) as string[]
+  );
 
   const handleSelectItem = useCallback(
     (reformItem: ReformItem) => {
@@ -355,6 +471,28 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
       });
     },
     [watchedItems, watchedTier, appendItem, removeItem]
+  );
+
+  const handleSelectPackage = useCallback(
+    (pkg: ReformPackage) => {
+      const marker = packageMarker(pkg.name);
+      const alreadyIdx = watchedExtras.findIndex((e) => e.name === marker);
+      if (alreadyIdx !== -1) {
+        removeExtra(alreadyIdx);
+        return;
+      }
+      const total = getPriceForTier(pkg, watchedTier);
+      const itemsList = (pkg.items ?? []).map((it) => `• ${it.name}`).join("\n");
+      appendExtra({
+        name: marker,
+        description: itemsList || (pkg.description ?? ""),
+        quantity: 1,
+        unit: "SERVICE",
+        unitPrice: total,
+        subtotal: total,
+      });
+    },
+    [watchedExtras, watchedTier, appendExtra, removeExtra]
   );
 
   const handleItemQuantityChange = (idx: number, qty: number) => {
@@ -771,9 +909,12 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
       {showItemSelector && (
         <ItemSelectorModal
           reformItems={reformItems}
+          reformPackages={reformPackages}
           selectedIds={selectedItemIds}
+          selectedPackageIds={selectedPackageIds}
           tier={watchedTier}
           onSelect={handleSelectItem}
+          onSelectPackage={handleSelectPackage}
           onClose={() => setShowItemSelector(false)}
         />
       )}

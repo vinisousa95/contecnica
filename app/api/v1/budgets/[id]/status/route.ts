@@ -19,7 +19,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   const existing = await prisma.budget.findUnique({
     where: { id: params.id },
     include: {
-      items: { include: { reformItem: true } },
+      items: { include: { reformItem: true, reformPackage: true } as any },
       extraItems: true,
     },
   });
@@ -46,7 +46,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     if (!alreadyLinked) {
       const allItems = [
-        ...existing.items.map((it, i) => ({ name: it.reformItem.name, description: it.reformItem.description, order: i })),
+        ...existing.items.map((it: any, i) => ({ name: it.reformPackage?.name ?? it.reformItem?.name ?? "Item", description: it.reformItem?.description ?? null, order: i })),
         ...existing.extraItems.map((it, i) => ({ name: it.name, description: it.description ?? null, order: existing.items.length + i })),
       ];
 

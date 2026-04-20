@@ -24,7 +24,7 @@ export default async function ImprimirOrcamentoPage({ params }: { params: { id: 
       },
       createdBy: { select: { name: true } },
       items: {
-        include: { reformItem: true },
+        include: { reformItem: true, reformPackage: { include: { items: { orderBy: { sortOrder: "asc" } } } } } as any,
         orderBy: [{ reformItem: { category: "asc" } }, { reformItem: { sortOrder: "asc" } }],
       },
       extraItems: { orderBy: { sortOrder: "asc" } },
@@ -37,7 +37,7 @@ export default async function ImprimirOrcamentoPage({ params }: { params: { id: 
   const data = {
     ...budget,
     totalAmount: Number(budget.totalAmount),
-    items: budget.items.map((i) => ({
+    items: budget.items.map((i: any) => ({
       ...i,
       quantity: Number(i.quantity),
       unitPrice: Number(i.unitPrice),
@@ -48,6 +48,18 @@ export default async function ImprimirOrcamentoPage({ params }: { params: { id: 
             priceLow: Number(i.reformItem.priceLow),
             priceMedium: Number(i.reformItem.priceMedium),
             priceHigh: Number(i.reformItem.priceHigh),
+          }
+        : null,
+      reformPackage: i.reformPackage
+        ? {
+            ...i.reformPackage,
+            priceLow: Number(i.reformPackage.priceLow),
+            priceMedium: Number(i.reformPackage.priceMedium),
+            priceHigh: Number(i.reformPackage.priceHigh),
+            items: (i.reformPackage.items ?? []).map((pi: any) => ({
+              ...pi,
+              quantity: Number(pi.quantity),
+            })),
           }
         : null,
     })),

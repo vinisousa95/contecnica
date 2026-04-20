@@ -30,6 +30,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   TILING: "Revestimentos",
   CARPENTRY: "Carpintaria",
   OTHERS: "Outros",
+  AMBIENTES: "Ambientes Completos",
 };
 
 const UNIT_LABELS: Record<string, string> = {
@@ -65,7 +66,7 @@ export function PrintView({ budget }: { budget: any }) {
   }, []);
 
   const itemsByCategory = (budget.items ?? []).reduce((acc: Record<string, any[]>, item: any) => {
-    const cat = item.reformItem?.category ?? "OTHERS";
+    const cat = item.reformPackageId ? "AMBIENTES" : (item.reformItem?.category ?? "OTHERS");
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(item);
     return acc;
@@ -301,20 +302,28 @@ export function PrintView({ budget }: { budget: any }) {
                     <tr key={`cat-${cat}`} className="cat-row">
                       <td colSpan={5}>{CATEGORY_LABELS[cat]}</td>
                     </tr>
-                    {items.map((item: any) => (
-                      <tr key={item.id}>
-                        <td>
-                          <div className="item-name">{item.reformItem?.name}</div>
-                          {item.reformItem?.description && (
-                            <div className="item-desc">{item.reformItem.description}</div>
-                          )}
-                        </td>
-                        <td className="right">{fmtQty(item.quantity)}</td>
-                        <td>{UNIT_LABELS[item.reformItem?.unit ?? "UNIT"]}</td>
-                        <td className="right">{fmt(item.unitPrice)}</td>
-                        <td className="right" style={{ fontWeight: 600 }}>{fmt(item.subtotal)}</td>
-                      </tr>
-                    ))}
+                    {items.map((item: any) => {
+                      const isPkg = !!item.reformPackageId;
+                      const name = isPkg
+                        ? (item.reformPackage?.name ?? item.name ?? "Ambiente")
+                        : (item.reformItem?.name ?? item.name ?? "Item");
+                      const desc = isPkg
+                        ? (item.reformPackage?.items ?? []).map((i: any) => i.name).filter(Boolean).join(", ")
+                        : item.reformItem?.description;
+                      const unit = isPkg ? "serviço" : (UNIT_LABELS[item.reformItem?.unit ?? "UNIT"]);
+                      return (
+                        <tr key={item.id}>
+                          <td>
+                            <div className="item-name">{name}</div>
+                            {desc && <div className="item-desc">{desc}</div>}
+                          </td>
+                          <td className="right">{fmtQty(item.quantity)}</td>
+                          <td>{unit}</td>
+                          <td className="right">{fmt(item.unitPrice)}</td>
+                          <td className="right" style={{ fontWeight: 600 }}>{fmt(item.subtotal)}</td>
+                        </tr>
+                      );
+                    })}
                   </>
                 ))}
               </tbody>

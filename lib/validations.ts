@@ -168,10 +168,14 @@ export type BudgetExtraItemInput = z.infer<typeof budgetExtraItemSchema>;
 // ── Reform Packages (Ambientes) ───────────────────────────────
 export const reformPackageItemSchema = z.object({
   id: z.string().optional(),
+  reformItemId: z.string().min(1, "Selecione um item do catálogo"),
   name: z.string().min(1, "Nome do item é obrigatório"),
   description: z.string().optional().nullable(),
   quantity: z.coerce.number().positive().default(1),
   unit: z.enum(["UNIT", "SQM", "M", "ML", "DAILY", "SERVICE", "POINT", "HOUR"]).default("UNIT"),
+  unitPriceLow: z.coerce.number().min(0).optional().nullable(),
+  unitPriceMedium: z.coerce.number().min(0).optional().nullable(),
+  unitPriceHigh: z.coerce.number().min(0).optional().nullable(),
   sortOrder: z.number().int().default(0),
 });
 

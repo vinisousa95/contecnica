@@ -13,6 +13,9 @@ function serializePackage(pkg: any) {
     items: (pkg.items ?? []).map((item: any) => ({
       ...item,
       quantity: Number(item.quantity),
+      unitPriceLow: item.unitPriceLow != null ? Number(item.unitPriceLow) : null,
+      unitPriceMedium: item.unitPriceMedium != null ? Number(item.unitPriceMedium) : null,
+      unitPriceHigh: item.unitPriceHigh != null ? Number(item.unitPriceHigh) : null,
     })),
   };
 }
@@ -52,10 +55,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         priceHigh,
         items: {
           create: items.map((item, i) => ({
+            reformItemId: item.reformItemId || null,
             name: item.name,
             description: item.description ?? null,
             quantity: item.quantity,
             unit: item.unit,
+            unitPriceLow: item.unitPriceLow ?? null,
+            unitPriceMedium: item.unitPriceMedium ?? null,
+            unitPriceHigh: item.unitPriceHigh ?? null,
             sortOrder: i,
           })),
         },

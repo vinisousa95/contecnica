@@ -261,7 +261,8 @@ model ReformItem {
   createdAt      DateTime     @default(now()) @map("created_at")
   updatedAt      DateTime     @updatedAt @map("updated_at")
 
-  budgetItems BudgetItem[]
+  budgetItems  BudgetItem[]
+  packageItems ReformPackageItem[]
 
   @@map("reform_items")
 }
@@ -313,14 +314,19 @@ model ReformPackage {
 }
 
 model ReformPackageItem {
-  id          String        @id @default(cuid())
-  packageId   String        @map("package_id")
-  package     ReformPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  name        String
-  description String?
-  quantity    Decimal       @db.Decimal(10, 3) @default(1)
-  unit        ItemUnit      @default(UNIT)
-  sortOrder   Int           @default(0) @map("sort_order")
+  id              String        @id @default(cuid())
+  packageId       String        @map("package_id")
+  package         ReformPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  reformItemId    String?       @map("reform_item_id")
+  reformItem      ReformItem?   @relation(fields: [reformItemId], references: [id], onDelete: SetNull)
+  name            String
+  description     String?
+  quantity        Decimal       @db.Decimal(10, 3) @default(1)
+  unit            ItemUnit      @default(UNIT)
+  unitPriceLow    Decimal?      @db.Decimal(10, 2) @map("unit_price_low")
+  unitPriceMedium Decimal?      @db.Decimal(10, 2) @map("unit_price_medium")
+  unitPriceHigh   Decimal?      @db.Decimal(10, 2) @map("unit_price_high")
+  sortOrder       Int           @default(0) @map("sort_order")
 
   @@map("reform_package_items")
 }

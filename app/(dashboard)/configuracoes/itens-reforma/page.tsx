@@ -456,18 +456,123 @@ function ItemsSection() {
 
 // ─── Packages Section ─────────────────────────────────────────────────────────
 
+type ReformPackageItemPreview = {
+  reformItemId?: string;
+  unitPriceLow?: number | null;
+  unitPriceMedium?: number | null;
+  unitPriceHigh?: number | null;
+};
+
+function PackageItemRow({
+  index,
+  catalogItems,
+  register,
+  control,
+  errors,
+  onSelectItem,
+  onRemove,
+  defaultReformItemId,
+}: {
+  index: number;
+  catalogItems: any[];
+  register: any;
+  control: any;
+  errors: any;
+  onSelectItem: (id: string) => void;
+  onRemove: () => void;
+  defaultReformItemId?: string;
+}) {
+  const reformItemId = useWatch({ control, name: `items.${index}.reformItemId` }) ?? defaultReformItemId ?? "";
+  const quantity = useWatch({ control, name: `items.${index}.quantity` }) ?? 1;
+  const priceLow = useWatch({ control, name: `items.${index}.unitPriceLow` });
+  const priceMedium = useWatch({ control, name: `items.${index}.unitPriceMedium` });
+  const priceHigh = useWatch({ control, name: `items.${index}.unitPriceHigh` });
+
+  const qty = parseFloat(String(quantity)) || 0;
+  const totalLow = priceLow != null ? Number(priceLow) * qty : null;
+  const totalMedium = priceMedium != null ? Number(priceMedium) * qty : null;
+  const totalHigh = priceHigh != null ? Number(priceHigh) * qty : null;
+
+  return (
+    <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+      <div className="flex gap-2 items-start">
+        <div className="flex-1">
+          <Select
+            value={reformItemId}
+            onChange={(e) => onSelectItem(e.target.value)}
+            error={(errors.items?.[index]?.reformItemId as any)?.message ?? (errors.items?.[index]?.name as any)?.message}
+            options={[
+              { value: "", label: "Selecione um item do catálogo..." },
+              ...catalogItems.map((it: any) => ({
+                value: it.id,
+                label: `${it.name} (${UNIT_LABELS[it.unit]})`,
+              })),
+            ]}
+          />
+          {/* Hidden inputs to keep form values in sync */}
+          <input type="hidden" {...register(`items.${index}.reformItemId`)} />
+          <input type="hidden" {...register(`items.${index}.name`)} />
+          <input type="hidden" {...register(`items.${index}.unit`)} />
+          <input type="hidden" {...register(`items.${index}.unitPriceLow`, { valueAsNumber: true })} />
+          <input type="hidden" {...register(`items.${index}.unitPriceMedium`, { valueAsNumber: true })} />
+          <input type="hidden" {...register(`items.${index}.unitPriceHigh`, { valueAsNumber: true })} />
+        </div>
+        <div className="w-24">
+          <Input
+            {...register(`items.${index}.quantity`, { valueAsNumber: true })}
+            type="number" step="0.01" min="0.01" placeholder="Qtd"
+          />
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="text-red-400 hover:text-red-600 mt-1"
+          onClick={onRemove}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+      {reformItemId && (priceLow != null || priceMedium != null || priceHigh != null) && (
+        <div className="flex flex-wrap gap-3 text-xs text-gray-500 px-1">
+          <span>
+            Baixo: <strong className="text-gray-700">{formatCurrency(totalLow ?? 0)}</strong>
+            <span className="text-gray-400"> ({formatCurrency(Number(priceLow ?? 0))}/un)</span>
+          </span>
+          <span>
+            Médio: <strong className="text-gray-700">{formatCurrency(totalMedium ?? 0)}</strong>
+            <span className="text-gray-400"> ({formatCurrency(Number(priceMedium ?? 0))}/un)</span>
+          </span>
+          <span>
+            Alto: <strong className="text-gray-700">{formatCurrency(totalHigh ?? 0)}</strong>
+            <span className="text-gray-400"> ({formatCurrency(Number(priceHigh ?? 0))}/un)</span>
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PackagesSection() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editPkg, setEditPkg] = useState<any | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [pctMedium, setPctMedium] = useState<string>("");
+  const [pctHigh, setPctHigh] = useState<string>("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["reform-packages", search],
     queryFn: () =>
       api.reformPackages.list({ ...(search && { search }), activeOnly: "false" }) as Promise<any>,
   });
+
+  const { data: catalogItemsData } = useQuery({
+    queryKey: ["reform-items", "", "", true],
+    queryFn: () => api.reformItems.list({ activeOnly: "true" }) as Promise<any>,
+  });
+  const catalogItems = Array.isArray(catalogItemsData) ? catalogItemsData : [];
 
   const packages = Array.isArray(data) ? data : [];
 
@@ -476,6 +581,7 @@ function PackagesSection() {
     handleSubmit,
     reset,
     control,
+    setValue,
     formState: { errors },
   } = useForm<ReformPackageInput>({
     resolver: zodResolver(reformPackageSchema),
@@ -483,6 +589,33 @@ function PackagesSection() {
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: "items" });
+  const watchedPriceLow = useWatch({ control, name: "priceLow" });
+
+  const applyPct = useCallback(
+    (pct: string, field: "priceMedium" | "priceHigh") => {
+      const base = parseFloat(String(watchedPriceLow));
+      const p = parseFloat(pct);
+      if (!isNaN(base) && base > 0 && !isNaN(p) && p >= 0) {
+        setValue(field, parseFloat((base * (1 + p / 100)).toFixed(2)));
+      }
+    },
+    [watchedPriceLow, setValue]
+  );
+
+  const handleSelectCatalogItem = (index: number, itemId: string) => {
+    const item = catalogItems.find((i: any) => i.id === itemId);
+    if (!item) {
+      setValue(`items.${index}.reformItemId`, "");
+      setValue(`items.${index}.name`, "");
+      return;
+    }
+    setValue(`items.${index}.reformItemId`, item.id);
+    setValue(`items.${index}.name`, item.name);
+    setValue(`items.${index}.unit`, item.unit);
+    setValue(`items.${index}.unitPriceLow`, item.priceLow);
+    setValue(`items.${index}.unitPriceMedium`, item.priceMedium);
+    setValue(`items.${index}.unitPriceHigh`, item.priceHigh);
+  };
 
   const createMutation = useMutation({
     mutationFn: (data: ReformPackageInput) => api.reformPackages.create(data),
@@ -517,6 +650,8 @@ function PackagesSection() {
 
   const handleEdit = (pkg: any) => {
     setEditPkg(pkg);
+    setPctMedium("");
+    setPctHigh("");
     reset({
       name: pkg.name,
       description: pkg.description ?? "",
@@ -529,10 +664,14 @@ function PackagesSection() {
       sortOrder: pkg.sortOrder,
       items: (pkg.items ?? []).map((it: any) => ({
         id: it.id,
+        reformItemId: it.reformItemId ?? "",
         name: it.name,
         description: it.description ?? "",
         quantity: it.quantity,
         unit: it.unit,
+        unitPriceLow: it.unitPriceLow ?? null,
+        unitPriceMedium: it.unitPriceMedium ?? null,
+        unitPriceHigh: it.unitPriceHigh ?? null,
         sortOrder: it.sortOrder,
       })),
     });
@@ -542,6 +681,8 @@ function PackagesSection() {
   const handleCloseForm = () => {
     setShowForm(false);
     setEditPkg(null);
+    setPctMedium("");
+    setPctHigh("");
     reset({ name: "", description: "", category: "OTHERS", customCategory: "", priceLow: 0, priceMedium: 0, priceHigh: 0, isActive: true, sortOrder: 0, items: [] });
   };
 
@@ -673,10 +814,28 @@ function PackagesSection() {
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Padrão Médio</label>
                   <Input {...register("priceMedium", { valueAsNumber: true })} type="number" step="0.01" min="0" placeholder="0,00" error={errors.priceMedium?.message} />
+                  <div className="flex items-center gap-1 mt-1">
+                    <input
+                      type="number" min="0" max="999" step="0.1" value={pctMedium}
+                      onChange={(e) => { setPctMedium(e.target.value); applyPct(e.target.value, "priceMedium"); }}
+                      placeholder="%"
+                      className="w-16 h-7 px-2 rounded border border-gray-300 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#EA580C]"
+                    />
+                    <span className="text-xs text-gray-400">% acima do baixo</span>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Padrão Alto</label>
                   <Input {...register("priceHigh", { valueAsNumber: true })} type="number" step="0.01" min="0" placeholder="0,00" error={errors.priceHigh?.message} />
+                  <div className="flex items-center gap-1 mt-1">
+                    <input
+                      type="number" min="0" max="999" step="0.1" value={pctHigh}
+                      onChange={(e) => { setPctHigh(e.target.value); applyPct(e.target.value, "priceHigh"); }}
+                      placeholder="%"
+                      className="w-16 h-7 px-2 rounded border border-gray-300 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#EA580C]"
+                    />
+                    <span className="text-xs text-gray-400">% acima do baixo</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -689,14 +848,14 @@ function PackagesSection() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => append({ name: "", description: "", quantity: 1, unit: "UNIT", sortOrder: fields.length })}
+                  onClick={() => append({ reformItemId: "", name: "", description: "", quantity: 1, unit: "UNIT", unitPriceLow: null, unitPriceMedium: null, unitPriceHigh: null, sortOrder: fields.length })}
                 >
                   <Plus className="h-3.5 w-3.5" />
                   Adicionar Item
                 </Button>
               </div>
               <p className="text-xs text-gray-400 mb-3">
-                Liste os serviços e materiais incluídos. Os valores individuais não aparecem — apenas o total do ambiente.
+                Selecione itens do catálogo. Os valores individuais ficam visíveis aqui para referência interna, mas <strong>não aparecem no orçamento do cliente</strong> — apenas o total do ambiente.
               </p>
               {fields.length === 0 ? (
                 <div className="border border-dashed border-gray-200 rounded-lg py-6 text-center">
@@ -704,35 +863,22 @@ function PackagesSection() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {fields.map((field, index) => (
-                    <div key={field.id} className="flex gap-2 items-start bg-gray-50 rounded-lg p-3">
-                      <div className="flex-1">
-                        <Input
-                          {...register(`items.${index}.name`)}
-                          placeholder="Ex: Demolição das paredes, Revestimento piso..."
-                          error={(errors.items?.[index]?.name as any)?.message}
-                        />
-                      </div>
-                      <div className="w-20">
-                        <Input {...register(`items.${index}.quantity`, { valueAsNumber: true })} type="number" step="0.01" min="0.01" placeholder="Qtd" />
-                      </div>
-                      <div className="w-24">
-                        <Select
-                          {...register(`items.${index}.unit`)}
-                          options={UNITS.map((u) => ({ value: u, label: UNIT_LABELS[u] }))}
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className="text-red-400 hover:text-red-600 mt-1"
-                        onClick={() => remove(index)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  ))}
+                  {fields.map((field, index) => {
+                    const itemValues = (field as any) as ReformPackageItemPreview;
+                    return (
+                      <PackageItemRow
+                        key={field.id}
+                        index={index}
+                        catalogItems={catalogItems}
+                        register={register}
+                        control={control}
+                        errors={errors}
+                        onSelectItem={(itemId) => handleSelectCatalogItem(index, itemId)}
+                        onRemove={() => remove(index)}
+                        defaultReformItemId={itemValues.reformItemId}
+                      />
+                    );
+                  })}
                 </div>
               )}
             </div>

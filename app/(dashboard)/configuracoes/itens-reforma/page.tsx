@@ -116,6 +116,27 @@ export default function ItensReformaPage() {
 
   const watchedPriceLow = useWatch({ control, name: "priceLow" });
   const watchedCategory = useWatch({ control, name: "category" });
+  const watchedCustomCategory = useWatch({ control, name: "customCategory" });
+
+  // What to show as the selected option in the Categoria dropdown
+  const categoryDisplayValue =
+    watchedCategory === "OTHERS" && watchedCustomCategory && customCats.includes(watchedCustomCategory)
+      ? watchedCustomCategory
+      : (watchedCategory as string | undefined) ?? "";
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    if (customCats.includes(val)) {
+      setValue("category", "OTHERS" as any, { shouldValidate: true });
+      setValue("customCategory", val);
+    } else if (val === "OTHERS") {
+      setValue("category", "OTHERS" as any, { shouldValidate: true });
+      setValue("customCategory", "");
+    } else {
+      setValue("category", (val || undefined) as any, { shouldValidate: true });
+      setValue("customCategory", "");
+    }
+  };
 
   const applyPct = useCallback((pct: string, field: "priceMedium" | "priceHigh") => {
     const base = parseFloat(String(watchedPriceLow));
@@ -366,17 +387,24 @@ export default function ItensReformaPage() {
               <Textarea {...register("description")} rows={2} placeholder="Detalhes do serviço ou material..." />
             </div>
 
+            <input type="hidden" {...register("category")} />
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Categoria <span className="text-red-500">*</span>
                 </label>
                 <Select
-                  {...register("category")}
+                  value={categoryDisplayValue}
+                  onChange={handleCategoryChange}
                   error={(errors.category as any)?.message}
                   options={[
                     { value: "", label: "Selecione..." },
-                    ...CATEGORIES.map((cat) => ({ value: cat, label: CATEGORY_LABELS[cat] })),
+                    ...CATEGORIES.filter((c) => c !== "OTHERS").map((cat) => ({
+                      value: cat,
+                      label: CATEGORY_LABELS[cat],
+                    })),
+                    ...customCats.map((cc) => ({ value: cc, label: cc })),
+                    { value: "OTHERS", label: "+ Nova categoria..." },
                   ]}
                 />
               </div>
@@ -389,29 +417,15 @@ export default function ItensReformaPage() {
               </div>
             </div>
 
-            {watchedCategory === "OTHERS" && (
+            {watchedCategory === "OTHERS" && !customCats.includes(watchedCustomCategory ?? "") && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome da categoria <span className="text-red-500">*</span>
+                  Nome da nova categoria <span className="text-red-500">*</span>
                 </label>
                 <Input
                   {...register("customCategory")}
                   placeholder="Ex: Impermeabilização, Gesso, Serralheria..."
                 />
-                {customCats.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {customCats.map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => setValue("customCategory", cat)}
-                        className="px-2.5 py-1 text-xs rounded-full border border-gray-300 bg-gray-50 text-gray-600 hover:border-[#EA580C] hover:text-[#EA580C] hover:bg-orange-50 transition-colors"
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
             )}
 

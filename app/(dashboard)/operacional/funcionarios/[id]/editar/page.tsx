@@ -23,6 +23,7 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
 
   const [form, setForm] = useState<EmployeeInput>({
     name: "",
+    rg: "",
     phone: "",
     role: "",
     status: "ACTIVE",
@@ -41,6 +42,7 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
     if (employee && !initialized) {
       setForm({
         name: employee.name,
+        rg: employee.rg ?? "",
         phone: employee.phone ?? "",
         role: employee.role ?? "",
         status: employee.status,
@@ -126,6 +128,12 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
+                label="RG"
+                placeholder="00.000.000-0"
+                value={form.rg ?? ""}
+                onChange={(e) => handleChange("rg", e.target.value)}
+              />
+              <Input
                 label="Telefone"
                 placeholder="(11) 99999-9999"
                 inputMode="numeric"
@@ -133,6 +141,9 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
                 value={form.phone ?? ""}
                 onChange={(e) => handleChange("phone", maskPhone(e.target.value))}
               />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Select
                 label="Status"
                 value={form.status}

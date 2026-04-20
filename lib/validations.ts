@@ -200,6 +200,7 @@ export type ReformPackageInput = z.infer<typeof reformPackageSchema>;
 // ── Employees ─────────────────────────────────────────────────
 export const employeeSchema = z.object({
   name: z.string().min(2, "Nome é obrigatório"),
+  rg: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
   role: z.string().optional().nullable(),
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),

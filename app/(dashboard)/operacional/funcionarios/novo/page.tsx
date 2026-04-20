@@ -22,6 +22,7 @@ export default function NovoFuncionarioPage() {
 
   const [form, setForm] = useState<EmployeeInput>({
     name: "",
+    rg: "",
     phone: "",
     role: "",
     status: "ACTIVE",
@@ -101,6 +102,12 @@ export default function NovoFuncionarioPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="RG"
+                placeholder="00.000.000-0"
+                value={form.rg ?? ""}
+                onChange={(e) => handleChange("rg", e.target.value)}
+              />
               <Input
                 label="Telefone"
                 placeholder="(11) 99999-9999"

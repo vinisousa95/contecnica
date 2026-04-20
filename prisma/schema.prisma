@@ -502,14 +502,15 @@ model BudgetExtraItem {
 // OPERATIONAL — Employees, Vehicles, Assignments
 // ─────────────────────────────────────────────
 model Employee {
-  id          String         @id @default(cuid())
-  name        String
-  phone       String?
-  role        String?
-  status      EmployeeStatus @default(ACTIVE)
-  notes       String?
-  createdAt   DateTime       @default(now()) @map("created_at")
-  updatedAt   DateTime       @updatedAt @map("updated_at")
+  id            String         @id @default(cuid())
+  name          String
+  rg            String?
+  phone         String?
+  role          String?
+  status        EmployeeStatus @default(ACTIVE)
+  notes         String?
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
   assignments   WorkAssignment[]
   assignedTasks Task[]           @relation("TaskAssignee")
 

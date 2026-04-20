@@ -463,6 +463,8 @@ type ReformPackageItemPreview = {
   unitPriceHigh?: number | null;
 };
 
+const CUSTOM_ITEM_VALUE = "__custom__";
+
 function PackageItemRow({
   index,
   catalogItems,
@@ -483,22 +485,27 @@ function PackageItemRow({
   defaultReformItemId?: string;
 }) {
   const reformItemId = useWatch({ control, name: `items.${index}.reformItemId` }) ?? defaultReformItemId ?? "";
+  const itemName = useWatch({ control, name: `items.${index}.name` }) ?? "";
   const quantity = useWatch({ control, name: `items.${index}.quantity` }) ?? 1;
   const priceLow = useWatch({ control, name: `items.${index}.unitPriceLow` });
   const priceMedium = useWatch({ control, name: `items.${index}.unitPriceMedium` });
   const priceHigh = useWatch({ control, name: `items.${index}.unitPriceHigh` });
 
+  // "Custom" mode: no reformItemId but has a name
+  const isCustom = !reformItemId && itemName.length > 0;
+  const selectValue = isCustom ? CUSTOM_ITEM_VALUE : reformItemId;
+
   const qty = parseFloat(String(quantity)) || 0;
-  const totalLow = priceLow != null ? Number(priceLow) * qty : null;
-  const totalMedium = priceMedium != null ? Number(priceMedium) * qty : null;
-  const totalHigh = priceHigh != null ? Number(priceHigh) * qty : null;
+  const totalLow = priceLow != null && priceLow !== "" ? Number(priceLow) * qty : null;
+  const totalMedium = priceMedium != null && priceMedium !== "" ? Number(priceMedium) * qty : null;
+  const totalHigh = priceHigh != null && priceHigh !== "" ? Number(priceHigh) * qty : null;
 
   return (
     <div className="bg-gray-50 rounded-lg p-3 space-y-2">
       <div className="flex gap-2 items-start">
         <div className="flex-1">
           <Select
-            value={reformItemId}
+            value={selectValue}
             onChange={(e) => onSelectItem(e.target.value)}
             error={(errors.items?.[index]?.reformItemId as any)?.message ?? (errors.items?.[index]?.name as any)?.message}
             options={[
@@ -507,15 +514,16 @@ function PackageItemRow({
                 value: it.id,
                 label: `${it.name} (${UNIT_LABELS[it.unit]})`,
               })),
+              { value: CUSTOM_ITEM_VALUE, label: "+ Adicionar item personalizado..." },
             ]}
           />
-          {/* Hidden inputs to keep form values in sync */}
+          {/* Hidden inputs keep form values in sync for catalog-based items */}
           <input type="hidden" {...register(`items.${index}.reformItemId`)} />
-          <input type="hidden" {...register(`items.${index}.name`)} />
-          <input type="hidden" {...register(`items.${index}.unit`)} />
-          <input type="hidden" {...register(`items.${index}.unitPriceLow`, { valueAsNumber: true })} />
-          <input type="hidden" {...register(`items.${index}.unitPriceMedium`, { valueAsNumber: true })} />
-          <input type="hidden" {...register(`items.${index}.unitPriceHigh`, { valueAsNumber: true })} />
+          {!isCustom && <input type="hidden" {...register(`items.${index}.name`)} />}
+          {!isCustom && <input type="hidden" {...register(`items.${index}.unit`)} />}
+          {!isCustom && <input type="hidden" {...register(`items.${index}.unitPriceLow`, { valueAsNumber: true })} />}
+          {!isCustom && <input type="hidden" {...register(`items.${index}.unitPriceMedium`, { valueAsNumber: true })} />}
+          {!isCustom && <input type="hidden" {...register(`items.${index}.unitPriceHigh`, { valueAsNumber: true })} />}
         </div>
         <div className="w-24">
           <Input
@@ -533,7 +541,45 @@ function PackageItemRow({
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </div>
-      {reformItemId && (priceLow != null || priceMedium != null || priceHigh != null) && (
+
+      {/* Custom item inputs */}
+      {isCustom && (
+        <div className="space-y-2 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2">
+            <Input
+              {...register(`items.${index}.name`)}
+              placeholder="Nome do item personalizado *"
+              error={(errors.items?.[index]?.name as any)?.message}
+            />
+            <div className="w-full sm:w-32">
+              <Select
+                {...register(`items.${index}.unit`)}
+                options={UNITS.map((u) => ({ value: u, label: UNIT_LABELS[u] }))}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <Input
+              {...register(`items.${index}.unitPriceLow`, { valueAsNumber: true })}
+              type="number" step="0.01" min="0" placeholder="Preço Baixo"
+            />
+            <Input
+              {...register(`items.${index}.unitPriceMedium`, { valueAsNumber: true })}
+              type="number" step="0.01" min="0" placeholder="Preço Médio"
+            />
+            <Input
+              {...register(`items.${index}.unitPriceHigh`, { valueAsNumber: true })}
+              type="number" step="0.01" min="0" placeholder="Preço Alto"
+            />
+          </div>
+          <p className="text-xs text-gray-400">
+            Item avulso — não será salvo no catálogo. Para reutilizar, cadastre-o em "Itens Individuais".
+          </p>
+        </div>
+      )}
+
+      {/* Price preview for catalog items */}
+      {!isCustom && reformItemId && (priceLow != null || priceMedium != null || priceHigh != null) && (
         <div className="flex flex-wrap gap-3 text-xs text-gray-500 px-1">
           <span>
             Baixo: <strong className="text-gray-700">{formatCurrency(totalLow ?? 0)}</strong>
@@ -603,6 +649,16 @@ function PackagesSection() {
   );
 
   const handleSelectCatalogItem = (index: number, itemId: string) => {
+    if (itemId === CUSTOM_ITEM_VALUE) {
+      // Switch to custom mode — clear catalog link, keep blank fields for user input
+      setValue(`items.${index}.reformItemId`, "");
+      setValue(`items.${index}.name`, " ");
+      setValue(`items.${index}.unit`, "UNIT");
+      setValue(`items.${index}.unitPriceLow`, null);
+      setValue(`items.${index}.unitPriceMedium`, null);
+      setValue(`items.${index}.unitPriceHigh`, null);
+      return;
+    }
     const item = catalogItems.find((i: any) => i.id === itemId);
     if (!item) {
       setValue(`items.${index}.reformItemId`, "");

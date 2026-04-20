@@ -191,6 +191,21 @@ export const api = {
       request(`/reform-items/${id}`, { method: "DELETE" }),
   },
 
+  // Reform Packages (ambientes)
+  reformPackages: {
+    list: (params?: Record<string, string>) => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return request(`/reform-packages${qs}`);
+    },
+    get: (id: string) => request(`/reform-packages/${id}`),
+    create: (data: unknown) =>
+      request("/reform-packages", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: unknown) =>
+      request(`/reform-packages/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string, hard = false) =>
+      request(`/reform-packages/${id}?hard=${hard}`, { method: "DELETE" }),
+  },
+
   // Employees (funcionários)
   employees: {
     list: (params?: Record<string, string>) => {

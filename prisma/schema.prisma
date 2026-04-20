@@ -292,6 +292,40 @@ enum ItemUnit {
 }
 
 // ─────────────────────────────────────────────
+// REFORM PACKAGES — Ambientes
+// ─────────────────────────────────────────────
+model ReformPackage {
+  id             String              @id @default(cuid())
+  name           String
+  description    String?
+  category       ItemCategory        @default(OTHERS)
+  customCategory String?             @map("custom_category")
+  priceLow       Decimal             @db.Decimal(10, 2) @map("price_low")
+  priceMedium    Decimal             @db.Decimal(10, 2) @map("price_medium")
+  priceHigh      Decimal             @db.Decimal(10, 2) @map("price_high")
+  isActive       Boolean             @default(true) @map("is_active")
+  sortOrder      Int                 @default(0) @map("sort_order")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  items          ReformPackageItem[]
+
+  @@map("reform_packages")
+}
+
+model ReformPackageItem {
+  id          String        @id @default(cuid())
+  packageId   String        @map("package_id")
+  package     ReformPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  quantity    Decimal       @db.Decimal(10, 3) @default(1)
+  unit        ItemUnit      @default(UNIT)
+  sortOrder   Int           @default(0) @map("sort_order")
+
+  @@map("reform_package_items")
+}
+
+// ─────────────────────────────────────────────
 // BUDGETS — Orçamentos
 // ─────────────────────────────────────────────
 model Budget {

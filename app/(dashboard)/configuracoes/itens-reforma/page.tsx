@@ -2,10 +2,15 @@
 
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@/lib/api-client";
-import { reformItemSchema, type ReformItemInput } from "@/lib/validations";
+import {
+  reformItemSchema,
+  type ReformItemInput,
+  reformPackageSchema,
+  type ReformPackageInput,
+} from "@/lib/validations";
 import { formatCurrency } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +24,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { LoadingPage } from "@/components/ui/loading";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Plus, HardHat, Pencil, PowerOff, Search, Trash2 } from "lucide-react";
+import { Plus, HardHat, Pencil, PowerOff, Search, Trash2, LayoutGrid, List } from "lucide-react";
 
 const CATEGORY_LABELS: Record<string, string> = {
   DEMOLITION: "Demolição",
@@ -49,7 +54,9 @@ const UNIT_LABELS: Record<string, string> = {
 const CATEGORIES = Object.keys(CATEGORY_LABELS);
 const UNITS = Object.keys(UNIT_LABELS);
 
-export default function ItensReformaPage() {
+// ─── Items Section ────────────────────────────────────────────────────────────
+
+function ItemsSection() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
@@ -86,7 +93,6 @@ export default function ItensReformaPage() {
 
   const items = Array.isArray(data) ? data : [];
 
-  // Union: API-provided custom cats + any custom cat present in currently loaded items
   const customCats: string[] = Array.from(
     new Set([
       ...(customCatsData ?? []),
@@ -108,18 +114,13 @@ export default function ItensReformaPage() {
     formState: { errors },
   } = useForm<ReformItemInput>({
     resolver: zodResolver(reformItemSchema),
-    defaultValues: {
-      unit: "UNIT",
-      isActive: true,
-      sortOrder: 0,
-    },
+    defaultValues: { unit: "UNIT", isActive: true, sortOrder: 0 },
   });
 
   const watchedPriceLow = useWatch({ control, name: "priceLow" });
   const watchedCategory = useWatch({ control, name: "category" });
   const watchedCustomCategory = useWatch({ control, name: "customCategory" });
 
-  // What to show as the selected option in the Categoria dropdown
   const categoryDisplayValue =
     watchedCategory === "OTHERS" && watchedCustomCategory && customCats.includes(watchedCustomCategory)
       ? watchedCustomCategory
@@ -139,13 +140,16 @@ export default function ItensReformaPage() {
     }
   };
 
-  const applyPct = useCallback((pct: string, field: "priceMedium" | "priceHigh") => {
-    const base = parseFloat(String(watchedPriceLow));
-    const p = parseFloat(pct);
-    if (!isNaN(base) && base > 0 && !isNaN(p) && p >= 0) {
-      setValue(field, String((base * (1 + p / 100)).toFixed(2)));
-    }
-  }, [watchedPriceLow, setValue]);
+  const applyPct = useCallback(
+    (pct: string, field: "priceMedium" | "priceHigh") => {
+      const base = parseFloat(String(watchedPriceLow));
+      const p = parseFloat(pct);
+      if (!isNaN(base) && base > 0 && !isNaN(p) && p >= 0) {
+        setValue(field, String((base * (1 + p / 100)).toFixed(2)));
+      }
+    },
+    [watchedPriceLow, setValue]
+  );
 
   const createMutation = useMutation({
     mutationFn: (data: ReformItemInput) => api.reformItems.create(data),
@@ -155,9 +159,7 @@ export default function ItensReformaPage() {
       toast({ title: "Item criado!", variant: "success" });
       handleCloseForm();
     },
-    onError: (err: Error) => {
-      toast({ title: "Erro ao criar", description: err.message, variant: "error" });
-    },
+    onError: (err: Error) => toast({ title: "Erro ao criar", description: err.message, variant: "error" }),
   });
 
   const updateMutation = useMutation({
@@ -169,9 +171,7 @@ export default function ItensReformaPage() {
       toast({ title: "Item atualizado!", variant: "success" });
       handleCloseForm();
     },
-    onError: (err: Error) => {
-      toast({ title: "Erro ao atualizar", description: err.message, variant: "error" });
-    },
+    onError: (err: Error) => toast({ title: "Erro ao atualizar", description: err.message, variant: "error" }),
   });
 
   const deactivateMutation = useMutation({
@@ -181,9 +181,7 @@ export default function ItensReformaPage() {
       toast({ title: "Item desativado", variant: "success" });
       setDeactivateId(null);
     },
-    onError: (err: Error) => {
-      toast({ title: "Erro ao desativar", description: err.message, variant: "error" });
-    },
+    onError: (err: Error) => toast({ title: "Erro ao desativar", description: err.message, variant: "error" }),
   });
 
   const hardDeleteMutation = useMutation({
@@ -199,9 +197,8 @@ export default function ItensReformaPage() {
       toast({ title: "Item excluído permanentemente", variant: "success" });
       setHardDeleteId(null);
     },
-    onError: (err: Error) => {
-      toast({ title: "Não foi possível excluir", description: err.message, variant: "error" });
-    },
+    onError: (err: Error) =>
+      toast({ title: "Não foi possível excluir", description: err.message, variant: "error" }),
   });
 
   const handleEdit = (item: any) => {
@@ -228,25 +225,12 @@ export default function ItensReformaPage() {
     setEditItem(null);
     setPctMedium("");
     setPctHigh("");
-    reset({
-      name: "",
-      description: "",
-      category: undefined,
-      unit: "UNIT",
-      priceLow: "",
-      priceMedium: "",
-      priceHigh: "",
-      isActive: true,
-      sortOrder: 0,
-    });
+    reset({ name: "", description: "", category: undefined, unit: "UNIT", priceLow: "", priceMedium: "", priceHigh: "", isActive: true, sortOrder: 0 });
   };
 
   const onSubmit = (data: ReformItemInput) => {
-    if (editItem) {
-      updateMutation.mutate({ id: editItem.id, data });
-    } else {
-      createMutation.mutate(data);
-    }
+    if (editItem) updateMutation.mutate({ id: editItem.id, data });
+    else createMutation.mutate(data);
   };
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
@@ -254,54 +238,33 @@ export default function ItensReformaPage() {
   if (isLoading) return <LoadingPage />;
 
   return (
-    <div className="space-y-5">
-      <PageHeader
-        title="Itens de Reforma"
-        description="Catálogo de serviços e materiais com preços por padrão"
-        actions={
-          <Button size="sm" onClick={() => setShowForm(true)}>
-            <Plus className="h-4 w-4" />
-            Novo Item
-          </Button>
-        }
-      />
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="py-3">
-          <div className="flex flex-wrap gap-3 items-center">
-            <div className="relative flex-1 min-w-52">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                className="pl-9"
-                placeholder="Buscar item..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <Select
-              className="w-44"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              options={[
-                { value: "", label: "Todas as categorias" },
-                ...CATEGORIES.map((cat) => ({ value: cat, label: CATEGORY_LABELS[cat] })),
-              ]}
-            />
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={activeOnly}
-                onChange={(e) => setActiveOnly(e.target.checked)}
-                className="rounded border-gray-300"
-              />
-              Somente ativos
-            </label>
+    <>
+      <div className="flex justify-between items-center">
+        <div className="flex flex-wrap gap-3 items-center flex-1">
+          <div className="relative flex-1 min-w-52">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input className="pl-9" placeholder="Buscar item..." value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
-        </CardContent>
-      </Card>
+          <Select
+            className="w-44"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            options={[
+              { value: "", label: "Todas as categorias" },
+              ...CATEGORIES.map((cat) => ({ value: cat, label: CATEGORY_LABELS[cat] })),
+            ]}
+          />
+          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+            <input type="checkbox" checked={activeOnly} onChange={(e) => setActiveOnly(e.target.checked)} className="rounded border-gray-300" />
+            Somente ativos
+          </label>
+        </div>
+        <Button size="sm" className="ml-3" onClick={() => setShowForm(true)}>
+          <Plus className="h-4 w-4" />
+          Novo Item
+        </Button>
+      </div>
 
-      {/* Table */}
       <Card>
         <CardContent className="p-0">
           {items.length === 0 ? (
@@ -332,27 +295,15 @@ export default function ItensReformaPage() {
                   <TableRow key={item.id} className={!item.isActive ? "opacity-50" : ""}>
                     <TableCell>
                       <p className="font-medium text-gray-900">{item.name}</p>
-                      {item.description && (
-                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{item.description}</p>
-                      )}
+                      {item.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{item.description}</p>}
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm text-gray-600">
-                        {item.customCategory || CATEGORY_LABELS[item.category]}
-                      </span>
+                      <span className="text-sm text-gray-600">{item.customCategory || CATEGORY_LABELS[item.category]}</span>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600">
-                      {UNIT_LABELS[item.unit]}
-                    </TableCell>
-                    <TableCell className="text-right text-sm text-gray-700">
-                      {formatCurrency(item.priceLow)}
-                    </TableCell>
-                    <TableCell className="text-right text-sm text-gray-700">
-                      {formatCurrency(item.priceMedium)}
-                    </TableCell>
-                    <TableCell className="text-right text-sm font-medium text-gray-900">
-                      {formatCurrency(item.priceHigh)}
-                    </TableCell>
+                    <TableCell className="text-sm text-gray-600">{UNIT_LABELS[item.unit]}</TableCell>
+                    <TableCell className="text-right text-sm text-gray-700">{formatCurrency(item.priceLow)}</TableCell>
+                    <TableCell className="text-right text-sm text-gray-700">{formatCurrency(item.priceMedium)}</TableCell>
+                    <TableCell className="text-right text-sm font-medium text-gray-900">{formatCurrency(item.priceHigh)}</TableCell>
                     <TableCell>
                       <Badge variant={item.isActive ? ("success" as const) : ("default" as const)}>
                         {item.isActive ? "Ativo" : "Inativo"}
@@ -360,30 +311,15 @@ export default function ItensReformaPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => handleEdit(item)}
-                        >
+                        <Button variant="ghost" size="icon-sm" onClick={() => handleEdit(item)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
                         {item.isActive && (
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            className="text-amber-500 hover:text-amber-700"
-                            onClick={() => setDeactivateId(item.id)}
-                          >
+                          <Button variant="ghost" size="icon-sm" className="text-amber-500 hover:text-amber-700" onClick={() => setDeactivateId(item.id)}>
                             <PowerOff className="h-3.5 w-3.5" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          className="text-red-500 hover:text-red-700"
-                          onClick={() => setHardDeleteId(item.id)}
-                          title="Excluir permanentemente"
-                        >
+                        <Button variant="ghost" size="icon-sm" className="text-red-500 hover:text-red-700" onClick={() => setHardDeleteId(item.id)} title="Excluir permanentemente">
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
@@ -409,12 +345,10 @@ export default function ItensReformaPage() {
               </label>
               <Input {...register("name")} placeholder="Ex: Pintura interna tinta PVA" error={errors.name?.message} />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
               <Textarea {...register("description")} rows={2} placeholder="Detalhes do serviço ou material..." />
             </div>
-
             <input type="hidden" {...register("category")} />
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -427,10 +361,7 @@ export default function ItensReformaPage() {
                   error={(errors.category as any)?.message}
                   options={[
                     { value: "", label: "Selecione..." },
-                    ...CATEGORIES.filter((c) => c !== "OTHERS").map((cat) => ({
-                      value: cat,
-                      label: CATEGORY_LABELS[cat],
-                    })),
+                    ...CATEGORIES.filter((c) => c !== "OTHERS").map((cat) => ({ value: cat, label: CATEGORY_LABELS[cat] })),
                     ...customCats.map((cc) => ({ value: cc, label: cc })),
                     { value: "OTHERS", label: "+ Nova categoria..." },
                   ]}
@@ -438,62 +369,33 @@ export default function ItensReformaPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Unidade</label>
-                <Select
-                  {...register("unit")}
-                  options={UNITS.map((u) => ({ value: u, label: UNIT_LABELS[u] }))}
-                />
+                <Select {...register("unit")} options={UNITS.map((u) => ({ value: u, label: UNIT_LABELS[u] }))} />
               </div>
             </div>
-
             {watchedCategory === "OTHERS" && !customCats.includes(watchedCustomCategory ?? "") && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Nome da nova categoria <span className="text-red-500">*</span>
                 </label>
-                <Input
-                  {...register("customCategory")}
-                  placeholder="Ex: Impermeabilização, Gesso, Serralheria..."
-                />
+                <Input {...register("customCategory")} placeholder="Ex: Impermeabilização, Gesso, Serralheria..." />
               </div>
             )}
-
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Preço Baixo <span className="text-red-500">*</span>
                 </label>
-                <Input
-                  {...register("priceLow")}
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0,00"
-                  error={errors.priceLow?.message}
-                />
+                <Input {...register("priceLow")} type="number" step="0.01" min="0" placeholder="0,00" error={errors.priceLow?.message} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Preço Médio <span className="text-red-500">*</span>
                 </label>
-                <Input
-                  {...register("priceMedium")}
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0,00"
-                  error={errors.priceMedium?.message}
-                />
+                <Input {...register("priceMedium")} type="number" step="0.01" min="0" placeholder="0,00" error={errors.priceMedium?.message} />
                 <div className="flex items-center gap-1 mt-1">
                   <input
-                    type="number"
-                    min="0"
-                    max="999"
-                    step="0.1"
-                    value={pctMedium}
-                    onChange={(e) => {
-                      setPctMedium(e.target.value);
-                      applyPct(e.target.value, "priceMedium");
-                    }}
+                    type="number" min="0" max="999" step="0.1" value={pctMedium}
+                    onChange={(e) => { setPctMedium(e.target.value); applyPct(e.target.value, "priceMedium"); }}
                     placeholder="%"
                     className="w-16 h-7 px-2 rounded border border-gray-300 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#EA580C]"
                   />
@@ -504,25 +406,11 @@ export default function ItensReformaPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Preço Alto <span className="text-red-500">*</span>
                 </label>
-                <Input
-                  {...register("priceHigh")}
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0,00"
-                  error={errors.priceHigh?.message}
-                />
+                <Input {...register("priceHigh")} type="number" step="0.01" min="0" placeholder="0,00" error={errors.priceHigh?.message} />
                 <div className="flex items-center gap-1 mt-1">
                   <input
-                    type="number"
-                    min="0"
-                    max="999"
-                    step="0.1"
-                    value={pctHigh}
-                    onChange={(e) => {
-                      setPctHigh(e.target.value);
-                      applyPct(e.target.value, "priceHigh");
-                    }}
+                    type="number" min="0" max="999" step="0.1" value={pctHigh}
+                    onChange={(e) => { setPctHigh(e.target.value); applyPct(e.target.value, "priceHigh"); }}
                     placeholder="%"
                     className="w-16 h-7 px-2 rounded border border-gray-300 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#EA580C]"
                   />
@@ -530,32 +418,18 @@ export default function ItensReformaPage() {
                 </div>
               </div>
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ordem de exibição
-              </label>
-              <Input
-                {...register("sortOrder", { valueAsNumber: true })}
-                type="number"
-                min="0"
-                placeholder="0"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Ordem de exibição</label>
+              <Input {...register("sortOrder", { valueAsNumber: true })} type="number" min="0" placeholder="0" />
             </div>
-
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleCloseForm}>
-                Cancelar
-              </Button>
-              <Button type="submit" loading={isSaving}>
-                {editItem ? "Salvar Alterações" : "Criar Item"}
-              </Button>
+              <Button type="button" variant="outline" onClick={handleCloseForm}>Cancelar</Button>
+              <Button type="submit" loading={isSaving}>{editItem ? "Salvar Alterações" : "Criar Item"}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Deactivate confirm */}
       <ConfirmDialog
         open={!!deactivateId}
         onOpenChange={(open) => !open && setDeactivateId(null)}
@@ -566,18 +440,362 @@ export default function ItensReformaPage() {
         loading={deactivateMutation.isPending}
         variant="danger"
       />
-
-      {/* Hard delete confirm */}
       <ConfirmDialog
         open={!!hardDeleteId}
         onOpenChange={(open) => !open && setHardDeleteId(null)}
         title="Excluir permanentemente?"
-        description="Essa ação não pode ser desfeita. O item será removido do catálogo. Se já foi usado em algum orçamento, a exclusão será bloqueada — nesse caso, apenas desative."
+        description="Essa ação não pode ser desfeita. O item será removido do catálogo. Se já foi usado em algum orçamento, a exclusão será bloqueada."
         confirmLabel="Excluir definitivamente"
         onConfirm={() => hardDeleteId && hardDeleteMutation.mutate(hardDeleteId)}
         loading={hardDeleteMutation.isPending}
         variant="danger"
       />
+    </>
+  );
+}
+
+// ─── Packages Section ─────────────────────────────────────────────────────────
+
+function PackagesSection() {
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [editPkg, setEditPkg] = useState<any | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["reform-packages", search],
+    queryFn: () =>
+      api.reformPackages.list({ ...(search && { search }), activeOnly: "false" }) as Promise<any>,
+  });
+
+  const packages = Array.isArray(data) ? data : [];
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    formState: { errors },
+  } = useForm<ReformPackageInput>({
+    resolver: zodResolver(reformPackageSchema),
+    defaultValues: { isActive: true, sortOrder: 0, items: [] },
+  });
+
+  const { fields, append, remove } = useFieldArray({ control, name: "items" });
+
+  const createMutation = useMutation({
+    mutationFn: (data: ReformPackageInput) => api.reformPackages.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reform-packages"] });
+      toast({ title: "Ambiente criado!", variant: "success" });
+      handleCloseForm();
+    },
+    onError: (err: Error) => toast({ title: "Erro ao criar", description: err.message, variant: "error" }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: ReformPackageInput }) =>
+      api.reformPackages.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reform-packages"] });
+      toast({ title: "Ambiente atualizado!", variant: "success" });
+      handleCloseForm();
+    },
+    onError: (err: Error) => toast({ title: "Erro ao atualizar", description: err.message, variant: "error" }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.reformPackages.delete(id, true),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reform-packages"] });
+      toast({ title: "Ambiente excluído", variant: "success" });
+      setDeleteId(null);
+    },
+    onError: (err: Error) => toast({ title: "Erro ao excluir", description: err.message, variant: "error" }),
+  });
+
+  const handleEdit = (pkg: any) => {
+    setEditPkg(pkg);
+    reset({
+      name: pkg.name,
+      description: pkg.description ?? "",
+      category: pkg.category ?? "OTHERS",
+      customCategory: pkg.customCategory ?? "",
+      priceLow: pkg.priceLow,
+      priceMedium: pkg.priceMedium,
+      priceHigh: pkg.priceHigh,
+      isActive: pkg.isActive,
+      sortOrder: pkg.sortOrder,
+      items: (pkg.items ?? []).map((it: any) => ({
+        id: it.id,
+        name: it.name,
+        description: it.description ?? "",
+        quantity: it.quantity,
+        unit: it.unit,
+        sortOrder: it.sortOrder,
+      })),
+    });
+    setShowForm(true);
+  };
+
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setEditPkg(null);
+    reset({ name: "", description: "", category: "OTHERS", customCategory: "", priceLow: 0, priceMedium: 0, priceHigh: 0, isActive: true, sortOrder: 0, items: [] });
+  };
+
+  const onSubmit = (data: ReformPackageInput) => {
+    if (editPkg) updateMutation.mutate({ id: editPkg.id, data });
+    else createMutation.mutate(data);
+  };
+
+  const isSaving = createMutation.isPending || updateMutation.isPending;
+
+  if (isLoading) return <LoadingPage />;
+
+  return (
+    <>
+      <div className="flex justify-between items-center">
+        <div className="relative flex-1 min-w-52 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input className="pl-9" placeholder="Buscar ambiente..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <Button size="sm" className="ml-3" onClick={() => setShowForm(true)}>
+          <Plus className="h-4 w-4" />
+          Novo Ambiente
+        </Button>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          {packages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <LayoutGrid className="h-10 w-10 text-gray-300" />
+              <p className="text-sm text-gray-500">Nenhum ambiente cadastrado.</p>
+              <Button size="sm" onClick={() => setShowForm(true)}>
+                <Plus className="h-4 w-4" />
+                Criar Primeiro Ambiente
+              </Button>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome do Ambiente</TableHead>
+                  <TableHead>Itens incluídos</TableHead>
+                  <TableHead className="text-right">Valor Baixo</TableHead>
+                  <TableHead className="text-right">Valor Médio</TableHead>
+                  <TableHead className="text-right">Valor Alto</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-16">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {packages.map((pkg: any) => (
+                  <TableRow key={pkg.id} className={!pkg.isActive ? "opacity-50" : ""}>
+                    <TableCell>
+                      <p className="font-medium text-gray-900">{pkg.name}</p>
+                      {pkg.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{pkg.description}</p>}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {(pkg.items ?? []).slice(0, 4).map((it: any) => (
+                          <span key={it.id} className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                            {it.name}
+                          </span>
+                        ))}
+                        {(pkg.items ?? []).length > 4 && (
+                          <span className="text-xs text-gray-400">+{pkg.items.length - 4} mais</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right text-sm text-gray-700">{formatCurrency(pkg.priceLow)}</TableCell>
+                    <TableCell className="text-right text-sm text-gray-700">{formatCurrency(pkg.priceMedium)}</TableCell>
+                    <TableCell className="text-right text-sm font-medium text-gray-900">{formatCurrency(pkg.priceHigh)}</TableCell>
+                    <TableCell>
+                      <Badge variant={pkg.isActive ? ("success" as const) : ("default" as const)}>
+                        {pkg.isActive ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon-sm" onClick={() => handleEdit(pkg)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon-sm" className="text-red-500 hover:text-red-700" onClick={() => setDeleteId(pkg.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Package Form Dialog */}
+      <Dialog open={showForm} onOpenChange={(open) => !open && handleCloseForm()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editPkg ? "Editar Ambiente" : "Novo Ambiente"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            {/* Basic info */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome do Ambiente <span className="text-red-500">*</span>
+                </label>
+                <Input {...register("name")} placeholder="Ex: Banheiro Completo, Cozinha, Sala..." error={errors.name?.message} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                <Textarea {...register("description")} rows={2} placeholder="Descreva o que está incluído neste ambiente..." />
+              </div>
+            </div>
+
+            {/* Prices */}
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                Valor Total do Ambiente <span className="text-red-500">*</span>
+              </p>
+              <p className="text-xs text-gray-400 mb-3">
+                Informe o valor total do ambiente completo. Os preços individuais dos itens não aparecerão no orçamento.
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Padrão Baixo</label>
+                  <Input {...register("priceLow", { valueAsNumber: true })} type="number" step="0.01" min="0" placeholder="0,00" error={errors.priceLow?.message} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Padrão Médio</label>
+                  <Input {...register("priceMedium", { valueAsNumber: true })} type="number" step="0.01" min="0" placeholder="0,00" error={errors.priceMedium?.message} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Padrão Alto</label>
+                  <Input {...register("priceHigh", { valueAsNumber: true })} type="number" step="0.01" min="0" placeholder="0,00" error={errors.priceHigh?.message} />
+                </div>
+              </div>
+            </div>
+
+            {/* Items list */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-gray-700">Itens do Ambiente</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ name: "", description: "", quantity: 1, unit: "UNIT", sortOrder: fields.length })}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Adicionar Item
+                </Button>
+              </div>
+              <p className="text-xs text-gray-400 mb-3">
+                Liste os serviços e materiais incluídos. Os valores individuais não aparecem — apenas o total do ambiente.
+              </p>
+              {fields.length === 0 ? (
+                <div className="border border-dashed border-gray-200 rounded-lg py-6 text-center">
+                  <p className="text-sm text-gray-400">Nenhum item adicionado ainda.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="flex gap-2 items-start bg-gray-50 rounded-lg p-3">
+                      <div className="flex-1">
+                        <Input
+                          {...register(`items.${index}.name`)}
+                          placeholder="Ex: Demolição das paredes, Revestimento piso..."
+                          error={(errors.items?.[index]?.name as any)?.message}
+                        />
+                      </div>
+                      <div className="w-20">
+                        <Input {...register(`items.${index}.quantity`, { valueAsNumber: true })} type="number" step="0.01" min="0.01" placeholder="Qtd" />
+                      </div>
+                      <div className="w-24">
+                        <Select
+                          {...register(`items.${index}.unit`)}
+                          options={UNITS.map((u) => ({ value: u, label: UNIT_LABELS[u] }))}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-red-400 hover:text-red-600 mt-1"
+                        onClick={() => remove(index)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleCloseForm}>Cancelar</Button>
+              <Button type="submit" loading={isSaving}>{editPkg ? "Salvar Alterações" : "Criar Ambiente"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Excluir ambiente?"
+        description="O ambiente e todos os seus itens serão removidos permanentemente."
+        confirmLabel="Excluir"
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+        loading={deleteMutation.isPending}
+        variant="danger"
+      />
+    </>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+export default function ItensReformaPage() {
+  const [tab, setTab] = useState<"items" | "packages">("items");
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        title="Itens de Reforma"
+        description="Catálogo de serviços, materiais e ambientes completos"
+      />
+
+      {/* Tab toggle */}
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-lg w-fit">
+        <button
+          type="button"
+          onClick={() => setTab("items")}
+          className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            tab === "items" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <List className="h-4 w-4" />
+          Itens Individuais
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("packages")}
+          className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            tab === "packages" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <LayoutGrid className="h-4 w-4" />
+          Ambientes
+        </button>
+      </div>
+
+      {tab === "items" ? <ItemsSection /> : <PackagesSection />}
     </div>
   );
 }

@@ -165,6 +165,32 @@ export type BudgetInput = z.infer<typeof budgetSchema>;
 export type BudgetItemInput = z.infer<typeof budgetItemSchema>;
 export type BudgetExtraItemInput = z.infer<typeof budgetExtraItemSchema>;
 
+// ── Reform Packages (Ambientes) ───────────────────────────────
+export const reformPackageItemSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Nome do item é obrigatório"),
+  description: z.string().optional().nullable(),
+  quantity: z.coerce.number().positive().default(1),
+  unit: z.enum(["UNIT", "SQM", "M", "ML", "DAILY", "SERVICE", "POINT", "HOUR"]).default("UNIT"),
+  sortOrder: z.number().int().default(0),
+});
+
+export const reformPackageSchema = z.object({
+  name: z.string().min(2, "Nome deve ter ao menos 2 caracteres"),
+  description: z.string().optional().nullable(),
+  category: z.string().optional().nullable(),
+  customCategory: z.string().optional().nullable(),
+  priceLow: z.coerce.number().min(0, "Valor deve ser positivo"),
+  priceMedium: z.coerce.number().min(0, "Valor deve ser positivo"),
+  priceHigh: z.coerce.number().min(0, "Valor deve ser positivo"),
+  isActive: z.boolean().default(true),
+  sortOrder: z.number().int().default(0),
+  items: z.array(reformPackageItemSchema).default([]),
+});
+
+export type ReformPackageItemInput = z.infer<typeof reformPackageItemSchema>;
+export type ReformPackageInput = z.infer<typeof reformPackageSchema>;
+
 // ── Employees ─────────────────────────────────────────────────
 export const employeeSchema = z.object({
   name: z.string().min(2, "Nome é obrigatório"),

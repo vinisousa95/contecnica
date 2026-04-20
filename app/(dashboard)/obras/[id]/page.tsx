@@ -23,7 +23,7 @@ import { toast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Pencil, MapPin, Calendar, DollarSign,
   ArrowDownCircle, ArrowUpCircle, Plus, CheckCircle2,
-  Circle, Eye, EyeOff, Trash2, Link2, ListChecks, RefreshCw, Wrench,
+  Circle, Eye, EyeOff, Trash2, Link2, ListChecks, RefreshCw, Wrench, Users, Car,
 } from "lucide-react";
 
 async function apiFetch(url: string, options?: RequestInit) {
@@ -31,6 +31,102 @@ async function apiFetch(url: string, options?: RequestInit) {
   const json = await res.json();
   if (!res.ok) throw new Error(json.error ?? "Erro");
   return json.data;
+}
+
+// ── Equipe Section ────────────────────────────────────────────
+const ASSIGNMENT_STATUS_LABELS: Record<string, string> = {
+  SCHEDULED: "Agendado",
+  IN_PROGRESS: "Em Andamento",
+  COMPLETED: "Concluído",
+  CANCELLED: "Cancelado",
+};
+const ASSIGNMENT_STATUS_COLORS: Record<string, string> = {
+  SCHEDULED: "bg-blue-100 text-blue-700",
+  IN_PROGRESS: "bg-green-100 text-green-700",
+  COMPLETED: "bg-gray-100 text-gray-500",
+  CANCELLED: "bg-red-100 text-red-500",
+};
+
+function EquipeSection({ projectId }: { projectId: string }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["assignments", projectId],
+    queryFn: () => apiFetch(`/api/v1/assignments?projectId=${projectId}&limit=50`),
+  });
+
+  const assignments: any[] = Array.isArray(data) ? data : (data?.data ?? []);
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Users className="h-4 w-4 text-[#EA580C]" />
+            Equipe na Obra ({assignments.length})
+          </CardTitle>
+          <Button size="sm" asChild>
+            <Link href={`/operacional/novo?projectId=${projectId}`}>
+              <Plus className="h-4 w-4" />
+              Agendar
+            </Link>
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        {isLoading ? (
+          <p className="text-sm text-gray-400 text-center py-6">Carregando...</p>
+        ) : assignments.length === 0 ? (
+          <div className="text-center py-8 text-sm text-gray-400">
+            <Users className="h-8 w-8 mx-auto mb-2 text-gray-200" />
+            Nenhum deslocamento agendado para esta obra.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Funcionário</TableHead>
+                <TableHead>RG</TableHead>
+                <TableHead>Veículo</TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead>Saída</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {assignments.map((a: any) => (
+                <TableRow key={a.id}>
+                  <TableCell>
+                    <p className="font-medium text-gray-900">{a.employee?.name}</p>
+                    {a.employee?.role && <p className="text-xs text-gray-400">{a.employee.role}</p>}
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-600">{a.employee?.rg ?? "—"}</TableCell>
+                  <TableCell>
+                    {a.vehicle ? (
+                      <div className="flex items-center gap-1.5">
+                        <Car className="h-3.5 w-3.5 text-gray-400" />
+                        <span className="text-sm text-gray-700">{a.vehicle.name}</span>
+                        {a.vehicle.plate && <span className="text-xs text-gray-400">· {a.vehicle.plate}</span>}
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-400">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-700">
+                    {a.date ? formatDate(a.date) : "—"}
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-600">{a.departureTime ?? "—"}</TableCell>
+                  <TableCell>
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${ASSIGNMENT_STATUS_COLORS[a.status] ?? "bg-gray-100 text-gray-600"}`}>
+                      {ASSIGNMENT_STATUS_LABELS[a.status] ?? a.status}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 // ── Execução Section ─────────────────────────────────────────
@@ -628,6 +724,9 @@ export default function ObraDetailPage({ params }: { params: { id: string } }) {
           </CardContent>
         </Card>
       )}
+
+      {/* Equipe na Obra */}
+      <EquipeSection projectId={params.id} />
 
       {/* Execução da Obra */}
       <ExecucaoSection projectId={params.id} />

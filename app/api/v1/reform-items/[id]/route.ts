@@ -22,7 +22,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         priceLow: parseFloat(priceLow),
         priceMedium: parseFloat(priceMedium),
         priceHigh: parseFloat(priceHigh),
-      },
+      } as any,
     });
 
     return apiSuccess({
@@ -40,6 +40,25 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
+
+  const { searchParams } = new URL(request.url);
+  const hard = searchParams.get("hard") === "true";
+
+  if (hard) {
+    try {
+      const inUse = await prisma.budgetItem.count({ where: { reformItemId: params.id } });
+      if (inUse > 0) {
+        return apiError(
+          `Não é possível excluir: item já usado em ${inUse} orçamento(s). Desative-o para manter o histórico.`
+        );
+      }
+      await prisma.reformItem.delete({ where: { id: params.id } });
+      return apiSuccess({ message: "Item excluído permanentemente" });
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code === "P2025") return apiError("Item não encontrado", 404);
+      return apiError("Erro ao excluir item", 500);
+    }
+  }
 
   // Soft-delete — apenas desativa
   try {

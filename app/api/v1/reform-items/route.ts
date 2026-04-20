@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
         priceLow: parseFloat(priceLow),
         priceMedium: parseFloat(priceMedium),
         priceHigh: parseFloat(priceHigh),
-      },
+      } as any,
     });
 
     return apiSuccess({

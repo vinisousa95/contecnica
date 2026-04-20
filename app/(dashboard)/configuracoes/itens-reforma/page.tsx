@@ -19,7 +19,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { LoadingPage } from "@/components/ui/loading";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Plus, HardHat, Pencil, PowerOff, Search } from "lucide-react";
+import { Plus, HardHat, Pencil, PowerOff, Search, Trash2 } from "lucide-react";
 
 const CATEGORY_LABELS: Record<string, string> = {
   DEMOLITION: "Demolição",
@@ -57,6 +57,7 @@ export default function ItensReformaPage() {
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState<any | null>(null);
   const [deactivateId, setDeactivateId] = useState<string | null>(null);
+  const [hardDeleteId, setHardDeleteId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["reform-items", search, category, activeOnly],
@@ -182,6 +183,24 @@ export default function ItensReformaPage() {
     },
     onError: (err: Error) => {
       toast({ title: "Erro ao desativar", description: err.message, variant: "error" });
+    },
+  });
+
+  const hardDeleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/v1/reform-items/${id}?hard=true`, { method: "DELETE" });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error ?? "Erro ao excluir");
+      return json.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reform-items"] });
+      queryClient.invalidateQueries({ queryKey: ["reform-items-custom-cats"] });
+      toast({ title: "Item excluído permanentemente", variant: "success" });
+      setHardDeleteId(null);
+    },
+    onError: (err: Error) => {
+      toast({ title: "Não foi possível excluir", description: err.message, variant: "error" });
     },
   });
 
@@ -358,6 +377,15 @@ export default function ItensReformaPage() {
                             <PowerOff className="h-3.5 w-3.5" />
                           </Button>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="text-red-500 hover:text-red-700"
+                          onClick={() => setHardDeleteId(item.id)}
+                          title="Excluir permanentemente"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -536,6 +564,18 @@ export default function ItensReformaPage() {
         confirmLabel="Desativar"
         onConfirm={() => deactivateId && deactivateMutation.mutate(deactivateId)}
         loading={deactivateMutation.isPending}
+        variant="danger"
+      />
+
+      {/* Hard delete confirm */}
+      <ConfirmDialog
+        open={!!hardDeleteId}
+        onOpenChange={(open) => !open && setHardDeleteId(null)}
+        title="Excluir permanentemente?"
+        description="Essa ação não pode ser desfeita. O item será removido do catálogo. Se já foi usado em algum orçamento, a exclusão será bloqueada — nesse caso, apenas desative."
+        confirmLabel="Excluir definitivamente"
+        onConfirm={() => hardDeleteId && hardDeleteMutation.mutate(hardDeleteId)}
+        loading={hardDeleteMutation.isPending}
         variant="danger"
       />
     </div>

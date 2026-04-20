@@ -71,14 +71,29 @@ export default function ItensReformaPage() {
   const { data: customCatsData } = useQuery({
     queryKey: ["reform-items-custom-cats"],
     queryFn: async () => {
-      const res = await fetch("/api/v1/reform-items/categories");
-      const json = await res.json();
-      return json.data as string[];
+      try {
+        const res = await fetch("/api/v1/reform-items/categories");
+        if (!res.ok) return [] as string[];
+        const json = await res.json();
+        return (json.data ?? []) as string[];
+      } catch {
+        return [] as string[];
+      }
     },
+    staleTime: 0,
   });
-  const customCats: string[] = customCatsData ?? [];
 
   const items = Array.isArray(data) ? data : [];
+
+  // Union: API-provided custom cats + any custom cat present in currently loaded items
+  const customCats: string[] = Array.from(
+    new Set([
+      ...(customCatsData ?? []),
+      ...(items as any[])
+        .map((i) => i.customCategory)
+        .filter((c: unknown): c is string => typeof c === "string" && c.trim().length > 0),
+    ])
+  ).sort();
 
   const [pctMedium, setPctMedium] = useState<string>("");
   const [pctHigh, setPctHigh] = useState<string>("");

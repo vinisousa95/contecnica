@@ -35,7 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const budget = await prisma.budget.findFirst({
       where: { id: body.importBudgetId },
       include: {
-        items: { include: { reformItem: true } },
+        items: { include: { reformItem: true, reformPackage: true } as any },
         extraItems: true,
       },
     });
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     await prisma.projectTask.deleteMany({ where: { projectId: params.id } });
 
     const allItems = [
-      ...budget.items.map((it, i) => ({ name: it.reformItem.name, description: it.reformItem.description, order: i })),
+      ...budget.items.map((it: any, i) => ({ name: it.reformPackage?.name ?? it.reformItem?.name ?? "Item", description: it.reformItem?.description ?? null, order: i })),
       ...budget.extraItems.map((it, i) => ({ name: it.name, description: it.description ?? undefined, order: budget.items.length + i })),
     ];
 

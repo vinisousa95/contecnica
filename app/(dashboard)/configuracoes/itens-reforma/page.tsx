@@ -470,6 +470,7 @@ function PackageItemRow({
   catalogItems,
   register,
   control,
+  setValue,
   errors,
   onSelectItem,
   onRemove,
@@ -479,17 +480,29 @@ function PackageItemRow({
   catalogItems: any[];
   register: any;
   control: any;
+  setValue: any;
   errors: any;
   onSelectItem: (id: string) => void;
   onRemove: () => void;
   defaultReformItemId?: string;
 }) {
+  const [pctMedium, setPctMedium] = useState("");
+  const [pctHigh, setPctHigh] = useState("");
+
   const reformItemId = useWatch({ control, name: `items.${index}.reformItemId` }) ?? defaultReformItemId ?? "";
   const itemName = useWatch({ control, name: `items.${index}.name` }) ?? "";
   const quantity = useWatch({ control, name: `items.${index}.quantity` }) ?? 1;
   const priceLow = useWatch({ control, name: `items.${index}.unitPriceLow` });
   const priceMedium = useWatch({ control, name: `items.${index}.unitPriceMedium` });
   const priceHigh = useWatch({ control, name: `items.${index}.unitPriceHigh` });
+
+  const applyCustomPct = (pct: string, field: "unitPriceMedium" | "unitPriceHigh") => {
+    const base = parseFloat(String(priceLow));
+    const p = parseFloat(pct);
+    if (!isNaN(base) && base > 0 && !isNaN(p) && p >= 0) {
+      setValue(`items.${index}.${field}`, parseFloat((base * (1 + p / 100)).toFixed(2)));
+    }
+  };
 
   // "Custom" mode: no reformItemId but has a name
   const isCustom = !reformItemId && itemName.length > 0;
@@ -559,18 +572,42 @@ function PackageItemRow({
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            <Input
-              {...register(`items.${index}.unitPriceLow`, { valueAsNumber: true })}
-              type="number" step="0.01" min="0" placeholder="Preço Baixo"
-            />
-            <Input
-              {...register(`items.${index}.unitPriceMedium`, { valueAsNumber: true })}
-              type="number" step="0.01" min="0" placeholder="Preço Médio"
-            />
-            <Input
-              {...register(`items.${index}.unitPriceHigh`, { valueAsNumber: true })}
-              type="number" step="0.01" min="0" placeholder="Preço Alto"
-            />
+            <div>
+              <Input
+                {...register(`items.${index}.unitPriceLow`, { valueAsNumber: true })}
+                type="number" step="0.01" min="0" placeholder="Preço Baixo"
+              />
+            </div>
+            <div>
+              <Input
+                {...register(`items.${index}.unitPriceMedium`, { valueAsNumber: true })}
+                type="number" step="0.01" min="0" placeholder="Preço Médio"
+              />
+              <div className="flex items-center gap-1 mt-1">
+                <input
+                  type="number" min="0" max="999" step="0.1" value={pctMedium}
+                  onChange={(e) => { setPctMedium(e.target.value); applyCustomPct(e.target.value, "unitPriceMedium"); }}
+                  placeholder="%"
+                  className="w-14 h-7 px-2 rounded border border-gray-300 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#EA580C]"
+                />
+                <span className="text-xs text-gray-400">% acima do baixo</span>
+              </div>
+            </div>
+            <div>
+              <Input
+                {...register(`items.${index}.unitPriceHigh`, { valueAsNumber: true })}
+                type="number" step="0.01" min="0" placeholder="Preço Alto"
+              />
+              <div className="flex items-center gap-1 mt-1">
+                <input
+                  type="number" min="0" max="999" step="0.1" value={pctHigh}
+                  onChange={(e) => { setPctHigh(e.target.value); applyCustomPct(e.target.value, "unitPriceHigh"); }}
+                  placeholder="%"
+                  className="w-14 h-7 px-2 rounded border border-gray-300 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#EA580C]"
+                />
+                <span className="text-xs text-gray-400">% acima do baixo</span>
+              </div>
+            </div>
           </div>
           <p className="text-xs text-gray-400">
             Item avulso — não será salvo no catálogo. Para reutilizar, cadastre-o em "Itens Individuais".
@@ -928,6 +965,7 @@ function PackagesSection() {
                         catalogItems={catalogItems}
                         register={register}
                         control={control}
+                        setValue={setValue}
                         errors={errors}
                         onSelectItem={(itemId) => handleSelectCatalogItem(index, itemId)}
                         onRemove={() => remove(index)}

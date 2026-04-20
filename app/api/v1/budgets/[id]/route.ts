@@ -15,7 +15,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       client: { select: { id: true, name: true, phone: true, email: true, document: true } },
       createdBy: { select: { id: true, name: true } },
       items: {
-        include: { reformItem: true },
+        include: { reformItem: true, reformPackage: { include: { items: true } } } as any,
         orderBy: [{ reformItem: { category: "asc" } }, { reformItem: { sortOrder: "asc" } }],
       },
       extraItems: { orderBy: { sortOrder: "asc" } },
@@ -66,11 +66,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
           totalAmount,
           items: {
             create: items.map((i) => ({
-              reformItemId: i.reformItemId,
+              reformItemId: i.reformItemId ?? null,
+              reformPackageId: (i as any).reformPackageId ?? null,
+              name: (i as any).name ?? null,
               quantity: i.quantity,
               unitPrice: i.unitPrice,
               subtotal: i.subtotal,
-            })),
+            })) as any,
           },
           extraItems: {
             create: extraItems.map((e, idx) => ({
@@ -81,12 +83,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
               unitPrice: e.unitPrice,
               subtotal: e.subtotal,
               sortOrder: idx,
-            })),
+            })) as any,
           },
         },
         include: {
           client: { select: { id: true, name: true } },
-          items: { include: { reformItem: true } },
+          items: { include: { reformItem: true, reformPackage: { include: { items: true } } } as any },
           extraItems: true,
         },
       });

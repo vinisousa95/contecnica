@@ -308,7 +308,8 @@ model ReformPackage {
   sortOrder      Int                 @default(0) @map("sort_order")
   createdAt      DateTime            @default(now()) @map("created_at")
   updatedAt      DateTime            @updatedAt @map("updated_at")
-  items          ReformPackageItem[]
+  items       ReformPackageItem[]
+  budgetItems BudgetItem[]
 
   @@map("reform_packages")
 }
@@ -382,14 +383,17 @@ enum BudgetStatus {
 
 // Itens do catálogo selecionados no orçamento
 model BudgetItem {
-  id           String     @id @default(cuid())
-  budgetId     String     @map("budget_id")
-  budget       Budget     @relation(fields: [budgetId], references: [id], onDelete: Cascade)
-  reformItemId String     @map("reform_item_id")
-  reformItem   ReformItem @relation(fields: [reformItemId], references: [id])
-  quantity     Decimal    @db.Decimal(10, 3)
-  unitPrice    Decimal    @db.Decimal(10, 2) @map("unit_price")
-  subtotal     Decimal    @db.Decimal(12, 2)
+  id              String         @id @default(cuid())
+  budgetId        String         @map("budget_id")
+  budget          Budget         @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  reformItemId    String?        @map("reform_item_id")
+  reformItem      ReformItem?    @relation(fields: [reformItemId], references: [id])
+  reformPackageId String?        @map("reform_package_id")
+  reformPackage   ReformPackage? @relation(fields: [reformPackageId], references: [id])
+  name            String?
+  quantity        Decimal        @db.Decimal(10, 3)
+  unitPrice       Decimal        @db.Decimal(10, 2) @map("unit_price")
+  subtotal        Decimal        @db.Decimal(12, 2)
 
   @@map("budget_items")
 }

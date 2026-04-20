@@ -135,7 +135,9 @@ export const budgetExtraItemSchema = z.object({
 
 // ── Budget ────────────────────────────────────────────────────
 export const budgetItemSchema = z.object({
-  reformItemId: z.string().min(1),
+  reformItemId: z.string().optional().nullable(),
+  reformPackageId: z.string().optional().nullable(),
+  name: z.string().optional().nullable(),
   quantity: z.number().min(0.001, "Quantidade deve ser maior que 0"),
   unitPrice: z.number().min(0),
   subtotal: z.number(),

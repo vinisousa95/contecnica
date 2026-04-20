@@ -414,20 +414,21 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
   const repricedRef = useRef(false);
   useEffect(() => {
     if (repricedRef.current) {
-      watchedItems.forEach((item, idx) => {
-        const reformItem = reformItems.find((r) => r.id === item.reformItemId);
-        if (reformItem) {
-          const newPrice = getPriceForTier(reformItem, watchedTier);
-          setValue(`items.${idx}.unitPrice`, newPrice);
-          setValue(`items.${idx}.subtotal`, newPrice * item.quantity);
-        }
-      });
-      watchedExtras.forEach((extra, idx) => {
-        const pkg = reformPackages.find((p) => `Ambiente: ${p.name}` === extra.name);
-        if (pkg) {
-          const newPrice = getPriceForTier(pkg, watchedTier);
-          setValue(`extraItems.${idx}.unitPrice`, newPrice);
-          setValue(`extraItems.${idx}.subtotal`, newPrice * (extra.quantity ?? 1));
+      watchedItems.forEach((item: any, idx) => {
+        if (item.reformItemId) {
+          const reformItem = reformItems.find((r) => r.id === item.reformItemId);
+          if (reformItem) {
+            const newPrice = getPriceForTier(reformItem, watchedTier);
+            setValue(`items.${idx}.unitPrice`, newPrice);
+            setValue(`items.${idx}.subtotal`, newPrice * item.quantity);
+          }
+        } else if (item.reformPackageId) {
+          const pkg = reformPackages.find((p) => p.id === item.reformPackageId);
+          if (pkg) {
+            const newPrice = getPriceForTier(pkg, watchedTier);
+            setValue(`items.${idx}.unitPrice`, newPrice);
+            setValue(`items.${idx}.subtotal`, newPrice * (item.quantity ?? 1));
+          }
         }
       });
     }
@@ -442,17 +443,11 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
   const discountAmount = subtotalBeforeDiscount * ((watchedDiscount ?? 0) / 100);
   const grandTotal = subtotalBeforeDiscount - discountAmount;
 
-  const selectedItemIds = new Set(watchedItems.map((i) => i.reformItemId));
-
-  // Track package selections via name marker (Ambiente: <name>) in extras
-  const packageMarker = (name: string) => `Ambiente: ${name}`;
+  const selectedItemIds = new Set(watchedItems.filter((i) => i.reformItemId).map((i) => i.reformItemId!));
   const selectedPackageIds = new Set(
-    watchedExtras
-      .map((e) => {
-        const match = reformPackages.find((p) => packageMarker(p.name) === e.name);
-        return match?.id;
-      })
-      .filter(Boolean) as string[]
+    watchedItems
+      .filter((i: any) => i.reformPackageId)
+      .map((i: any) => i.reformPackageId as string)
   );
 
   const handleSelectItem = useCallback(
@@ -468,31 +463,29 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
         quantity: 1,
         unitPrice,
         subtotal: unitPrice,
-      });
+      } as any);
     },
     [watchedItems, watchedTier, appendItem, removeItem]
   );
 
   const handleSelectPackage = useCallback(
     (pkg: ReformPackage) => {
-      const marker = packageMarker(pkg.name);
-      const alreadyIdx = watchedExtras.findIndex((e) => e.name === marker);
+      const alreadyIdx = watchedItems.findIndex((i: any) => i.reformPackageId === pkg.id);
       if (alreadyIdx !== -1) {
-        removeExtra(alreadyIdx);
+        removeItem(alreadyIdx);
         return;
       }
       const total = getPriceForTier(pkg, watchedTier);
-      const itemsList = (pkg.items ?? []).map((it) => `• ${it.name}`).join("\n");
-      appendExtra({
-        name: marker,
-        description: itemsList || (pkg.description ?? ""),
+      appendItem({
+        reformItemId: null,
+        reformPackageId: pkg.id,
+        name: pkg.name,
         quantity: 1,
-        unit: "SERVICE",
         unitPrice: total,
         subtotal: total,
-      });
+      } as any);
     },
-    [watchedExtras, watchedTier, appendExtra, removeExtra]
+    [watchedItems, watchedTier, appendItem, removeItem]
   );
 
   const handleItemQuantityChange = (idx: number, qty: number) => {
@@ -683,18 +676,34 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {itemFields.map((field, idx) => {
-                    const ri = getReformItemData(field.reformItemId);
-                    const item = watchedItems[idx];
+                    const item = watchedItems[idx] as any;
+                    const ri = getReformItemData(item.reformItemId);
+                    const pkg = item.reformPackageId
+                      ? reformPackages.find((p) => p.id === item.reformPackageId)
+                      : null;
+                    const displayName = pkg ? pkg.name : (ri?.name ?? item.name ?? "Item");
+                    const isPackage = !!pkg;
                     return (
                       <tr key={field.id}>
                         <td className="py-2 pr-3">
-                          <p className="font-medium text-gray-900">{ri?.name ?? "Item"}</p>
-                          {ri?.description && (
+                          <div className="flex items-center gap-1.5">
+                            {isPackage && (
+                              <LayoutGrid className="h-3.5 w-3.5 text-orange-500 flex-shrink-0" />
+                            )}
+                            <p className="font-medium text-gray-900">{displayName}</p>
+                          </div>
+                          {isPackage && pkg?.items && pkg.items.length > 0 && (
+                            <p className="text-xs text-gray-400 mt-0.5 ml-5">
+                              Inclui: {pkg.items.slice(0, 3).map((i: any) => i.name).join(", ")}
+                              {pkg.items.length > 3 ? ` +${pkg.items.length - 3}` : ""}
+                            </p>
+                          )}
+                          {!isPackage && ri?.description && (
                             <p className="text-xs text-gray-500">{ri.description}</p>
                           )}
-                          <span className="text-xs text-gray-400">
-                            {ri ? CATEGORY_LABELS[ri.category] : ""}
-                          </span>
+                          {!isPackage && ri && (
+                            <span className="text-xs text-gray-400">{CATEGORY_LABELS[ri.category]}</span>
+                          )}
                         </td>
                         <td className="py-2 w-24">
                           <input
@@ -710,9 +719,12 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
                         </td>
                         <td className="py-2 text-right text-gray-700">
                           {formatCurrency(item?.unitPrice ?? 0)}
-                          <span className="text-xs text-gray-400 ml-1">
-                            /{ri ? UNIT_LABELS[ri.unit] : ""}
-                          </span>
+                          {!isPackage && ri && (
+                            <span className="text-xs text-gray-400 ml-1">/{UNIT_LABELS[ri.unit]}</span>
+                          )}
+                          {isPackage && (
+                            <span className="text-xs text-orange-400 ml-1">total</span>
+                          )}
                         </td>
                         <td className="py-2 text-right font-semibold text-gray-900">
                           {formatCurrency(item?.subtotal ?? 0)}

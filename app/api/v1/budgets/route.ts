@@ -86,11 +86,13 @@ export async function POST(request: NextRequest) {
         createdById: session.userId,
         items: {
           create: items.map((i) => ({
-            reformItemId: i.reformItemId,
+            reformItemId: i.reformItemId ?? null,
+            reformPackageId: (i as any).reformPackageId ?? null,
+            name: (i as any).name ?? null,
             quantity: i.quantity,
             unitPrice: i.unitPrice,
             subtotal: i.subtotal,
-          })),
+          })) as any,
         },
         extraItems: {
           create: extraItems.map((e, idx) => ({
@@ -101,12 +103,12 @@ export async function POST(request: NextRequest) {
             unitPrice: e.unitPrice,
             subtotal: e.subtotal,
             sortOrder: idx,
-          })),
+          })) as any,
         },
       },
       include: {
         client: { select: { id: true, name: true } },
-        items: { include: { reformItem: true } },
+        items: { include: { reformItem: true, reformPackage: { include: { items: true } } } as any },
         extraItems: true,
       },
     });
@@ -134,6 +136,18 @@ export function serializeBudget(b: any) {
             priceLow: Number(i.reformItem.priceLow),
             priceMedium: Number(i.reformItem.priceMedium),
             priceHigh: Number(i.reformItem.priceHigh),
+          }
+        : undefined,
+      reformPackage: i.reformPackage
+        ? {
+            ...i.reformPackage,
+            priceLow: Number(i.reformPackage.priceLow),
+            priceMedium: Number(i.reformPackage.priceMedium),
+            priceHigh: Number(i.reformPackage.priceHigh),
+            items: (i.reformPackage.items ?? []).map((pi: any) => ({
+              ...pi,
+              quantity: Number(pi.quantity),
+            })),
           }
         : undefined,
     })),

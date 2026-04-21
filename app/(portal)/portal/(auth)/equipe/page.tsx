@@ -95,29 +95,7 @@ export default function PortalEquipePage() {
                     {a.employee.rg && (
                       <span className="text-xs text-gray-500">RG: {a.employee.rg}</span>
                     )}
-                    {a.employee.phone && (
-                      <span className="text-xs text-gray-500">📞 {a.employee.phone}</span>
-                    )}
                   </div>
-                  {(() => {
-                    const addr = [
-                      a.employee.street &&
-                        `${a.employee.street}${a.employee.number ? `, ${a.employee.number}` : ""}`,
-                      a.employee.complement,
-                      a.employee.neighborhood,
-                      a.employee.city && a.employee.state
-                        ? `${a.employee.city} - ${a.employee.state}`
-                        : a.employee.city || a.employee.state,
-                      a.employee.zipCode && `CEP ${a.employee.zipCode}`,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ");
-                    return addr ? (
-                      <p className="text-xs text-gray-500 mt-1">
-                        <span className="font-medium">Endereço:</span> {addr}
-                      </p>
-                    ) : null;
-                  })()}
                 </div>
               </div>
 

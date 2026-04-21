@@ -216,21 +216,34 @@ function TeamSection({ projectId }: { projectId: string }) {
               <div className="w-9 h-9 rounded-full bg-[#EA580C]/10 flex items-center justify-center flex-shrink-0">
                 <Users className="h-4 w-4 text-[#EA580C]" />
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-900">{a.employee.name}</p>
                 {a.employee.role && <p className="text-xs text-gray-500">{a.employee.role}</p>}
-                <div className="flex flex-wrap gap-3 mt-1">
+                <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
+                  {a.employee.cpf && (
+                    <span className="text-xs text-gray-500">CPF: {a.employee.cpf}</span>
+                  )}
                   {a.employee.rg && (
-                    <span className="flex items-center gap-1 text-xs text-gray-500">
-                      RG: {a.employee.rg}
-                    </span>
+                    <span className="text-xs text-gray-500">RG: {a.employee.rg}</span>
                   )}
                   {a.employee.phone && (
-                    <span className="flex items-center gap-1 text-xs text-gray-500">
-                      📞 {a.employee.phone}
-                    </span>
+                    <span className="text-xs text-gray-500">📞 {a.employee.phone}</span>
                   )}
                 </div>
+                {(() => {
+                  const addr = [
+                    a.employee.street && `${a.employee.street}${a.employee.number ? `, ${a.employee.number}` : ""}`,
+                    a.employee.complement,
+                    a.employee.neighborhood,
+                    a.employee.city && a.employee.state ? `${a.employee.city} - ${a.employee.state}` : (a.employee.city || a.employee.state),
+                    a.employee.zipCode && `CEP ${a.employee.zipCode}`,
+                  ].filter(Boolean).join(" · ");
+                  return addr ? (
+                    <p className="text-xs text-gray-500 mt-1">
+                      <span className="font-medium">Endereço:</span> {addr}
+                    </p>
+                  ) : null;
+                })()}
               </div>
             </div>
 

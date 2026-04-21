@@ -504,9 +504,17 @@ model BudgetExtraItem {
 model Employee {
   id            String         @id @default(cuid())
   name          String
+  cpf           String?
   rg            String?
   phone         String?
   role          String?
+  street        String?
+  number        String?
+  complement    String?
+  neighborhood  String?
+  city          String?
+  state         String?
+  zipCode       String?        @map("zip_code")
   status        EmployeeStatus @default(ACTIVE)
   notes         String?
   createdAt     DateTime       @default(now()) @map("created_at")

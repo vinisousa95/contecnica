@@ -30,7 +30,23 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     },
     orderBy: { date: "asc" },
     include: {
-      employee: { select: { id: true, name: true, rg: true, phone: true, role: true } },
+      employee: {
+        select: {
+          id: true,
+          name: true,
+          cpf: true,
+          rg: true,
+          phone: true,
+          role: true,
+          street: true,
+          number: true,
+          complement: true,
+          neighborhood: true,
+          city: true,
+          state: true,
+          zipCode: true,
+        },
+      },
       vehicle: { select: { id: true, name: true, model: true, plate: true, color: true, type: true } },
     },
   });

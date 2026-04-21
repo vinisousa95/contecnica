@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       take: limit,
       orderBy: { date: "desc" },
       include: {
-        employee: { select: { id: true, name: true, role: true, rg: true } },
+        employee: { select: { id: true, name: true, role: true, cpf: true, rg: true } },
         vehicle: { select: { id: true, name: true, plate: true, color: true, model: true } },
         project: { select: { id: true, name: true } },
       },

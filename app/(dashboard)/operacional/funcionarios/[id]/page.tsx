@@ -101,12 +101,39 @@ export default function FuncionarioDetailPage({ params }: { params: { id: string
                   <p className="text-sm font-medium text-gray-800">{employee.role}</p>
                 </div>
               )}
+              {employee.cpf && (
+                <div>
+                  <p className="text-xs text-gray-500">CPF</p>
+                  <p className="text-sm text-gray-700">{employee.cpf}</p>
+                </div>
+              )}
+              {employee.rg && (
+                <div>
+                  <p className="text-xs text-gray-500">RG</p>
+                  <p className="text-sm text-gray-700">{employee.rg}</p>
+                </div>
+              )}
               {employee.phone && (
                 <div className="flex items-center gap-2">
                   <Phone className="h-3.5 w-3.5 text-gray-400" />
                   <p className="text-sm text-gray-700">{formatPhone(employee.phone)}</p>
                 </div>
               )}
+              {(() => {
+                const addr = [
+                  employee.street && `${employee.street}${employee.number ? `, ${employee.number}` : ""}`,
+                  employee.complement,
+                  employee.neighborhood,
+                  employee.city && employee.state ? `${employee.city} - ${employee.state}` : (employee.city || employee.state),
+                  employee.zipCode && `CEP ${employee.zipCode}`,
+                ].filter(Boolean).join(" · ");
+                return addr ? (
+                  <div>
+                    <p className="text-xs text-gray-500">Endereço</p>
+                    <p className="text-sm text-gray-700">{addr}</p>
+                  </div>
+                ) : null;
+              })()}
               <div>
                 <p className="text-xs text-gray-500">Cadastrado em</p>
                 <p className="text-sm text-gray-700">{formatDate(employee.createdAt)}</p>

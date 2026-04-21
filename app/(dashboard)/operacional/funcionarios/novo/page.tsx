@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
-import { maskPhone } from "@/lib/masks";
+import { maskPhone, maskCpfCnpj, maskCep } from "@/lib/masks";
 
 export default function NovoFuncionarioPage() {
   const router = useRouter();
@@ -22,9 +22,17 @@ export default function NovoFuncionarioPage() {
 
   const [form, setForm] = useState<EmployeeInput>({
     name: "",
+    cpf: "",
     rg: "",
     phone: "",
     role: "",
+    street: "",
+    number: "",
+    complement: "",
+    neighborhood: "",
+    city: "",
+    state: "",
+    zipCode: "",
     status: "ACTIVE",
     notes: "",
   });
@@ -55,8 +63,17 @@ export default function NovoFuncionarioPage() {
     if (!validate()) return;
     mutation.mutate({
       ...form,
+      cpf: form.cpf || null,
+      rg: form.rg || null,
       phone: form.phone || null,
       role: form.role || null,
+      street: form.street || null,
+      number: form.number || null,
+      complement: form.complement || null,
+      neighborhood: form.neighborhood || null,
+      city: form.city || null,
+      state: form.state || null,
+      zipCode: form.zipCode || null,
       notes: form.notes || null,
     });
   }
@@ -103,6 +120,14 @@ export default function NovoFuncionarioPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
+                label="CPF"
+                placeholder="000.000.000-00"
+                inputMode="numeric"
+                maxLength={14}
+                value={form.cpf ?? ""}
+                onChange={(e) => handleChange("cpf", maskCpfCnpj(e.target.value))}
+              />
+              <Input
                 label="RG"
                 placeholder="00.000.000-0"
                 value={form.rg ?? ""}
@@ -125,6 +150,59 @@ export default function NovoFuncionarioPage() {
                   { value: "INACTIVE", label: "Inativo" },
                 ]}
               />
+            </div>
+
+            <div className="pt-2">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Endereço</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Input
+                  label="CEP"
+                  placeholder="00000-000"
+                  inputMode="numeric"
+                  maxLength={9}
+                  value={form.zipCode ?? ""}
+                  onChange={(e) => handleChange("zipCode", maskCep(e.target.value))}
+                />
+                <div className="sm:col-span-2">
+                  <Input
+                    label="Rua"
+                    placeholder="Nome da rua"
+                    value={form.street ?? ""}
+                    onChange={(e) => handleChange("street", e.target.value)}
+                  />
+                </div>
+                <Input
+                  label="Número"
+                  placeholder="123"
+                  value={form.number ?? ""}
+                  onChange={(e) => handleChange("number", e.target.value)}
+                />
+                <Input
+                  label="Complemento"
+                  placeholder="Apto, bloco..."
+                  value={form.complement ?? ""}
+                  onChange={(e) => handleChange("complement", e.target.value)}
+                />
+                <Input
+                  label="Bairro"
+                  placeholder="Bairro"
+                  value={form.neighborhood ?? ""}
+                  onChange={(e) => handleChange("neighborhood", e.target.value)}
+                />
+                <Input
+                  label="Cidade"
+                  placeholder="Cidade"
+                  value={form.city ?? ""}
+                  onChange={(e) => handleChange("city", e.target.value)}
+                />
+                <Input
+                  label="Estado"
+                  placeholder="SP"
+                  maxLength={2}
+                  value={form.state ?? ""}
+                  onChange={(e) => handleChange("state", e.target.value.toUpperCase())}
+                />
+              </div>
             </div>
 
             <Textarea

@@ -13,11 +13,13 @@ import {
   LogOut,
   Building2,
   Wrench,
+  Users,
 } from "lucide-react";
 
 const navigation = [
   { label: "Resumo", href: "/portal/dashboard", icon: LayoutDashboard },
   { label: "Andamento", href: "/portal/andamento", icon: Clock },
+  { label: "Equipe na Obra", href: "/portal/equipe", icon: Users },
   { label: "Serviços Extras", href: "/portal/servicos-extras", icon: Wrench },
   { label: "Cobranças", href: "/portal/cobrancas", icon: ShoppingCart },
   { label: "Fotos", href: "/portal/fotos", icon: Image },

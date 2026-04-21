@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Contécnica",
+    "slug": "contecnica-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#1F2937"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.contecnica.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Usado para fotografar obras e notas fiscais.",
+        "NSPhotoLibraryUsageDescription": "Usado para selecionar fotos da galeria."
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-camera",
+      [
+        "expo-image-picker",
+        { "photosPermission": "Permite selecionar fotos da galeria." }
+      ]
+    ],
+    "scheme": "contecnica"
+  }
+}

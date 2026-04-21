@@ -57,6 +57,11 @@ const navigation: NavItem[] = [
     ],
   },
   {
+    label: "Funcionários",
+    href: "/operacional/funcionarios",
+    icon: Users,
+  },
+  {
     label: "Orçamentos",
     href: "/orcamentos",
     icon: FileText,
@@ -71,7 +76,6 @@ const navigation: NavItem[] = [
     icon: Truck,
     children: [
       { label: "Deslocamentos", href: "/operacional", icon: MapPin },
-      { label: "Funcionários", href: "/operacional/funcionarios", icon: Users },
       { label: "Veículos", href: "/operacional/veiculos", icon: Truck },
     ],
   },

@@ -48,9 +48,13 @@ const ASSIGNMENT_STATUS_COLORS: Record<string, string> = {
 };
 
 function EquipeSection({ projectId }: { projectId: string }) {
+  const today = new Date().toISOString().split("T")[0];
+  const [filterDate, setFilterDate] = useState(today);
+
   const { data, isLoading } = useQuery({
-    queryKey: ["assignments", projectId],
-    queryFn: () => apiFetch(`/api/v1/assignments?projectId=${projectId}&limit=50`),
+    queryKey: ["assignments", projectId, filterDate],
+    queryFn: () =>
+      apiFetch(`/api/v1/assignments?projectId=${projectId}&limit=100&from=${filterDate}&to=${filterDate}`),
   });
 
   const assignments: any[] = Array.isArray(data) ? data : (data?.data ?? []);
@@ -58,17 +62,25 @@ function EquipeSection({ projectId }: { projectId: string }) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <CardTitle className="text-sm flex items-center gap-2">
             <Users className="h-4 w-4 text-[#EA580C]" />
             Equipe na Obra ({assignments.length})
           </CardTitle>
-          <Button size="sm" asChild>
-            <Link href={`/operacional/novo?projectId=${projectId}`}>
-              <Plus className="h-4 w-4" />
-              Agendar
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={filterDate}
+              onChange={(e) => setFilterDate(e.target.value)}
+              className="text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#EA580C]/30"
+            />
+            <Button size="sm" asChild>
+              <Link href={`/operacional/novo?projectId=${projectId}`}>
+                <Plus className="h-4 w-4" />
+                Agendar
+              </Link>
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-0">

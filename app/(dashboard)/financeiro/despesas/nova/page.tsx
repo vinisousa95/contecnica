@@ -23,7 +23,7 @@ export default function NovaDespesaPage() {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast({ title: "Despesa cadastrada com sucesso!", variant: "success" });
-      router.push("/financeiro/despesas");
+      router.push(defaultProjectId ? `/obras/${defaultProjectId}` : "/financeiro/despesas");
     },
     onError: (err: Error) => {
       toast({ title: "Erro ao cadastrar despesa", description: err.message, variant: "error" });
@@ -37,7 +37,7 @@ export default function NovaDespesaPage() {
         description="Registre uma nova conta a pagar"
         actions={
           <Button variant="outline" size="sm" asChild>
-            <Link href="/financeiro/despesas">
+            <Link href={defaultProjectId ? `/obras/${defaultProjectId}` : "/financeiro/despesas"}>
               <ArrowLeft className="h-4 w-4" />
               Voltar
             </Link>

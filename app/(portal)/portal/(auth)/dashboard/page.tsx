@@ -6,7 +6,7 @@ import { LoadingPage } from "@/components/ui/loading";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import {
   HardHat, TrendingUp, Calendar, ChevronRight,
-  Clock, BarChart3, DollarSign, Wrench, AlertCircle,
+  Clock, BarChart3, DollarSign, Wrench, AlertCircle, ShoppingCart,
 } from "lucide-react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -154,12 +154,28 @@ export default function PortalDashboardPage() {
               iconColor="text-blue-600"
             />
             <StatCard
-              label="Gasto até agora"
-              value={formatCurrency(project.totalExpenses)}
-              sub="Total de despesas"
+              label="Total Gasto"
+              value={formatCurrency(project.totalExpenses ?? 0)}
+              sub="Material + serviços extras"
               icon={TrendingUp}
+              iconBg="bg-red-50"
+              iconColor="text-red-500"
+            />
+            <StatCard
+              label="Reembolso de Material"
+              value={formatCurrency(project.totalMaterial ?? 0)}
+              sub="Materiais da obra"
+              icon={ShoppingCart}
               iconBg="bg-amber-50"
               iconColor="text-amber-600"
+            />
+            <StatCard
+              label="Serviços Extras"
+              value={formatCurrency(project.totalExtraServices ?? 0)}
+              sub="Serviços aprovados"
+              icon={Wrench}
+              iconBg="bg-orange-50"
+              iconColor="text-[#EA580C]"
             />
           </div>
 

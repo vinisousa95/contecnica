@@ -29,10 +29,24 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
   if (!project) return apiError("Obra não encontrada", 404);
 
-  const totalExpenses = project.expenses.reduce((s, e) => s + Number(e.amount), 0);
+  const totalMaterial = project.expenses.reduce((s, e) => s + Number(e.amount), 0);
   const totalReceived = project.revenues
     .filter((r) => r.status === "RECEIVED")
     .reduce((s, r) => s + Number(r.amount), 0);
+
+  // Extra services accepted for this project
+  let totalExtraServices = 0;
+  try {
+    const extras = await (prisma as any).extraService.findMany({
+      where: { projectId: params.id, status: "ACCEPTED" },
+      select: { amount: true },
+    });
+    totalExtraServices = extras.reduce((s: number, e: any) => s + Number(e.amount), 0);
+  } catch {
+    totalExtraServices = 0;
+  }
+
+  const totalExpenses = totalMaterial + totalExtraServices;
 
   return apiSuccess({
     id: project.id,
@@ -53,6 +67,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     city: project.city,
     state: project.state,
     zipCode: project.zipCode,
+    totalMaterial,
+    totalExtraServices,
     totalExpenses,
     totalReceived,
     remaining: project.budget ? Number(project.budget) - totalExpenses : null,

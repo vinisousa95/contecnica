@@ -154,14 +154,6 @@ export default function PortalDashboardPage() {
               iconColor="text-blue-600"
             />
             <StatCard
-              label="Total Gasto"
-              value={formatCurrency(project.totalExpenses ?? 0)}
-              sub="Material + serviços extras"
-              icon={TrendingUp}
-              iconBg="bg-red-50"
-              iconColor="text-red-500"
-            />
-            <StatCard
               label="Reembolso de Material"
               value={formatCurrency(project.totalMaterial ?? 0)}
               sub="Materiais da obra"
@@ -176,6 +168,14 @@ export default function PortalDashboardPage() {
               icon={Wrench}
               iconBg="bg-orange-50"
               iconColor="text-[#EA580C]"
+            />
+            <StatCard
+              label="Total Gasto"
+              value={formatCurrency((project.budget ?? 0) + (project.totalMaterial ?? 0) + (project.totalExtraServices ?? 0))}
+              sub="Orçamento + material + extras"
+              icon={TrendingUp}
+              iconBg="bg-red-50"
+              iconColor="text-red-500"
             />
           </div>
 

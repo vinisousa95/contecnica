@@ -66,6 +66,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   TILING: "Revestimentos",
   CARPENTRY: "Carpintaria",
   OTHERS: "Outros",
+  AMBIENTES: "Ambientes Completos",
 };
 
 const UNIT_LABELS: Record<string, string> = {
@@ -147,9 +148,9 @@ export default function OrcamentoDetailPage() {
 
   const nextActions = NEXT_STATUS[budget.status] ?? [];
 
-  // Group catalog items by category
+  // Group catalog items by category (packages go under AMBIENTES)
   const itemsByCategory = (budget.items ?? []).reduce((acc: Record<string, any[]>, item: any) => {
-    const cat = item.reformItem?.category ?? "OTHERS";
+    const cat = item.reformPackageId ? "AMBIENTES" : (item.reformItem?.category ?? "OTHERS");
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(item);
     return acc;
@@ -261,16 +262,23 @@ export default function OrcamentoDetailPage() {
                     </div>
                     <table className="w-full text-sm">
                       <tbody className="divide-y divide-gray-50">
-                        {items.map((item: any) => (
+                        {items.map((item: any) => {
+                          const isPkg = !!item.reformPackageId;
+                          const name = isPkg
+                            ? (item.reformPackage?.name ?? item.name ?? "Ambiente")
+                            : (item.reformItem?.name ?? item.name ?? "Item");
+                          const desc = isPkg
+                            ? (item.reformPackage?.items ?? []).map((i: any) => i.name).filter(Boolean).join(", ")
+                            : item.reformItem?.description;
+                          const unitLabel = isPkg ? "serviço" : UNIT_LABELS[item.reformItem?.unit ?? "UNIT"];
+                          return (
                           <tr key={item.id} className="px-5">
                             <td className="px-5 py-2.5">
-                              <p className="font-medium text-gray-900">{item.reformItem?.name}</p>
-                              {item.reformItem?.description && (
-                                <p className="text-xs text-gray-500">{item.reformItem.description}</p>
-                              )}
+                              <p className="font-medium text-gray-900">{name}</p>
+                              {desc && <p className="text-xs text-gray-500">{desc}</p>}
                             </td>
                             <td className="px-3 py-2.5 text-right text-gray-600 whitespace-nowrap">
-                              {Number(item.quantity).toLocaleString("pt-BR")} {UNIT_LABELS[item.reformItem?.unit ?? "UNIT"]}
+                              {Number(item.quantity).toLocaleString("pt-BR")} {unitLabel}
                             </td>
                             <td className="px-3 py-2.5 text-right text-gray-600 whitespace-nowrap">
                               {formatCurrency(item.unitPrice)}
@@ -279,7 +287,8 @@ export default function OrcamentoDetailPage() {
                               {formatCurrency(item.subtotal)}
                             </td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

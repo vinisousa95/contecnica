@@ -167,6 +167,8 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
 const STATUS_PT: Record<string, string> = {
   SCHEDULED: "Agendado",
   IN_PROGRESS: "Em Andamento",
+  COMPLETED: "Concluído",
+  CANCELLED: "Cancelado",
 };
 
 function TeamSection({ projectId }: { projectId: string }) {

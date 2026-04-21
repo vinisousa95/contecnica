@@ -203,7 +203,7 @@ export default function CronogramaPage() {
 
   const { data: projectsData } = useQuery({
     queryKey: ["projects-list-cronograma"],
-    queryFn: () => apiFetch("/api/v1/projects?limit=100&status=IN_PROGRESS"),
+    queryFn: () => apiFetch("/api/v1/projects?limit=100"),
   });
 
   const projects: any[] = projectsData?.data ?? projectsData ?? [];

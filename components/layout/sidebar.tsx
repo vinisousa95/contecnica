@@ -21,6 +21,7 @@ import {
   Truck,
   MapPin,
   ClipboardList,
+  CalendarDays,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -70,6 +71,11 @@ const navigation: NavItem[] = [
     label: "Execução de Tarefas",
     href: "/tarefas",
     icon: ClipboardList,
+  },
+  {
+    label: "Cronograma",
+    href: "/cronograma",
+    icon: CalendarDays,
   },
   {
     label: "Operacional",

@@ -14,11 +14,13 @@ import {
   Building2,
   Wrench,
   Users,
+  CalendarDays,
 } from "lucide-react";
 
 const navigation = [
   { label: "Resumo", href: "/portal/dashboard", icon: LayoutDashboard },
   { label: "Andamento", href: "/portal/andamento", icon: Clock },
+  { label: "Cronograma", href: "/portal/cronograma", icon: CalendarDays },
   { label: "Equipe na Obra", href: "/portal/equipe", icon: Users },
   { label: "Serviços Extras", href: "/portal/servicos-extras", icon: Wrench },
   { label: "Cobranças", href: "/portal/cobrancas", icon: ShoppingCart },

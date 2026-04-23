@@ -3,7 +3,7 @@ import { getSessionFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { budgetSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
-import { serializeBudget } from "../route";
+import { serializeBudget } from "../serialize";
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);

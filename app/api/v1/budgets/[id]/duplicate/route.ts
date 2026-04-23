@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { getSessionFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/utils";
-import { serializeBudget } from "../../route";
+import { serializeBudget } from "../../serialize";
 
 async function generateCode(): Promise<string> {
   const year = new Date().getFullYear();

@@ -4,7 +4,7 @@ import {
   Alert, ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { projectsApi, employeesApi } from "@/lib/api";
+import { projectsApi, employeesApi } from "../../lib/api";
 
 type Step = "project" | "tasks" | "employee";
 

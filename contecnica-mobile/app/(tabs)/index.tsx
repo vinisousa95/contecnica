@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { getUser, clearAuth } from "@/lib/auth";
+import { getUser, clearAuth } from "../../lib/auth";
 
 const MENU = [
   { label: "Enviar Fotos", desc: "Registre o andamento da obra", icon: "camera-outline" as const, route: "/fotos" },
@@ -22,14 +22,16 @@ export default function HomeScreen() {
       { text: "Cancelar", style: "cancel" },
       {
         text: "Sair", style: "destructive",
-        onPress: async () => { await clearAuth(); router.replace("/login"); },
+        onPress: async () => {
+          await clearAuth();
+          router.replace("/login");
+        },
       },
     ]);
   }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoBox}>
           <Text style={styles.logoC}>C</Text>

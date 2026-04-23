@@ -4,8 +4,8 @@ import {
   KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
 } from "react-native";
 import { router } from "expo-router";
-import { authApi } from "@/lib/api";
-import { saveToken, saveUser } from "@/lib/auth";
+import { authApi } from "../lib/api";
+import { saveToken, saveUser } from "../lib/auth";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -20,6 +20,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       const result = await authApi.login(email.trim(), password);
+      if (!result.token) throw new Error("Token não recebido do servidor");
       await saveToken(result.token);
       await saveUser(result.user);
       router.replace("/(tabs)");
@@ -36,7 +37,6 @@ export default function LoginScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={styles.inner}>
-        {/* Logo */}
         <View style={styles.logoBox}>
           <Text style={styles.logoC}>C</Text>
         </View>

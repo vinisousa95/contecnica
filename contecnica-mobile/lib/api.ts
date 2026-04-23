@@ -7,7 +7,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Cookie: `session=${token}` } : {}),
+      ...(token ? { Cookie: `contecnica_session=${token}` } : {}),
       ...options?.headers,
     },
   });
@@ -16,17 +16,14 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return json.data ?? json;
 }
 
-// ── Auth ──────────────────────────────────────────────────────
 export const authApi = {
   login: (email: string, password: string) =>
     request<{ token: string; user: any }>("/api/v1/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     }),
-  me: () => request<any>("/api/v1/auth/me"),
 };
 
-// ── Projects ──────────────────────────────────────────────────
 export const projectsApi = {
   list: () => request<any[]>("/api/v1/projects?limit=100"),
   tasks: (projectId: string) =>
@@ -38,7 +35,6 @@ export const projectsApi = {
     }),
 };
 
-// ── Photos ────────────────────────────────────────────────────
 export const photosApi = {
   upload: async (projectId: string, taskId: string | null, uri: string, caption?: string) => {
     const token = await getToken();
@@ -54,7 +50,7 @@ export const photosApi = {
     const res = await fetch(`${API_BASE_URL}/api/v1/projects/${projectId}/photos`, {
       method: "POST",
       headers: {
-        ...(token ? { Cookie: `session=${token}` } : {}),
+        ...(token ? { Cookie: `contecnica_session=${token}` } : {}),
       },
       body: formData,
     });
@@ -64,7 +60,6 @@ export const photosApi = {
   },
 };
 
-// ── Expenses ──────────────────────────────────────────────────
 export const expensesApi = {
   create: (data: object) =>
     request("/api/v1/expenses", {
@@ -74,7 +69,6 @@ export const expensesApi = {
   categories: () => request<any[]>("/api/v1/categories?type=EXPENSE"),
 };
 
-// ── Employees ─────────────────────────────────────────────────
 export const employeesApi = {
   list: () => request<any[]>("/api/v1/employees?status=ACTIVE&limit=100"),
 };

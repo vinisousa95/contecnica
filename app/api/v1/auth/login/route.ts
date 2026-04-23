@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
     });
 
     const response = apiSuccess({
+      token,
       user: {
         id: user.id,
         name: user.name,

@@ -5,8 +5,8 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
-import { projectsApi, expensesApi } from "@/lib/api";
-import { scanReceipt, type ReceiptData } from "@/lib/scanReceipt";
+import { projectsApi, expensesApi } from "../../lib/api";
+import { scanReceipt, type ReceiptData } from "../../lib/scanReceipt";
 
 type Step = "project" | "photo" | "review";
 
@@ -21,14 +21,17 @@ export default function ReembolsoScreen() {
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
 
   useEffect(() => {
-    projectsApi.list().then((data: any) => {
-      setProjects(Array.isArray(data) ? data : (data?.data ?? []));
-    });
-    // Fetch "Material" expense category
-    expensesApi.categories().then((cats: any[]) => {
-      const mat = cats.find(c => c.name.toLowerCase().includes("material"));
-      if (mat) setCategoryId(mat.id);
-    }).catch(() => {});
+    projectsApi.list()
+      .then((data: any) => setProjects(Array.isArray(data) ? data : (data?.data ?? [])))
+      .catch(() => setProjects([]));
+
+    expensesApi.categories()
+      .then((cats: any) => {
+        const list = Array.isArray(cats) ? cats : [];
+        const mat = list.find((c: any) => c.name?.toLowerCase().includes("material"));
+        if (mat) setCategoryId(mat.id);
+      })
+      .catch(() => {});
   }, []);
 
   async function pickAndScan(fromCamera: boolean) {
@@ -52,8 +55,7 @@ export default function ReembolsoScreen() {
       const data = await scanReceipt(uri);
       setReceipt(data);
       setStep("review");
-    } catch (e: any) {
-      // Fallback: manual entry
+    } catch {
       setReceipt({ supplier: "", totalAmount: 0, items: "", date: null });
       setStep("review");
       Alert.alert("IA indisponível", "Preencha os dados manualmente.");
@@ -95,16 +97,17 @@ export default function ReembolsoScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>Reembolso de Material</Text>
 
-      {/* Step 1: Project */}
       <SectionCard title="1. Selecionar Obra" done={!!projectId} onReset={projectId ? () => { setStep("project"); setProjectId(""); setImage(null); setReceipt(null); } : undefined}>
         {step === "project" ? (
-          projects.map(p => (
-            <TouchableOpacity key={p.id} style={styles.listItem} onPress={() => { setProjectId(p.id); setStep("photo"); }} activeOpacity={0.7}>
-              <Ionicons name="business-outline" size={16} color="#EA580C" />
-              <Text style={styles.listItemText}>{p.name}</Text>
-              <Ionicons name="chevron-forward" size={14} color="#D1D5DB" />
-            </TouchableOpacity>
-          ))
+          projects.length === 0
+            ? <ActivityIndicator color="#EA580C" style={{ padding: 20 }} />
+            : projects.map(p => (
+              <TouchableOpacity key={p.id} style={styles.listItem} onPress={() => { setProjectId(p.id); setStep("photo"); }} activeOpacity={0.7}>
+                <Ionicons name="business-outline" size={16} color="#EA580C" />
+                <Text style={styles.listItemText}>{p.name}</Text>
+                <Ionicons name="chevron-forward" size={14} color="#D1D5DB" />
+              </TouchableOpacity>
+            ))
         ) : (
           <View style={styles.selectedRow}>
             <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
@@ -113,19 +116,17 @@ export default function ReembolsoScreen() {
         )}
       </SectionCard>
 
-      {/* Step 2: Photo */}
       {(step === "photo" || step === "review") && (
         <SectionCard title="2. Foto da Nota Fiscal" done={step === "review"} onReset={step === "review" ? () => { setStep("photo"); setReceipt(null); setImage(null); } : undefined}>
           {step === "photo" && (
             <>
               <Text style={styles.hint}>Tire uma foto clara da nota fiscal. A IA irá ler os dados automaticamente.</Text>
-              {scanning && (
+              {scanning ? (
                 <View style={styles.scanningBox}>
                   <ActivityIndicator color="#EA580C" size="large" />
                   <Text style={styles.scanningText}>IA lendo a nota fiscal...</Text>
                 </View>
-              )}
-              {!scanning && (
+              ) : (
                 <View style={styles.photoBtns}>
                   <TouchableOpacity style={styles.photoBtn} onPress={() => pickAndScan(true)} activeOpacity={0.7}>
                     <Ionicons name="camera-outline" size={22} color="#fff" />
@@ -145,7 +146,6 @@ export default function ReembolsoScreen() {
         </SectionCard>
       )}
 
-      {/* Step 3: Review & edit */}
       {step === "review" && receipt && (
         <SectionCard title="3. Confirmar Dados" done={false}>
           <View style={styles.aiTag}>
@@ -153,14 +153,14 @@ export default function ReembolsoScreen() {
             <Text style={styles.aiTagText}>Preenchido pela IA — revise antes de enviar</Text>
           </View>
 
-          <Field label="Fornecedor" value={receipt.supplier} onChange={v => setReceipt(r => r ? { ...r, supplier: v } : r)} />
+          <Field label="Fornecedor" value={receipt.supplier} onChange={(v: string) => setReceipt(r => r ? { ...r, supplier: v } : r)} />
           <Field
             label="Valor Total (R$)"
             value={receipt.totalAmount > 0 ? String(receipt.totalAmount) : ""}
-            onChange={v => setReceipt(r => r ? { ...r, totalAmount: parseFloat(v.replace(",", ".")) || 0 } : r)}
+            onChange={(v: string) => setReceipt(r => r ? { ...r, totalAmount: parseFloat(v.replace(",", ".")) || 0 } : r)}
             keyboardType="decimal-pad"
           />
-          <Field label="Materiais adquiridos" value={receipt.items} onChange={v => setReceipt(r => r ? { ...r, items: v } : r)} multiline />
+          <Field label="Materiais adquiridos" value={receipt.items} onChange={(v: string) => setReceipt(r => r ? { ...r, items: v } : r)} multiline />
 
           <TouchableOpacity
             style={[styles.sendBtn, sending && { opacity: 0.6 }]}
@@ -182,7 +182,7 @@ export default function ReembolsoScreen() {
   );
 }
 
-function Field({ label, value, onChange, keyboardType, multiline }: any) {
+function Field({ label, value, onChange, keyboardType, multiline }: { label: string; value: string; onChange: (v: string) => void; keyboardType?: any; multiline?: boolean }) {
   return (
     <View style={{ marginBottom: 12 }}>
       <Text style={fieldStyles.label}>{label}</Text>
@@ -198,7 +198,7 @@ function Field({ label, value, onChange, keyboardType, multiline }: any) {
   );
 }
 
-function SectionCard({ title, done, onReset, children }: any) {
+function SectionCard({ title, done, onReset, children }: { title: string; done: boolean; onReset?: () => void; children: React.ReactNode }) {
   return (
     <View style={cardStyles.container}>
       <View style={cardStyles.header}>

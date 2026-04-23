@@ -5,14 +5,19 @@ import { getToken } from "../lib/auth";
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load persisted token into memory, then decide route
-    getToken().then((token) => {
+    getToken().then((t) => {
+      setToken(t);
       setReady(true);
-      if (!token) router.replace("/login");
     });
   }, []);
+
+  // Navega apenas após o Stack estar montado
+  useEffect(() => {
+    if (ready && !token) router.replace("/login");
+  }, [ready, token]);
 
   if (!ready) return null;
 

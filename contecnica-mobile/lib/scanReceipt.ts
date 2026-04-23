@@ -1,4 +1,3 @@
-import * as FileSystem from "expo-file-system";
 import { ANTHROPIC_API_KEY } from "./config";
 
 export interface ReceiptData {
@@ -10,10 +9,11 @@ export interface ReceiptData {
 
 export async function scanReceipt(imageUri: string): Promise<ReceiptData> {
   if (!ANTHROPIC_API_KEY) {
-    throw new Error("Chave da API Anthropic não configurada. Adicione EXPO_PUBLIC_ANTHROPIC_KEY no .env");
+    throw new Error("Chave Anthropic não configurada. Adicione EXPO_PUBLIC_ANTHROPIC_KEY no .env");
   }
 
-  // Convert image to base64
+  // Lazy import to avoid native module init issues
+  const FileSystem = await import("expo-file-system");
   const base64 = await FileSystem.readAsStringAsync(imageUri, {
     encoding: FileSystem.EncodingType.Base64,
   });
@@ -38,12 +38,12 @@ export async function scanReceipt(imageUri: string): Promise<ReceiptData> {
             },
             {
               type: "text",
-              text: `Analise esta nota fiscal/cupom fiscal e extraia as informações. Responda SOMENTE com JSON válido neste formato:
+              text: `Analise esta nota fiscal e extraia as informações. Responda SOMENTE com JSON:
 {
-  "supplier": "nome do fornecedor/loja",
+  "supplier": "nome do fornecedor",
   "totalAmount": 0.00,
-  "items": "descrição resumida dos materiais adquiridos",
-  "date": "DD/MM/AAAA ou null se não encontrar"
+  "items": "descrição dos materiais",
+  "date": "DD/MM/AAAA ou null"
 }`,
             },
           ],
@@ -53,13 +53,11 @@ export async function scanReceipt(imageUri: string): Promise<ReceiptData> {
   });
 
   if (!response.ok) {
-    throw new Error("Erro ao analisar nota fiscal. Verifique sua chave Anthropic.");
+    throw new Error("Erro ao analisar nota fiscal. Verifique a chave Anthropic.");
   }
 
   const result = await response.json();
-  const text = result.content[0]?.text ?? "{}";
-
-  // Extract JSON from response
+  const text = result.content?.[0]?.text ?? "{}";
   const match = text.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("Não foi possível extrair dados da nota fiscal");
 

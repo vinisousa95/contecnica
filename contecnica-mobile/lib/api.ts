@@ -1,8 +1,8 @@
 import { API_BASE_URL } from "./config";
-import { getToken } from "./auth";
+import { getMemoryToken } from "./token";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const token = await getToken();
+  const token = getMemoryToken();
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
@@ -37,7 +37,7 @@ export const projectsApi = {
 
 export const photosApi = {
   upload: async (projectId: string, taskId: string | null, uri: string, caption?: string) => {
-    const token = await getToken();
+    const token = getMemoryToken();
     const formData = new FormData();
     formData.append("file", {
       uri,

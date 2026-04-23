@@ -4,16 +4,17 @@ import { StatusBar } from "expo-status-bar";
 import { getToken } from "../lib/auth";
 
 export default function RootLayout() {
-  const [checked, setChecked] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    // Load persisted token into memory, then decide route
     getToken().then((token) => {
+      setReady(true);
       if (!token) router.replace("/login");
-      setChecked(true);
     });
   }, []);
 
-  if (!checked) return null;
+  if (!ready) return null;
 
   return (
     <>

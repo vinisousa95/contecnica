@@ -1,5 +1,7 @@
+import { router } from "expo-router";
 import { API_BASE_URL } from "./config";
 import { getMemoryToken } from "./token";
+import { clearAuth } from "./auth";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = getMemoryToken();
@@ -12,6 +14,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     },
   });
   const json = await res.json();
+  if (res.status === 401) {
+    await clearAuth();
+    router.replace("/login");
+    throw new Error("Sessão expirada");
+  }
   if (!res.ok) throw new Error(json.error ?? "Erro na requisição");
   return json.data ?? json;
 }

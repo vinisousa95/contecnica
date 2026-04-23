@@ -19,10 +19,9 @@ export default function FotosScreen() {
   const [step, setStep] = useState<"project" | "task" | "photo">("project");
 
   useEffect(() => {
-    projectsApi.list().then((data: any) => {
-      const list = Array.isArray(data) ? data : (data?.data ?? []);
-      setProjects(list);
-    });
+    projectsApi.list()
+      .then((data: any) => setProjects(Array.isArray(data) ? data : (data?.data ?? [])))
+      .catch(() => {});
   }, []);
 
   async function selectProject(id: string) {

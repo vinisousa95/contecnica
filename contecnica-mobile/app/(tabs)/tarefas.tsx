@@ -19,12 +19,12 @@ export default function TarefasScreen() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    projectsApi.list().then((data: any) => {
-      setProjects(Array.isArray(data) ? data : (data?.data ?? []));
-    });
-    employeesApi.list().then((data: any) => {
-      setEmployees(Array.isArray(data) ? data : []);
-    });
+    projectsApi.list()
+      .then((data: any) => setProjects(Array.isArray(data) ? data : (data?.data ?? [])))
+      .catch(() => {});
+    employeesApi.list()
+      .then((data: any) => setEmployees(Array.isArray(data) ? data : []))
+      .catch(() => {});
   }, []);
 
   async function selectProject(id: string) {

@@ -54,7 +54,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get("contecnica_session")?.value;
+  const bearerHeader = request.headers.get("Authorization");
+  const bearerToken = bearerHeader?.startsWith("Bearer ") ? bearerHeader.slice(7) : null;
+  const token = bearerToken ?? request.cookies.get("contecnica_session")?.value;
   if (!token) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ success: false, error: "Não autorizado" }, { status: 401 });

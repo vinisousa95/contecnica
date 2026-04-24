@@ -77,6 +77,14 @@ export async function POST(request: NextRequest) {
 
     const code = await generateCode();
 
+    const [clientExists, userExists] = await Promise.all([
+      prisma.client.findUnique({ where: { id: rest.clientId }, select: { id: true } }),
+      prisma.user.findUnique({ where: { id: session.userId }, select: { id: true } }),
+    ]);
+
+    if (!clientExists) return apiError(`Cliente não encontrado (id: ${rest.clientId})`, 400);
+    if (!userExists) return apiError("Sessão inválida — faça logout e entre novamente", 401);
+
     const budget = await prisma.budget.create({
       data: {
         ...rest,

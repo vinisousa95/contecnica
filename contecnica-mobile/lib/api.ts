@@ -9,7 +9,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Cookie: `contecnica_session=${token}` } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options?.headers,
     },
   });
@@ -57,7 +57,7 @@ export const photosApi = {
     const res = await fetch(`${API_BASE_URL}/api/v1/projects/${projectId}/photos`, {
       method: "POST",
       headers: {
-        ...(token ? { Cookie: `contecnica_session=${token}` } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: formData,
     });

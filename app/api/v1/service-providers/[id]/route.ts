@@ -37,9 +37,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return apiError(parsed.error.errors[0].message);
     }
 
+    const { birthDate, ...rest } = parsed.data;
     const provider = await prisma.serviceProvider.update({
       where: { id: params.id },
-      data: parsed.data,
+      data: { ...rest, birthDate: birthDate ? new Date(birthDate) : null },
     });
 
     return apiSuccess(provider);

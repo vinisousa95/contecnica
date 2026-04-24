@@ -204,6 +204,7 @@ export const employeeSchema = z.object({
   rg: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
   role: z.string().optional().nullable(),
+  birthDate: z.string().optional().nullable(),
   street: z.string().optional().nullable(),
   number: z.string().optional().nullable(),
   complement: z.string().optional().nullable(),
@@ -248,6 +249,7 @@ export const serviceProviderSchema = z.object({
   name: z.string().min(2, "Nome deve ter ao menos 2 caracteres"),
   type: z.enum(["INDIVIDUAL", "COMPANY"]).default("INDIVIDUAL"),
   documentNumber: z.string().optional().nullable(),
+  birthDate: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
   email: z.string().email("E-mail inválido").optional().nullable().or(z.literal("")),
   specialty: z.enum([

@@ -52,8 +52,9 @@ export async function POST(request: NextRequest) {
       return apiError(parsed.error.errors[0].message);
     }
 
+    const { birthDate, ...rest } = parsed.data;
     const employee = await prisma.employee.create({
-      data: parsed.data,
+      data: { ...rest, ...(birthDate ? { birthDate: new Date(birthDate) } : {}) },
     });
 
     return apiSuccess(employee);

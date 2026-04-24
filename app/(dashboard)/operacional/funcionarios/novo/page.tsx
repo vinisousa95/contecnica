@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -26,6 +26,7 @@ export default function NovoFuncionarioPage() {
     rg: "",
     phone: "",
     role: "",
+    birthDate: "",
     street: "",
     number: "",
     complement: "",
@@ -36,6 +37,29 @@ export default function NovoFuncionarioPage() {
     status: "ACTIVE",
     notes: "",
   });
+  const [cepLoading, setCepLoading] = useState(false);
+
+  const lookupCep = useCallback(async (cep: string) => {
+    const clean = cep.replace(/\D/g, "");
+    if (clean.length !== 8) return;
+    setCepLoading(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+      const data = await res.json();
+      if (data.erro) return;
+      setForm((prev) => ({
+        ...prev,
+        street: data.logradouro ?? prev.street,
+        neighborhood: data.bairro ?? prev.neighborhood,
+        city: data.localidade ?? prev.city,
+        state: data.uf ?? prev.state,
+      }));
+    } catch {
+      // silencioso
+    } finally {
+      setCepLoading(false);
+    }
+  }, []);
 
   const [errors, setErrors] = useState<Partial<Record<keyof EmployeeInput, string>>>({});
 
@@ -67,6 +91,7 @@ export default function NovoFuncionarioPage() {
       rg: form.rg || null,
       phone: form.phone || null,
       role: form.role || null,
+      birthDate: form.birthDate || null,
       street: form.street || null,
       number: form.number || null,
       complement: form.complement || null,
@@ -141,6 +166,12 @@ export default function NovoFuncionarioPage() {
                 value={form.phone ?? ""}
                 onChange={(e) => handleChange("phone", maskPhone(e.target.value))}
               />
+              <Input
+                label="Data de Nascimento"
+                type="date"
+                value={form.birthDate ?? ""}
+                onChange={(e) => handleChange("birthDate", e.target.value)}
+              />
               <Select
                 label="Status"
                 value={form.status}
@@ -160,8 +191,13 @@ export default function NovoFuncionarioPage() {
                   placeholder="00000-000"
                   inputMode="numeric"
                   maxLength={9}
+                  disabled={cepLoading}
                   value={form.zipCode ?? ""}
-                  onChange={(e) => handleChange("zipCode", maskCep(e.target.value))}
+                  onChange={(e) => {
+                    const masked = maskCep(e.target.value);
+                    handleChange("zipCode", masked);
+                    lookupCep(masked);
+                  }}
                 />
                 <div className="sm:col-span-2">
                   <Input

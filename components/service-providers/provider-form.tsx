@@ -104,6 +104,14 @@ export function ServiceProviderForm({ defaultValues, onSubmit, loading }: Servic
               },
             })}
           />
+          {providerType === "INDIVIDUAL" && (
+            <Input
+              label="Data de Nascimento"
+              type="date"
+              error={errors.birthDate?.message}
+              {...register("birthDate")}
+            />
+          )}
           <Select
             label="Status"
             options={[

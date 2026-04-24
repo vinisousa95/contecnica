@@ -511,6 +511,7 @@ model Employee {
   rg            String?
   phone         String?
   role          String?
+  birthDate     DateTime?      @map("birth_date")
   street        String?
   number        String?
   complement    String?
@@ -629,6 +630,7 @@ model ServiceProvider {
   name           String
   type           ServiceProviderType       @default(INDIVIDUAL)
   documentNumber String?                   @map("document_number")
+  birthDate      DateTime?                 @map("birth_date")
   phone          String?
   email          String?
   specialty      ServiceProviderSpecialty  @default(OTHER)

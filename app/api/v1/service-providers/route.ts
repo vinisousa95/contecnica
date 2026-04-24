@@ -56,8 +56,9 @@ export async function POST(request: NextRequest) {
       return apiError(parsed.error.errors[0].message);
     }
 
+    const { birthDate, ...rest } = parsed.data;
     const provider = await prisma.serviceProvider.create({
-      data: parsed.data,
+      data: { ...rest, ...(birthDate ? { birthDate: new Date(birthDate) } : {}) },
     });
 
     return apiSuccess(provider);

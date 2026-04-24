@@ -45,25 +45,32 @@ export const projectsApi = {
 export const photosApi = {
   upload: async (projectId: string, taskId: string | null, uri: string, caption?: string) => {
     const token = getMemoryToken();
-    const formData = new FormData();
-    formData.append("file", {
-      uri,
-      name: `photo_${Date.now()}.jpg`,
-      type: "image/jpeg",
-    } as any);
-    if (taskId) formData.append("taskId", taskId);
-    if (caption) formData.append("caption", caption);
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const res = await fetch(`${API_BASE_URL}/api/v1/projects/${projectId}/photos`, {
+    // Passo 1: faz upload do arquivo e recebe a URL
+    const formData = new FormData();
+    formData.append("file", { uri, name: `photo_${Date.now()}.jpg`, type: "image/jpeg" } as any);
+    formData.append("type", "photo");
+
+    const uploadRes = await fetch(`${API_BASE_URL}/api/v1/upload`, {
       method: "POST",
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+      headers,
       body: formData,
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error ?? "Erro ao enviar foto");
-    return json.data;
+    const uploadJson = await uploadRes.json();
+    if (!uploadRes.ok) throw new Error(uploadJson.error ?? "Erro ao fazer upload");
+    const imageUrl: string = uploadJson.data?.url;
+    if (!imageUrl) throw new Error("URL da imagem não retornada");
+
+    // Passo 2: cria o registro da foto com a URL
+    return request(`/api/v1/projects/${projectId}/photos`, {
+      method: "POST",
+      body: JSON.stringify({
+        imageUrl,
+        ...(caption ? { description: caption } : {}),
+        ...(taskId ? { taskId } : {}),
+      }),
+    });
   },
 };
 

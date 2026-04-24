@@ -22,6 +22,7 @@ import {
   MapPin,
   ClipboardList,
   CalendarDays,
+  Wrench,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -71,6 +72,11 @@ const navigation: NavItem[] = [
     label: "Execução de Tarefas",
     href: "/tarefas",
     icon: ClipboardList,
+  },
+  {
+    label: "Prestadores",
+    href: "/prestadores",
+    icon: Wrench,
   },
   {
     label: "Cronograma",

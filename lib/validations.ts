@@ -242,3 +242,43 @@ export const assignmentSchema = z.object({
 export type EmployeeInput = z.infer<typeof employeeSchema>;
 export type VehicleInput = z.infer<typeof vehicleSchema>;
 export type AssignmentInput = z.infer<typeof assignmentSchema>;
+
+// ── Service Providers ─────────────────────────────────────────
+export const serviceProviderSchema = z.object({
+  name: z.string().min(2, "Nome deve ter ao menos 2 caracteres"),
+  type: z.enum(["INDIVIDUAL", "COMPANY"]).default("INDIVIDUAL"),
+  documentNumber: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  email: z.string().email("E-mail inválido").optional().nullable().or(z.literal("")),
+  specialty: z.enum([
+    "ELECTRICAL", "PLUMBING", "PAINTING", "MASONRY", "FINISHING",
+    "DRYWALL", "CARPENTRY", "METALWORK", "GLASSWORK", "CLEANING",
+    "TRANSPORT", "ENGINEERING", "ARCHITECTURE", "OTHER",
+  ]).default("OTHER"),
+  street: z.string().optional().nullable(),
+  number: z.string().optional().nullable(),
+  complement: z.string().optional().nullable(),
+  neighborhood: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  state: z.string().optional().nullable(),
+  zipCode: z.string().optional().nullable(),
+  pixKey: z.string().optional().nullable(),
+  bankInfo: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
+});
+
+export const workServiceProviderSchema = z.object({
+  serviceProviderId: z.string().min(1, "Prestador é obrigatório"),
+  projectId: z.string().min(1, "Obra é obrigatória"),
+  serviceDescription: z.string().min(2, "Descrição do serviço é obrigatória"),
+  startDate: z.string().optional().nullable(),
+  expectedEndDate: z.string().optional().nullable(),
+  agreedAmount: z.string().optional().nullable(),
+  status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELED"]).default("PENDING"),
+  notes: z.string().optional().nullable(),
+  generateExpense: z.boolean().optional().default(false),
+});
+
+export type ServiceProviderInput = z.infer<typeof serviceProviderSchema>;
+export type WorkServiceProviderInput = z.infer<typeof workServiceProviderSchema>;

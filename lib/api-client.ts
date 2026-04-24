@@ -269,6 +269,33 @@ export const api = {
     updateStatus: (id: string, status: string) =>
       request(`/budgets/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
   },
+
+  // Service Providers (prestadores de serviços)
+  serviceProviders: {
+    list: (params?: Record<string, string>) => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return requestPaginated(`/service-providers${qs}`);
+    },
+    get: (id: string) => request(`/service-providers/${id}`),
+    create: (data: unknown) =>
+      request("/service-providers", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: unknown) =>
+      request(`/service-providers/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    inactivate: (id: string) =>
+      request(`/service-providers/${id}/inactivate`, { method: "PATCH" }),
+    delete: (id: string) =>
+      request(`/service-providers/${id}`, { method: "DELETE" }),
+    history: (id: string) => request(`/service-providers/${id}/history`),
+    // Work links
+    listByProject: (projectId: string) =>
+      request(`/projects/${projectId}/service-providers`),
+    linkToProject: (projectId: string, data: unknown) =>
+      request(`/projects/${projectId}/service-providers`, { method: "POST", body: JSON.stringify(data) }),
+    updateLink: (projectId: string, linkId: string, data: unknown) =>
+      request(`/projects/${projectId}/service-providers/${linkId}`, { method: "PATCH", body: JSON.stringify(data) }),
+    removeLink: (projectId: string, linkId: string) =>
+      request(`/projects/${projectId}/service-providers/${linkId}`, { method: "DELETE" }),
+  },
 };
 
 export { ApiError };

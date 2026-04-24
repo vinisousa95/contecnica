@@ -13,6 +13,10 @@ import {
   EXPENSE_STATUS_COLORS,
   REVENUE_STATUS_LABELS,
   REVENUE_STATUS_COLORS,
+  SPECIALTY_LABELS,
+  SPECIALTY_COLORS,
+  WORK_PROVIDER_STATUS_LABELS,
+  WORK_PROVIDER_STATUS_COLORS,
 } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +27,7 @@ import { toast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Pencil, MapPin, Calendar, DollarSign,
   ArrowDownCircle, ArrowUpCircle, Plus, CheckCircle2,
-  Circle, Eye, EyeOff, Trash2, Link2, ListChecks, RefreshCw, Wrench, Users, Car,
+  Circle, Eye, EyeOff, Trash2, Link2, ListChecks, RefreshCw, Wrench, Users, Car, HardHat,
 } from "lucide-react";
 
 async function apiFetch(url: string, options?: RequestInit) {
@@ -638,6 +642,263 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
   );
 }
 
+// ── Prestadores Section ───────────────────────────────────────
+function PrestadoresSection({ projectId }: { projectId: string }) {
+  const qc = useQueryClient();
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    serviceProviderId: "",
+    serviceDescription: "",
+    agreedAmount: "",
+    startDate: "",
+    expectedEndDate: "",
+    generateExpense: false,
+  });
+
+  const { data: links = [], isLoading } = useQuery({
+    queryKey: ["project-service-providers", projectId],
+    queryFn: () => apiFetch(`/api/v1/projects/${projectId}/service-providers`),
+  });
+
+  const { data: providersData } = useQuery({
+    queryKey: ["service-providers-active"],
+    queryFn: () => apiFetch(`/api/v1/service-providers?status=ACTIVE&limit=200`),
+    staleTime: 30000,
+  });
+  const providers: any[] = Array.isArray(providersData) ? providersData : (providersData?.data ?? []);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.serviceProviderId || !form.serviceDescription.trim()) return;
+    setSaving(true);
+    try {
+      await apiFetch(`/api/v1/projects/${projectId}/service-providers`, {
+        method: "POST",
+        body: JSON.stringify({
+          serviceProviderId: form.serviceProviderId,
+          serviceDescription: form.serviceDescription.trim(),
+          ...(form.agreedAmount ? { agreedAmount: form.agreedAmount } : {}),
+          ...(form.startDate ? { startDate: form.startDate } : {}),
+          ...(form.expectedEndDate ? { expectedEndDate: form.expectedEndDate } : {}),
+          generateExpense: form.generateExpense,
+          projectId,
+        }),
+      });
+      toast({ title: "Prestador vinculado à obra" });
+      qc.invalidateQueries({ queryKey: ["project-service-providers", projectId] });
+      setForm({ serviceProviderId: "", serviceDescription: "", agreedAmount: "", startDate: "", expectedEndDate: "", generateExpense: false });
+      setShowForm(false);
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRemove = async (linkId: string) => {
+    if (!window.confirm("Remover este prestador da obra?")) return;
+    try {
+      await apiFetch(`/api/v1/projects/${projectId}/service-providers/${linkId}`, { method: "DELETE" });
+      toast({ title: "Prestador removido da obra" });
+      qc.invalidateQueries({ queryKey: ["project-service-providers", projectId] });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    }
+  };
+
+  const handleStatusChange = async (linkId: string, status: string) => {
+    try {
+      await apiFetch(`/api/v1/projects/${projectId}/service-providers/${linkId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      qc.invalidateQueries({ queryKey: ["project-service-providers", projectId] });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <HardHat className="h-4 w-4 text-[#EA580C]" />
+            Prestadores de Serviço
+            <span className="text-xs font-normal text-gray-400 ml-1">({(links as any[]).length})</span>
+          </CardTitle>
+          <Button size="sm" variant="outline" onClick={() => setShowForm((v) => !v)}>
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            Vincular Prestador
+          </Button>
+        </div>
+      </CardHeader>
+
+      {showForm && (
+        <div className="px-5 pb-4 border-b border-gray-100">
+          <form onSubmit={handleAdd} className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Prestador *</label>
+                <select
+                  value={form.serviceProviderId}
+                  onChange={(e) => setForm((f) => ({ ...f, serviceProviderId: e.target.value }))}
+                  required
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                >
+                  <option value="">Selecionar prestador…</option>
+                  {providers.map((p: any) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} — {SPECIALTY_LABELS[p.specialty] ?? p.specialty}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Descrição do Serviço *</label>
+                <input
+                  type="text"
+                  value={form.serviceDescription}
+                  onChange={(e) => setForm((f) => ({ ...f, serviceDescription: e.target.value }))}
+                  placeholder="Ex: Instalação elétrica completa"
+                  required
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Valor Combinado (R$)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.agreedAmount}
+                  onChange={(e) => setForm((f) => ({ ...f, agreedAmount: e.target.value }))}
+                  placeholder="0,00"
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Início</label>
+                  <input
+                    type="date"
+                    value={form.startDate}
+                    onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
+                    className="w-full text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Previsão</label>
+                  <input
+                    type="date"
+                    value={form.expectedEndDate}
+                    onChange={(e) => setForm((f) => ({ ...f, expectedEndDate: e.target.value }))}
+                    className="w-full text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                  />
+                </div>
+              </div>
+            </div>
+            {form.agreedAmount && (
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.generateExpense}
+                  onChange={(e) => setForm((f) => ({ ...f, generateExpense: e.target.checked }))}
+                  className="rounded"
+                />
+                Gerar despesa automática no financeiro
+              </label>
+            )}
+            <div className="flex gap-2">
+              <Button type="submit" size="sm" disabled={saving}>
+                {saving ? "Salvando…" : "Vincular"}
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => setShowForm(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <CardContent className="p-0">
+        {isLoading ? (
+          <p className="text-sm text-gray-400 text-center py-8">Carregando…</p>
+        ) : (links as any[]).length === 0 ? (
+          <div className="text-center py-10 text-sm text-gray-400 space-y-2">
+            <HardHat className="h-8 w-8 mx-auto text-gray-200" />
+            <p>Nenhum prestador vinculado a esta obra.</p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Prestador</TableHead>
+                <TableHead>Serviço</TableHead>
+                <TableHead>Valor</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Pagamento</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(links as any[]).map((l: any) => (
+                <TableRow key={l.id}>
+                  <TableCell>
+                    <Link href={`/prestadores/${l.serviceProviderId}`} className="font-medium text-sm hover:text-blue-600">
+                      {l.serviceProvider?.name}
+                    </Link>
+                    {l.serviceProvider?.specialty && (
+                      <p>
+                        <span className={`inline-flex rounded-full px-1.5 py-0.5 text-xs font-medium ${SPECIALTY_COLORS[l.serviceProvider.specialty]}`}>
+                          {SPECIALTY_LABELS[l.serviceProvider.specialty]}
+                        </span>
+                      </p>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-600 max-w-[180px] truncate">{l.serviceDescription}</TableCell>
+                  <TableCell className="text-sm font-medium">
+                    {l.agreedAmount ? formatCurrency(l.agreedAmount) : "—"}
+                  </TableCell>
+                  <TableCell>
+                    <select
+                      value={l.status}
+                      onChange={(e) => handleStatusChange(l.id, e.target.value)}
+                      className={`text-xs font-medium rounded-full px-2 py-0.5 border-0 cursor-pointer focus:outline-none ${WORK_PROVIDER_STATUS_COLORS[l.status]}`}
+                    >
+                      {Object.entries(WORK_PROVIDER_STATUS_LABELS).map(([val, label]) => (
+                        <option key={val} value={val}>{label}</option>
+                      ))}
+                    </select>
+                  </TableCell>
+                  <TableCell>
+                    {l.expense ? (
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${EXPENSE_STATUS_COLORS[l.expense.status]}`}>
+                        {EXPENSE_STATUS_LABELS[l.expense.status]}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <button
+                      onClick={() => handleRemove(l.id)}
+                      className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ObraDetailPage({ params }: { params: { id: string } }) {
   const { data: project, isLoading } = useQuery({
     queryKey: ["project", params.id],
@@ -745,6 +1006,9 @@ export default function ObraDetailPage({ params }: { params: { id: string } }) {
 
       {/* Serviços Extras */}
       <ExtraServicesSection projectId={params.id} />
+
+      {/* Prestadores */}
+      <PrestadoresSection projectId={params.id} />
 
       {/* Expenses */}
       <Card>

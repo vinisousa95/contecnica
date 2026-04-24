@@ -162,6 +162,60 @@ export function getPaginationParams(searchParams: URLSearchParams) {
   return { page, limit, skip: (page - 1) * limit };
 }
 
+// ── Service Providers ─────────────────────────────────────────
+export const SPECIALTY_LABELS: Record<string, string> = {
+  ELECTRICAL: "Elétrica",
+  PLUMBING: "Hidráulica",
+  PAINTING: "Pintura",
+  MASONRY: "Alvenaria",
+  FINISHING: "Acabamento",
+  DRYWALL: "Drywall/Gesso",
+  CARPENTRY: "Marcenaria",
+  METALWORK: "Serralheria",
+  GLASSWORK: "Vidraçaria",
+  CLEANING: "Limpeza",
+  TRANSPORT: "Transporte",
+  ENGINEERING: "Engenharia",
+  ARCHITECTURE: "Arquitetura",
+  OTHER: "Outros",
+};
+
+export const SPECIALTY_COLORS: Record<string, string> = {
+  ELECTRICAL: "bg-yellow-100 text-yellow-700",
+  PLUMBING: "bg-blue-100 text-blue-700",
+  PAINTING: "bg-purple-100 text-purple-700",
+  MASONRY: "bg-stone-100 text-stone-700",
+  FINISHING: "bg-pink-100 text-pink-700",
+  DRYWALL: "bg-slate-100 text-slate-700",
+  CARPENTRY: "bg-amber-100 text-amber-700",
+  METALWORK: "bg-zinc-100 text-zinc-700",
+  GLASSWORK: "bg-cyan-100 text-cyan-700",
+  CLEANING: "bg-teal-100 text-teal-700",
+  TRANSPORT: "bg-indigo-100 text-indigo-700",
+  ENGINEERING: "bg-orange-100 text-orange-700",
+  ARCHITECTURE: "bg-rose-100 text-rose-700",
+  OTHER: "bg-gray-100 text-gray-600",
+};
+
+export const PROVIDER_TYPE_LABELS: Record<string, string> = {
+  INDIVIDUAL: "Pessoa Física",
+  COMPANY: "Pessoa Jurídica",
+};
+
+export const WORK_PROVIDER_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Pendente",
+  IN_PROGRESS: "Em Andamento",
+  COMPLETED: "Concluído",
+  CANCELED: "Cancelado",
+};
+
+export const WORK_PROVIDER_STATUS_COLORS: Record<string, string> = {
+  PENDING: "bg-amber-100 text-amber-700",
+  IN_PROGRESS: "bg-blue-100 text-blue-700",
+  COMPLETED: "bg-green-100 text-green-700",
+  CANCELED: "bg-red-100 text-red-600",
+};
+
 // ── API response helpers ───────────────────────────────────────
 export function apiSuccess<T>(data: T, meta?: Record<string, unknown>) {
   return Response.json({ success: true, data, ...meta });

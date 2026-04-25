@@ -296,6 +296,27 @@ export const api = {
     removeLink: (projectId: string, linkId: string) =>
       request(`/projects/${projectId}/service-providers/${linkId}`, { method: "DELETE" }),
   },
+
+  // Personal Expenses (Gastos Pessoais)
+  personalExpenses: {
+    list: (params?: Record<string, string>) => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return requestPaginated(`/personal-expenses${qs}`);
+    },
+    get: (id: string) => request(`/personal-expenses/${id}`),
+    create: (data: unknown) =>
+      request("/personal-expenses", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: unknown) =>
+      request(`/personal-expenses/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+    pay: (id: string, paidDate?: string) =>
+      request(`/personal-expenses/${id}/pay`, { method: "PATCH", body: JSON.stringify({ paidDate }) }),
+    delete: (id: string) =>
+      request(`/personal-expenses/${id}`, { method: "DELETE" }),
+    summary: (params?: Record<string, string>) => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return request(`/personal-expenses/summary${qs}`);
+    },
+  },
 };
 
 export { ApiError };

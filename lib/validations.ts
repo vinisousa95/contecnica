@@ -284,3 +284,26 @@ export const workServiceProviderSchema = z.object({
 
 export type ServiceProviderInput = z.infer<typeof serviceProviderSchema>;
 export type WorkServiceProviderInput = z.infer<typeof workServiceProviderSchema>;
+
+// ── Personal Expenses ─────────────────────────────────────────
+export const personalExpenseSchema = z.object({
+  description: z.string().min(2, "Descrição é obrigatória"),
+  category: z.enum([
+    "FOOD","MARKET","TRANSPORT","FUEL","RENT","FINANCING",
+    "CREDIT_CARD","HEALTH","EDUCATION","LEISURE","FAMILY",
+    "SUBSCRIPTIONS","TAXES","OTHER",
+  ]),
+  amount: z.string().min(1, "Valor é obrigatório"),
+  expenseDate: z.string().min(1, "Data do gasto é obrigatória"),
+  dueDate: z.string().optional().nullable(),
+  status: z.enum(["PENDING","PAID","OVERDUE","CANCELED"]).default("PENDING"),
+  paymentMethod: z.enum([
+    "PIX","CASH","CREDIT_CARD","DEBIT_CARD","BANK_SLIP","TRANSFER","AUTO_DEBIT","OTHER",
+  ]),
+  isRecurring: z.boolean().default(false),
+  recurrenceType: z.enum(["NONE","WEEKLY","MONTHLY","YEARLY"]).default("NONE"),
+  attachmentUrl: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+});
+
+export type PersonalExpenseInput = z.infer<typeof personalExpenseSchema>;

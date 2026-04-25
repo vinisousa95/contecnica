@@ -28,6 +28,7 @@ model User {
   reviewedSubmissions AppSubmission[] @relation("ReviewedBy")
   budgets             Budget[]
   createdTasks        Task[]          @relation("TaskCreator")
+  personalExpenses    PersonalExpense[] @relation("PersonalExpenseCreator")
 
   @@map("users")
 }
@@ -732,4 +733,71 @@ enum ExtraServiceStatus {
   PENDING_APPROVAL
   ACCEPTED
   REJECTED
+}
+
+// ─────────────────────────────────────────────
+// PERSONAL EXPENSES (Gastos Pessoais)
+// ─────────────────────────────────────────────
+model PersonalExpense {
+  id            String                    @id @default(cuid())
+  description   String
+  category      PersonalExpenseCategory
+  amount        Decimal                   @db.Decimal(12, 2)
+  expenseDate   DateTime                  @map("expense_date")
+  dueDate       DateTime?                 @map("due_date")
+  paidDate      DateTime?                 @map("paid_date")
+  status        PersonalExpenseStatus     @default(PENDING)
+  paymentMethod PersonalPaymentMethod     @map("payment_method")
+  isRecurring   Boolean                   @default(false) @map("is_recurring")
+  recurrenceType PersonalRecurrenceType   @default(NONE) @map("recurrence_type")
+  attachmentUrl String?                   @map("attachment_url")
+  notes         String?
+  createdById   String                    @map("created_by_id")
+  createdBy     User                      @relation("PersonalExpenseCreator", fields: [createdById], references: [id])
+  createdAt     DateTime                  @default(now()) @map("created_at")
+  updatedAt     DateTime                  @updatedAt @map("updated_at")
+
+  @@map("personal_expenses")
+}
+
+enum PersonalExpenseStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELED
+}
+
+enum PersonalExpenseCategory {
+  FOOD
+  MARKET
+  TRANSPORT
+  FUEL
+  RENT
+  FINANCING
+  CREDIT_CARD
+  HEALTH
+  EDUCATION
+  LEISURE
+  FAMILY
+  SUBSCRIPTIONS
+  TAXES
+  OTHER
+}
+
+enum PersonalPaymentMethod {
+  PIX
+  CASH
+  CREDIT_CARD
+  DEBIT_CARD
+  BANK_SLIP
+  TRANSFER
+  AUTO_DEBIT
+  OTHER
+}
+
+enum PersonalRecurrenceType {
+  NONE
+  WEEKLY
+  MONTHLY
+  YEARLY
 }

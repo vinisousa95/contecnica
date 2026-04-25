@@ -224,3 +224,70 @@ export function apiSuccess<T>(data: T, meta?: Record<string, unknown>) {
 export function apiError(message: string, status = 400) {
   return Response.json({ success: false, error: message }, { status });
 }
+
+// ── Personal Expenses ─────────────────────────────────────────
+export const PERSONAL_EXPENSE_CATEGORY_LABELS: Record<string, string> = {
+  FOOD: "Alimentação",
+  MARKET: "Mercado",
+  TRANSPORT: "Transporte",
+  FUEL: "Combustível",
+  RENT: "Aluguel",
+  FINANCING: "Financiamento",
+  CREDIT_CARD: "Cartão de Crédito",
+  HEALTH: "Saúde",
+  EDUCATION: "Educação",
+  LEISURE: "Lazer",
+  FAMILY: "Família",
+  SUBSCRIPTIONS: "Assinaturas",
+  TAXES: "Impostos",
+  OTHER: "Outros",
+};
+
+export const PERSONAL_EXPENSE_CATEGORY_COLORS: Record<string, string> = {
+  FOOD: "bg-orange-100 text-orange-700",
+  MARKET: "bg-green-100 text-green-700",
+  TRANSPORT: "bg-blue-100 text-blue-700",
+  FUEL: "bg-yellow-100 text-yellow-700",
+  RENT: "bg-purple-100 text-purple-700",
+  FINANCING: "bg-red-100 text-red-700",
+  CREDIT_CARD: "bg-pink-100 text-pink-700",
+  HEALTH: "bg-teal-100 text-teal-700",
+  EDUCATION: "bg-indigo-100 text-indigo-700",
+  LEISURE: "bg-cyan-100 text-cyan-700",
+  FAMILY: "bg-rose-100 text-rose-700",
+  SUBSCRIPTIONS: "bg-violet-100 text-violet-700",
+  TAXES: "bg-stone-100 text-stone-700",
+  OTHER: "bg-gray-100 text-gray-600",
+};
+
+export const PERSONAL_EXPENSE_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Pendente",
+  PAID: "Pago",
+  OVERDUE: "Vencido",
+  CANCELED: "Cancelado",
+};
+
+export const PERSONAL_EXPENSE_STATUS_COLORS: Record<string, string> = {
+  PENDING: "bg-amber-100 text-amber-700",
+  PAID: "bg-green-100 text-green-700",
+  OVERDUE: "bg-red-100 text-red-700",
+  CANCELED: "bg-gray-100 text-gray-500",
+};
+
+export const PERSONAL_PAYMENT_METHOD_LABELS: Record<string, string> = {
+  PIX: "Pix",
+  CASH: "Dinheiro",
+  CREDIT_CARD: "Cartão de Crédito",
+  DEBIT_CARD: "Cartão de Débito",
+  BANK_SLIP: "Boleto",
+  TRANSFER: "Transferência",
+  AUTO_DEBIT: "Débito Automático",
+  OTHER: "Outros",
+};
+
+export const PERSONAL_RECURRENCE_LABELS: Record<string, string> = {
+  NONE: "Não",
+  WEEKLY: "Semanal",
+  MONTHLY: "Mensal",
+  YEARLY: "Anual",
+};

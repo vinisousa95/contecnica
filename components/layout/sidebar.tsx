@@ -23,6 +23,7 @@ import {
   ClipboardList,
   CalendarDays,
   Wrench,
+  Wallet,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -31,6 +32,7 @@ interface NavItem {
   href?: string;
   icon: React.ComponentType<{ className?: string }>;
   children?: NavItem[];
+  adminOnly?: boolean;
 }
 
 const navigation: NavItem[] = [
@@ -92,6 +94,12 @@ const navigation: NavItem[] = [
     ],
   },
   {
+    label: "Gastos Pessoais",
+    href: "/gastos-pessoais",
+    icon: Wallet,
+    adminOnly: true,
+  },
+  {
     label: "Relatórios",
     href: "/relatorios",
     icon: BarChart3,
@@ -107,7 +115,7 @@ const navigation: NavItem[] = [
   },
 ];
 
-function NavItemComponent({ item, depth = 0 }: { item: NavItem; depth?: number }) {
+function NavItemComponent({ item, depth = 0 }: { item: NavItem; depth?: number; }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(() => {
     if (item.children) {
@@ -208,9 +216,11 @@ export function Sidebar({ user }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {navigation.map((item) => (
-          <NavItemComponent key={item.label} item={item} />
-        ))}
+        {navigation
+          .filter((item) => !item.adminOnly || user.role === "ADMIN")
+          .map((item) => (
+            <NavItemComponent key={item.label} item={item} />
+          ))}
       </nav>
 
       {/* User footer */}

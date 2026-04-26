@@ -121,6 +121,56 @@ export default function NovoContratoPage() {
   const selectedClient = clientList.find((c: any) => c.id === clientId);
   const selectedProject = projectList.find((p: any) => p.id === projectId);
 
+  // Fetch linked budget when project changes
+  const { data: projectDetail } = useQuery({
+    queryKey: ["project-detail-contract", projectId],
+    queryFn: () => api.projects.get(projectId) as Promise<any>,
+    enabled: !!projectId,
+  });
+
+  const linkedBudgetId = projectDetail?.linkedBudgetId ?? null;
+
+  const { data: linkedBudget } = useQuery({
+    queryKey: ["budget-for-contract", linkedBudgetId],
+    queryFn: () => api.budgets.get(linkedBudgetId!) as Promise<any>,
+    enabled: !!linkedBudgetId,
+  });
+
+  // Auto-populate service items from linked budget
+  useEffect(() => {
+    if (!linkedBudget) return;
+
+    const items: ServiceItem[] = [];
+
+    // Regular budget items (from catalog)
+    for (const item of linkedBudget.items ?? []) {
+      const name = item.name || item.reformItem?.name || item.reformPackage?.name || "Serviço";
+      items.push({
+        name,
+        quantity: Number(item.quantity),
+        unit: item.reformItem?.unit ?? item.reformPackage?.unit ?? "SERVICE",
+        unitPrice: Number(item.unitPrice),
+        subtotal: Number(item.subtotal),
+      });
+    }
+
+    // Extra items (free-form)
+    for (const item of linkedBudget.extraItems ?? []) {
+      items.push({
+        name: item.name,
+        quantity: Number(item.quantity),
+        unit: item.unit ?? "SERVICE",
+        unitPrice: Number(item.unitPrice),
+        subtotal: Number(item.subtotal),
+      });
+    }
+
+    if (items.length > 0) {
+      setServiceItems(items);
+      toast({ title: `${items.length} item(s) importados do orçamento vinculado`, variant: "success" });
+    }
+  }, [linkedBudget]);
+
   useEffect(() => {
     if (templateId) {
       const tpl = templates.find((t: any) => t.id === templateId);
@@ -292,7 +342,11 @@ export default function NovoContratoPage() {
                   <Select
                     options={clientOptions}
                     value={clientId}
-                    onChange={(e) => { setClientId(e.target.value); setProjectId(""); }}
+                    onChange={(e) => {
+                setClientId(e.target.value);
+                setProjectId("");
+                setServiceItems([{ name: "", quantity: 1, unit: "SERVICE", unitPrice: 0, subtotal: 0 }]);
+              }}
                   />
                 </div>
               </div>

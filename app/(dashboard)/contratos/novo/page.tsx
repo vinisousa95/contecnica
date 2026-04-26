@@ -9,9 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, Trash2, ArrowLeft, Eye } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Eye, X } from "lucide-react";
 
 const UNIT_OPTIONS = [
   { value: "UNIT", label: "Un" },
@@ -303,9 +304,9 @@ export default function NovoContratoPage() {
               <ArrowLeft className="h-4 w-4" />
               Voltar
             </Button>
-            <Button variant="outline" onClick={() => setShowPreview(!showPreview)}>
+            <Button variant="outline" onClick={() => setShowPreview(true)}>
               <Eye className="h-4 w-4" />
-              {showPreview ? "Ocultar Prévia" : "Pré-visualizar"}
+              Pré-visualizar
             </Button>
             <Button onClick={handleSubmit} loading={createMutation.isPending}>
               Salvar Contrato
@@ -570,19 +571,26 @@ export default function NovoContratoPage() {
         </div>
       </div>
 
-      {/* Prévia */}
-      {showPreview && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Pré-visualização do Contrato</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono leading-relaxed bg-gray-50 rounded-lg p-4 max-h-[600px] overflow-y-auto">
-              {previewBody || "Selecione um modelo para visualizar..."}
-            </pre>
-          </CardContent>
-        </Card>
-      )}
+      {/* Modal de pré-visualização */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Pré-visualização do Contrato</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto">
+            {templateBody ? (
+              <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono leading-relaxed bg-gray-50 rounded-lg p-5 min-h-[400px]">
+                {replaceVars(templateBody, buildVars())}
+              </pre>
+            ) : (
+              <div className="py-12 text-center text-gray-400">
+                <Eye className="h-8 w-8 mx-auto mb-2 text-gray-200" />
+                <p>Selecione um modelo de contrato para visualizar</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

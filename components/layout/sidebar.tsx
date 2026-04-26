@@ -77,6 +77,12 @@ const navigation: NavItem[] = [
     roles: ["ADMIN", "MANAGER"],
   },
   {
+    label: "Contratos",
+    href: "/contratos",
+    icon: FileText,
+    roles: ["ADMIN", "MANAGER"],
+  },
+  {
     label: "Execução de Tarefas",
     href: "/tarefas",
     icon: ClipboardList,
@@ -123,6 +129,7 @@ const navigation: NavItem[] = [
       { label: "Usuários", href: "/configuracoes/usuarios", icon: Users },
       { label: "Categorias", href: "/configuracoes/categorias", icon: CreditCard },
       { label: "Itens de Reforma", href: "/configuracoes/itens-reforma", icon: HardHat },
+      { label: "Modelos de Contrato", href: "/configuracoes/contratos", icon: FileText },
     ],
   },
 ];

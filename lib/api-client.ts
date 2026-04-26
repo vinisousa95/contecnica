@@ -304,6 +304,35 @@ export const api = {
       request("/company-settings", { method: "PUT", body: JSON.stringify(data) }),
   },
 
+  // Contract Templates (Modelos de Contrato)
+  contractTemplates: {
+    list: () => request("/contract-templates"),
+    get: (id: string) => request(`/contract-templates/${id}`),
+    create: (data: unknown) =>
+      request("/contract-templates", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: unknown) =>
+      request(`/contract-templates/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request(`/contract-templates/${id}`, { method: "DELETE" }),
+  },
+
+  // Contracts (Contratos)
+  contracts: {
+    list: (params?: Record<string, string>) => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return request(`/contracts${qs}`);
+    },
+    get: (id: string) => request(`/contracts/${id}`),
+    create: (data: unknown) =>
+      request("/contracts", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: unknown) =>
+      request(`/contracts/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request(`/contracts/${id}`, { method: "DELETE" }),
+    sign: (id: string, signedFileUrl: string) =>
+      request(`/contracts/${id}/sign`, { method: "PATCH", body: JSON.stringify({ signedFileUrl }) }),
+  },
+
   // Personal Expenses (Gastos Pessoais)
   personalExpenses: {
     list: (params?: Record<string, string>) => {

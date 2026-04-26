@@ -350,21 +350,21 @@ function ItemSelectorModal({
 export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "Salvar Orçamento" }: BudgetFormProps) {
   const [showItemSelector, setShowItemSelector] = useState(false);
 
-  const { data: clients = [] } = useQuery<Client[]>({
+  const { data: clients = [] } = useQuery({
     queryKey: ["clients-simple"],
-    queryFn: () => api.clients.list({ limit: "500" }),
+    queryFn: () => api.clients.list({ limit: "500" }) as Promise<any>,
     select: (data: any) => data?.data ?? (Array.isArray(data) ? data : []),
   });
 
-  const { data: reformItems = [] } = useQuery<ReformItem[]>({
+  const { data: reformItems = [] } = useQuery({
     queryKey: ["reform-items-active"],
-    queryFn: () => api.reformItems.list({ activeOnly: "true" }),
+    queryFn: () => api.reformItems.list({ activeOnly: "true" }) as Promise<any>,
     select: (data: any) => data?.data ?? (Array.isArray(data) ? data : []),
   });
 
-  const { data: reformPackages = [] } = useQuery<ReformPackage[]>({
+  const { data: reformPackages = [] } = useQuery({
     queryKey: ["reform-packages-active"],
-    queryFn: () => api.reformPackages.list({ activeOnly: "true" }),
+    queryFn: () => api.reformPackages.list({ activeOnly: "true" }) as Promise<any>,
     select: (data: any) => data?.data ?? (Array.isArray(data) ? data : []),
   });
 

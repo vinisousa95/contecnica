@@ -40,7 +40,7 @@ const navigation: NavItem[] = [
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["ADMIN", "MANAGER"],
+    roles: ["ADMIN"],
   },
   {
     label: "Clientes",

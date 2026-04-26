@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@/lib/api-client";
-import { createUserSchema, type CreateUserInput } from "@/lib/validations";
+import { createUserSchema, updateUserSchema, type CreateUserInput, type UpdateUserInput } from "@/lib/validations";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,17 +17,30 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { LoadingPage } from "@/components/ui/loading";
 import { toast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
-import { Plus, UserX, UserCheck, Users } from "lucide-react";
+import { Plus, UserX, Pencil, Users } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Administrador",
-  MANAGER: "Gerente",
+  MANAGER: "Administrativo",
   EMPLOYEE: "Funcionário",
 };
+
+const ROLE_COLORS: Record<string, string> = {
+  ADMIN: "bg-orange-50 text-orange-700",
+  MANAGER: "bg-blue-50 text-blue-700",
+  EMPLOYEE: "bg-gray-100 text-gray-600",
+};
+
+const ROLE_OPTIONS = [
+  { value: "ADMIN", label: "Administrador — acesso total" },
+  { value: "MANAGER", label: "Administrativo — sem financeiro" },
+  { value: "EMPLOYEE", label: "Funcionário — apenas tarefas" },
+];
 
 export default function UsuariosPage() {
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
+  const [editUser, setEditUser] = useState<any | null>(null);
   const [deactivateId, setDeactivateId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -41,10 +54,23 @@ export default function UsuariosPage() {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       toast({ title: "Usuário criado com sucesso!", variant: "success" });
       setShowCreate(false);
-      reset();
+      createForm.reset();
     },
     onError: (err: Error) => {
       toast({ title: "Erro ao criar usuário", description: err.message, variant: "error" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateUserInput }) =>
+      api.users.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast({ title: "Usuário atualizado com sucesso!", variant: "success" });
+      setEditUser(null);
+    },
+    onError: (err: Error) => {
+      toast({ title: "Erro ao atualizar", description: err.message, variant: "error" });
     },
   });
 
@@ -61,10 +87,26 @@ export default function UsuariosPage() {
     },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CreateUserInput>({
+  const createForm = useForm<CreateUserInput>({
     resolver: zodResolver(createUserSchema),
-    defaultValues: { role: "ADMIN" },
+    defaultValues: { role: "EMPLOYEE" },
   });
+
+  const editForm = useForm<UpdateUserInput>({
+    resolver: zodResolver(updateUserSchema),
+  });
+
+  function openEdit(u: any) {
+    setEditUser(u);
+    editForm.reset({
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      phone: u.phone ?? "",
+      isActive: u.isActive,
+      password: "",
+    });
+  }
 
   const users = Array.isArray(data) ? data : [];
 
@@ -117,7 +159,7 @@ export default function UsuariosPage() {
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">{u.email}</TableCell>
                     <TableCell>
-                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-50 text-blue-700">
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_COLORS[u.role] ?? "bg-gray-100 text-gray-600"}`}>
                         {ROLE_LABELS[u.role] ?? u.role}
                       </span>
                     </TableCell>
@@ -130,7 +172,10 @@ export default function UsuariosPage() {
                     </TableCell>
                     <TableCell className="text-sm text-gray-400">{formatDate(u.createdAt)}</TableCell>
                     <TableCell>
-                      <div className="flex justify-end">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="icon-sm" title="Editar" onClick={() => openEdit(u)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
                         {u.isActive ? (
                           <Button
                             variant="ghost"
@@ -160,47 +205,44 @@ export default function UsuariosPage() {
           <DialogHeader>
             <DialogTitle>Novo Usuário</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit((d) => createMutation.mutateAsync(d))} className="space-y-4">
-            <Input
-              label="Nome"
-              required
-              placeholder="Nome completo"
-              error={errors.name?.message}
-              {...register("name")}
-            />
-            <Input
-              label="E-mail"
-              type="email"
-              required
-              placeholder="email@exemplo.com"
-              error={errors.email?.message}
-              {...register("email")}
-            />
-            <Input
-              label="Senha"
-              type="password"
-              required
-              placeholder="Mínimo 6 caracteres"
-              error={errors.password?.message}
-              {...register("password")}
-            />
+          <form onSubmit={createForm.handleSubmit((d) => createMutation.mutateAsync(d).catch(() => {}))} className="space-y-4">
+            <Input label="Nome" required placeholder="Nome completo" error={createForm.formState.errors.name?.message} {...createForm.register("name")} />
+            <Input label="E-mail" type="email" required placeholder="email@exemplo.com" error={createForm.formState.errors.email?.message} {...createForm.register("email")} />
+            <Input label="Senha" type="password" required placeholder="Mínimo 6 caracteres" error={createForm.formState.errors.password?.message} {...createForm.register("password")} />
             <Select
-              label="Perfil"
-              options={[
-                { value: "ADMIN", label: "Administrador" },
-                { value: "MANAGER", label: "Gerente" },
-                { value: "EMPLOYEE", label: "Funcionário" },
-              ]}
-              error={errors.role?.message}
-              {...register("role")}
+              label="Perfil de Acesso"
+              options={ROLE_OPTIONS}
+              error={createForm.formState.errors.role?.message}
+              {...createForm.register("role")}
             />
             <DialogFooter className="gap-2">
-              <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" loading={createMutation.isPending}>
-                Criar Usuário
-              </Button>
+              <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
+              <Button type="submit" loading={createMutation.isPending}>Criar Usuário</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editUser} onOpenChange={(open) => !open && setEditUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Usuário</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={editForm.handleSubmit((d) => updateMutation.mutateAsync({ id: editUser.id, data: d }).catch(() => {}))} className="space-y-4">
+            <Input label="Nome" required placeholder="Nome completo" error={editForm.formState.errors.name?.message} {...editForm.register("name")} />
+            <Input label="E-mail" type="email" required placeholder="email@exemplo.com" error={editForm.formState.errors.email?.message} {...editForm.register("email")} />
+            <Input label="Nova Senha" type="password" placeholder="Deixe em branco para não alterar" error={editForm.formState.errors.password?.message} {...editForm.register("password")} />
+            <Input label="Telefone" placeholder="(00) 00000-0000" {...editForm.register("phone")} />
+            <Select
+              label="Perfil de Acesso"
+              options={ROLE_OPTIONS}
+              error={editForm.formState.errors.role?.message}
+              {...editForm.register("role")}
+            />
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="outline" onClick={() => setEditUser(null)}>Cancelar</Button>
+              <Button type="submit" loading={updateMutation.isPending}>Salvar Alterações</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -210,7 +252,7 @@ export default function UsuariosPage() {
         open={!!deactivateId}
         onOpenChange={(open) => !open && setDeactivateId(null)}
         title="Desativar usuário"
-        description="O usuário perderá acesso ao sistema. Esta ação pode ser revertida manualmente."
+        description="O usuário perderá acesso ao sistema. Esta ação pode ser revertida editando o usuário."
         confirmLabel="Desativar"
         variant="warning"
         loading={deactivateMutation.isPending}

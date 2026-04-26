@@ -80,8 +80,43 @@ export async function middleware(request: NextRequest) {
 
   if (pathname === "/") {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = session.role === "EMPLOYEE" ? "/tarefas" : "/dashboard";
     return NextResponse.redirect(url);
+  }
+
+  // ── Role-based access control ──────────────────────────────
+  const role = session.role;
+
+  // EMPLOYEE: só acessa /tarefas e APIs necessárias
+  if (role === "EMPLOYEE") {
+    const allowed = ["/tarefas", "/api/v1/assignments", "/api/v1/projects"];
+    const isAllowed = allowed.some((p) => pathname.startsWith(p));
+    if (!isAllowed) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ success: false, error: "Sem permissão" }, { status: 403 });
+      }
+      const url = request.nextUrl.clone();
+      url.pathname = "/tarefas";
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // MANAGER: sem acesso ao financeiro, relatórios, gastos pessoais e configurações
+  if (role === "MANAGER") {
+    const blocked = [
+      "/financeiro", "/relatorios", "/gastos-pessoais", "/configuracoes",
+      "/api/v1/expenses", "/api/v1/revenues", "/api/v1/reports",
+      "/api/v1/personal-expenses", "/api/v1/company-settings",
+    ];
+    const isBlocked = blocked.some((p) => pathname.startsWith(p));
+    if (isBlocked) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ success: false, error: "Sem permissão" }, { status: 403 });
+      }
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    }
   }
 
   return NextResponse.next();

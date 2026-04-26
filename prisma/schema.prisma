@@ -801,3 +801,25 @@ enum PersonalRecurrenceType {
   MONTHLY
   YEARLY
 }
+
+// ─────────────────────────────────────────────
+// COMPANY SETTINGS
+// ─────────────────────────────────────────────
+model CompanySettings {
+  id           String   @id @default("singleton")
+  name         String   @default("")
+  cnpj         String?
+  email        String?
+  phone        String?
+  website      String?
+  street       String?
+  number       String?
+  complement   String?
+  neighborhood String?
+  city         String?
+  state        String?
+  zipCode      String?  @map("zip_code")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("company_settings")
+}

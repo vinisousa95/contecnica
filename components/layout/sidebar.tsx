@@ -32,7 +32,7 @@ interface NavItem {
   href?: string;
   icon: React.ComponentType<{ className?: string }>;
   children?: NavItem[];
-  adminOnly?: boolean;
+  roles?: string[]; // undefined = all roles
 }
 
 const navigation: NavItem[] = [
@@ -40,20 +40,24 @@ const navigation: NavItem[] = [
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+    roles: ["ADMIN", "MANAGER"],
   },
   {
     label: "Clientes",
     href: "/clientes",
     icon: Users,
+    roles: ["ADMIN", "MANAGER"],
   },
   {
     label: "Obras",
     href: "/obras",
     icon: HardHat,
+    roles: ["ADMIN", "MANAGER"],
   },
   {
     label: "Financeiro",
     icon: DollarSign,
+    roles: ["ADMIN"],
     children: [
       { label: "Contas a Pagar", href: "/financeiro/despesas", icon: ArrowDownCircle },
       { label: "Contas a Receber", href: "/financeiro/receitas", icon: ArrowUpCircle },
@@ -64,11 +68,13 @@ const navigation: NavItem[] = [
     label: "Funcionários",
     href: "/operacional/funcionarios",
     icon: Users,
+    roles: ["ADMIN", "MANAGER"],
   },
   {
     label: "Orçamentos",
     href: "/orcamentos",
     icon: FileText,
+    roles: ["ADMIN", "MANAGER"],
   },
   {
     label: "Execução de Tarefas",
@@ -79,15 +85,18 @@ const navigation: NavItem[] = [
     label: "Prestadores",
     href: "/prestadores",
     icon: Wrench,
+    roles: ["ADMIN", "MANAGER"],
   },
   {
     label: "Cronograma",
     href: "/cronograma",
     icon: CalendarDays,
+    roles: ["ADMIN", "MANAGER"],
   },
   {
     label: "Operacional",
     icon: Truck,
+    roles: ["ADMIN", "MANAGER"],
     children: [
       { label: "Deslocamentos", href: "/operacional", icon: MapPin },
       { label: "Veículos", href: "/operacional/veiculos", icon: Truck },
@@ -97,16 +106,20 @@ const navigation: NavItem[] = [
     label: "Gastos Pessoais",
     href: "/gastos-pessoais",
     icon: Wallet,
+    roles: ["ADMIN"],
   },
   {
     label: "Relatórios",
     href: "/relatorios",
     icon: BarChart3,
+    roles: ["ADMIN"],
   },
   {
     label: "Configurações",
     icon: Settings,
+    roles: ["ADMIN"],
     children: [
+      { label: "Dados da Empresa", href: "/configuracoes/empresa", icon: Building2 },
       { label: "Usuários", href: "/configuracoes/usuarios", icon: Users },
       { label: "Categorias", href: "/configuracoes/categorias", icon: CreditCard },
       { label: "Itens de Reforma", href: "/configuracoes/itens-reforma", icon: HardHat },
@@ -216,7 +229,7 @@ export function Sidebar({ user }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {navigation
-          .filter((item) => !item.adminOnly || user.role === "ADMIN")
+          .filter((item) => !item.roles || item.roles.includes(user.role))
           .map((item) => (
             <NavItemComponent key={item.label} item={item} />
           ))}

@@ -297,6 +297,13 @@ export const api = {
       request(`/projects/${projectId}/service-providers/${linkId}`, { method: "DELETE" }),
   },
 
+  // Company Settings
+  companySettings: {
+    get: () => request("/company-settings"),
+    update: (data: unknown) =>
+      request("/company-settings", { method: "PUT", body: JSON.stringify(data) }),
+  },
+
   // Personal Expenses (Gastos Pessoais)
   personalExpenses: {
     list: (params?: Record<string, string>) => {

@@ -106,7 +106,7 @@ export default function NovoContratoPage() {
     queryKey: ["projects-for-contract", clientId],
     queryFn: () =>
       clientId
-        ? (api.projects.list({ clientId, status: "PLANNING,IN_PROGRESS", limit: "100" }) as Promise<any>)
+        ? (api.projects.list({ clientId, limit: "100" }) as Promise<any>)
         : Promise.resolve([]),
     enabled: !!clientId,
   });

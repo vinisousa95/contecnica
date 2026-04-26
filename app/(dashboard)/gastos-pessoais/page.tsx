@@ -188,41 +188,45 @@ export default function GastosPessoaisPage() {
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
         </div>
-        <Select
-          className="w-44"
-          value={category}
-          onChange={(e) => { setCategory(e.target.value); setPage(1); }}
-          options={[{ value: "", label: "Todas as categorias" }, ...CATEGORY_OPTIONS]}
-        />
-        <Select
-          className="w-36"
-          value={status}
-          onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-          options={[
-            { value: "", label: "Todos os status" },
-            { value: "PENDING", label: "Pendente" },
-            { value: "PAID", label: "Pago" },
-            { value: "OVERDUE", label: "Vencido" },
-            { value: "CANCELED", label: "Cancelado" },
-          ]}
-        />
-        <Select
-          className="w-36"
-          value={month}
-          onChange={(e) => { setMonth(e.target.value); setPage(1); }}
-          options={[{ value: "", label: "Todos os meses" }, ...MONTH_OPTIONS]}
-        />
-        <Select
-          className="w-24"
-          value={year}
-          onChange={(e) => { setYear(e.target.value); setPage(1); }}
-          options={[
-            { value: "", label: "Ano" },
-            { value: String(CURRENT_YEAR), label: String(CURRENT_YEAR) },
-            { value: String(CURRENT_YEAR - 1), label: String(CURRENT_YEAR - 1) },
-            { value: String(CURRENT_YEAR - 2), label: String(CURRENT_YEAR - 2) },
-          ]}
-        />
+        <div className="w-44">
+          <Select
+            value={category}
+            onChange={(e) => { setCategory(e.target.value); setPage(1); }}
+            options={[{ value: "", label: "Todas as categorias" }, ...CATEGORY_OPTIONS]}
+          />
+        </div>
+        <div className="w-36">
+          <Select
+            value={status}
+            onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+            options={[
+              { value: "", label: "Todos os status" },
+              { value: "PENDING", label: "Pendente" },
+              { value: "PAID", label: "Pago" },
+              { value: "OVERDUE", label: "Vencido" },
+              { value: "CANCELED", label: "Cancelado" },
+            ]}
+          />
+        </div>
+        <div className="w-36">
+          <Select
+            value={month}
+            onChange={(e) => { setMonth(e.target.value); setPage(1); }}
+            options={[{ value: "", label: "Todos os meses" }, ...MONTH_OPTIONS]}
+          />
+        </div>
+        <div className="w-24">
+          <Select
+            value={year}
+            onChange={(e) => { setYear(e.target.value); setPage(1); }}
+            options={[
+              { value: "", label: "Ano" },
+              { value: String(CURRENT_YEAR), label: String(CURRENT_YEAR) },
+              { value: String(CURRENT_YEAR - 1), label: String(CURRENT_YEAR - 1) },
+              { value: String(CURRENT_YEAR - 2), label: String(CURRENT_YEAR - 2) },
+            ]}
+          />
+        </div>
       </div>
 
       <Card>

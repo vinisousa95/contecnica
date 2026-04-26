@@ -66,9 +66,11 @@ export default function GastosPessoaisPage() {
     queryFn: () => api.personalExpenses.list(params),
   });
 
+  const summaryMonth = month || String(CURRENT_MONTH);
+  const summaryYear = year || String(CURRENT_YEAR);
   const { data: summary } = useQuery({
-    queryKey: ["personal-expenses-summary", month, year],
-    queryFn: () => api.personalExpenses.summary({ month, year }) as Promise<any>,
+    queryKey: ["personal-expenses-summary", summaryMonth, summaryYear],
+    queryFn: () => api.personalExpenses.summary({ month: summaryMonth, year: summaryYear }) as Promise<any>,
   });
 
   const deleteMutation = useMutation({

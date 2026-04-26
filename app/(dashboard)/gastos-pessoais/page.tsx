@@ -118,15 +118,14 @@ export default function GastosPessoaisPage() {
       />
 
       {/* Summary cards */}
-      {summary && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Total do Mês</p>
-                  <p className="text-xl font-bold text-gray-900 mt-1">{formatCurrency(summary.totalMonth)}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{summary.countMonth} gastos</p>
+                  <p className="text-xl font-bold text-gray-900 mt-1">{formatCurrency(summary?.totalMonth ?? 0)}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{summary?.countMonth ?? 0} gastos</p>
                 </div>
                 <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
                   <TrendingDown className="h-5 w-5 text-orange-600" />
@@ -140,7 +139,7 @@ export default function GastosPessoaisPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Pago</p>
-                  <p className="text-xl font-bold text-green-700 mt-1">{formatCurrency(summary.totalPaid)}</p>
+                  <p className="text-xl font-bold text-green-700 mt-1">{formatCurrency(summary?.totalPaid ?? 0)}</p>
                 </div>
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                   <CheckCircle className="h-5 w-5 text-green-600" />
@@ -154,7 +153,7 @@ export default function GastosPessoaisPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Pendente</p>
-                  <p className="text-xl font-bold text-amber-700 mt-1">{formatCurrency(summary.totalPending)}</p>
+                  <p className="text-xl font-bold text-amber-700 mt-1">{formatCurrency(summary?.totalPending ?? 0)}</p>
                 </div>
                 <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
                   <Clock className="h-5 w-5 text-amber-600" />
@@ -168,7 +167,7 @@ export default function GastosPessoaisPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Vencidos</p>
-                  <p className="text-xl font-bold text-red-700 mt-1">{summary.overdueCount}</p>
+                  <p className="text-xl font-bold text-red-700 mt-1">{summary?.overdueCount ?? 0}</p>
                   <p className="text-xs text-gray-400 mt-0.5">no total</p>
                 </div>
                 <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
@@ -178,7 +177,6 @@ export default function GastosPessoaisPage() {
             </CardContent>
           </Card>
         </div>
-      )}
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">

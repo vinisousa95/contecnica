@@ -82,16 +82,29 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 
-  // Check if client has projects
-  const count = await prisma.project.count({ where: { clientId: params.id } });
-  if (count > 0) {
-    return apiError("Não é possível excluir cliente com obras vinculadas. Inative-o.");
+  const [projectCount, budgetCount] = await Promise.all([
+    prisma.project.count({ where: { clientId: params.id } }),
+    prisma.budget.count({ where: { clientId: params.id } }),
+  ]);
+
+  if (projectCount > 0) {
+    return apiError(`Não é possível excluir: cliente possui ${projectCount} obra(s) vinculada(s). Inative-o.`);
+  }
+  if (budgetCount > 0) {
+    return apiError(`Não é possível excluir: cliente possui ${budgetCount} orçamento(s) vinculado(s). Inative-o.`);
   }
 
   try {
+    // Revenues têm clientId nullable — desvincula antes de excluir
+    await prisma.revenue.updateMany({
+      where: { clientId: params.id },
+      data: { clientId: null },
+    });
+
     await prisma.client.delete({ where: { id: params.id } });
     return apiSuccess({ message: "Cliente excluído com sucesso" });
-  } catch {
+  } catch (error: unknown) {
+    console.error(error);
     return apiError("Erro ao excluir cliente", 500);
   }
 }

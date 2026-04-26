@@ -97,7 +97,6 @@ const navigation: NavItem[] = [
     label: "Gastos Pessoais",
     href: "/gastos-pessoais",
     icon: Wallet,
-    adminOnly: true,
   },
   {
     label: "Relatórios",

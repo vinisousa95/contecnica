@@ -179,8 +179,8 @@ export default function GastosPessoaisPage() {
       )}
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-        <div className="flex-1 min-w-48">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex-1 min-w-[200px]">
           <Input
             placeholder="Buscar por descrição..."
             leftIcon={<Search className="h-4 w-4" />}
@@ -189,13 +189,13 @@ export default function GastosPessoaisPage() {
           />
         </div>
         <Select
-          className="sm:w-44"
+          className="w-44"
           value={category}
           onChange={(e) => { setCategory(e.target.value); setPage(1); }}
           options={[{ value: "", label: "Todas as categorias" }, ...CATEGORY_OPTIONS]}
         />
         <Select
-          className="sm:w-36"
+          className="w-36"
           value={status}
           onChange={(e) => { setStatus(e.target.value); setPage(1); }}
           options={[
@@ -207,17 +207,17 @@ export default function GastosPessoaisPage() {
           ]}
         />
         <Select
-          className="sm:w-32"
+          className="w-36"
           value={month}
           onChange={(e) => { setMonth(e.target.value); setPage(1); }}
           options={[{ value: "", label: "Todos os meses" }, ...MONTH_OPTIONS]}
         />
         <Select
-          className="sm:w-28"
+          className="w-24"
           value={year}
           onChange={(e) => { setYear(e.target.value); setPage(1); }}
           options={[
-            { value: "", label: "Todos" },
+            { value: "", label: "Ano" },
             { value: String(CURRENT_YEAR), label: String(CURRENT_YEAR) },
             { value: String(CURRENT_YEAR - 1), label: String(CURRENT_YEAR - 1) },
             { value: String(CURRENT_YEAR - 2), label: String(CURRENT_YEAR - 2) },

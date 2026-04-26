@@ -24,17 +24,13 @@ CONTRATADA: {{empresa_nome}}, inscrita no CNPJ sob nº {{empresa_cnpj}}, com sed
 Têm entre si justo e contratado o seguinte:
 
 CLÁUSULA 1ª – DO OBJETO
-A CONTRATADA se compromete a executar os serviços de reforma/construção no imóvel situado em {{obra_endereco}}, conforme descrito abaixo:
-
-{{itens_servico}}
+A CONTRATADA se compromete a executar os serviços de reforma/construção no imóvel situado em {{obra_endereco}}, conforme relação de serviços detalhada neste instrumento.
 
 CLÁUSULA 2ª – DO PRAZO
 Os serviços terão início em {{data_inicio}} e prazo de execução de {{prazo_dias}} dias corridos.
 
 CLÁUSULA 3ª – DO VALOR E FORMA DE PAGAMENTO
-O valor total dos serviços é de {{valor_total}} ({{valor_total_extenso}}), a ser pago conforme abaixo:
-
-{{parcelas}}
+O valor total dos serviços é de {{valor_total}} ({{valor_total_extenso}}), a ser pago conforme condições de pagamento detalhadas neste instrumento.
 
 CLÁUSULA 4ª – DAS OBRIGAÇÕES DA CONTRATADA
 A CONTRATADA se obriga a:

@@ -2,8 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { getPortalSession } from "@/lib/portal-auth";
 import { prisma } from "@/lib/prisma";
 
-function fmt(value: number): string {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+function fmt(v: number) {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 const UNIT_LABELS: Record<string, string> = {
@@ -11,33 +11,12 @@ const UNIT_LABELS: Record<string, string> = {
   DAILY: "Diária", SERVICE: "Serviço", POINT: "Ponto", HOUR: "Hora",
 };
 
-function renderBodyLine(line: string, idx: number) {
-  const isClause = /^CL[AÁ]USULA\s/i.test(line);
-  const isSubItem = /^[a-z]\)\s/.test(line);
-  const isSignatureLine = /^_{5,}/.test(line);
-  const isEmpty = line.trim() === "";
-
-  if (isEmpty) return <div key={idx} style={{ height: "10px" }} />;
-  if (isSignatureLine || line.startsWith("Por estarem") || /^\w+,\s\d/.test(line))
-    return null;
-  if (isClause) {
-    return (
-      <p key={idx} style={{
-        fontWeight: "bold", fontSize: "11pt", marginTop: "18px", marginBottom: "4px",
-        color: "#1a1a2e", textTransform: "uppercase", letterSpacing: "0.03em",
-        borderBottom: "1px solid #e5e5e5", paddingBottom: "3px",
-      }}>{line}</p>
-    );
-  }
-  if (isSubItem) {
-    return (
-      <p key={idx} style={{ margin: "2px 0", paddingLeft: "16px", fontSize: "11pt", color: "#333" }}>{line}</p>
-    );
-  }
-  return (
-    <p key={idx} style={{ margin: "4px 0", fontSize: "11pt", lineHeight: "1.7", textAlign: "justify", color: "#222" }}>{line}</p>
-  );
-}
+const isEmbeddedItem = (l: string) => /^\d+\. .+ — \d/.test(l);
+const isEmbeddedPayment = (l: string) => /^\d+ª .+: R\$/.test(l) || /^\d+ª .+R\$/.test(l);
+const isSignatureLine = (l: string) => /^_{4,}/.test(l.trim());
+const isBlank = (l: string) => l.trim() === "";
+const isClause = (l: string) => /^CL[AÁ]USULA\s/i.test(l.trim());
+const isSubItem = (l: string) => /^[a-z]\)\s/.test(l.trim());
 
 export default async function PortalImprimirContrato({ params }: { params: { id: string } }) {
   const session = await getPortalSession();
@@ -58,183 +37,177 @@ export default async function PortalImprimirContrato({ params }: { params: { id:
   const vars: any = typeof contract.variables === "object" ? contract.variables : {};
   const totalAmount = Number(contract.totalAmount);
 
-  const bodyLines = contract.body.split("\n");
-  const sigDate = vars.data_assinatura || "";
+  const companyName = company?.name || "";
+  const companyCnpj = company?.cnpj || "";
+
+  const bodyLines = contract.body.split("\n").filter(
+    (l) => !isEmbeddedItem(l) && !isEmbeddedPayment(l) && !isSignatureLine(l)
+  );
+
   const sigCity = vars.cidade || "";
+  const sigDate = vars.data_assinatura || "";
   const responsavel = vars.responsavel_nome || "";
   const responsavelCpf = vars.responsavel_cpf || "";
-  const companyName = company?.name || "CONTRATADA";
-  const companyCnpj = company?.cnpj || "";
+
+  const CSS = `
+    @page { margin: 2.5cm 2cm; size: A4; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; line-height: 1.6; }
+    @media screen { body { max-width: 800px; margin: 30px auto; padding: 40px; } }
+    @media print { body { margin: 0; } }
+    .page-header { text-align: center; margin-bottom: 32px; }
+    .page-header h1 { font-size: 13pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.06em; }
+    .page-header .num { font-size: 10pt; color: #444; margin-top: 6px; }
+    .divider { border: none; border-top: 2px solid #000; margin: 0 auto 28px; }
+    .body-text { margin-bottom: 28px; }
+    .body-text p { margin-bottom: 8px; text-align: justify; font-size: 12pt; }
+    .clause { font-weight: bold; text-transform: uppercase; margin-top: 20px; margin-bottom: 6px; }
+    .subitem { padding-left: 24px; margin-bottom: 4px; }
+    .section-heading { font-weight: bold; text-transform: uppercase; font-size: 11pt; letter-spacing: 0.04em; border-bottom: 1.5px solid #000; padding-bottom: 4px; margin-bottom: 10px; margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 28px; font-size: 11pt; }
+    thead tr th { border: 1px solid #000; padding: 6px 10px; text-align: left; font-size: 10pt; font-weight: bold; background: #f0f0f0; }
+    tbody tr td { border: 1px solid #000; padding: 6px 10px; }
+    tbody tr:nth-child(even) td { background: #fafafa; }
+    tfoot tr td { border: 1px solid #000; padding: 7px 10px; font-weight: bold; }
+    .tr { text-align: right; } .tc { text-align: center; }
+    .sig-section { margin-top: 48px; }
+    .sig-date { text-align: right; margin-bottom: 40px; }
+    .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; }
+    .sig-block { text-align: center; }
+    .sig-line { border-top: 1px solid #000; padding-top: 8px; margin-top: 50px; font-size: 11pt; }
+    .sig-label { font-weight: bold; }
+    .sig-doc { font-size: 10pt; color: #333; }
+    .footer { margin-top: 40px; border-top: 1px solid #ccc; padding-top: 8px; text-align: center; font-size: 8.5pt; color: #666; font-family: Arial, sans-serif; }
+  `;
 
   return (
     <html lang="pt-BR">
       <head>
         <meta charSet="utf-8" />
-        <title>{contract.title} — Nº {contract.number}</title>
-        <style>{`
-          @page { margin: 1.8cm 1.5cm; size: A4; }
-          * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: Georgia, 'Times New Roman', serif; font-size: 11pt; color: #222; background: #fff; }
-          @media print { body { margin: 0; } }
-          @media screen { body { max-width: 820px; margin: 20px auto; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.1); } }
-        `}</style>
+        <title>{contract.title}</title>
+        <style>{CSS}</style>
       </head>
       <body>
-        {/* HEADER */}
-        <div style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)", borderRadius: "6px 6px 0 0" }}>
-          <div style={{ background: "#EA580C", height: "5px" }} />
-          <div style={{ padding: "20px 28px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <div style={{ fontSize: "20pt", fontWeight: "900", fontFamily: "Arial, sans-serif", color: "#fff" }}>{companyName}</div>
-              {companyCnpj && <div style={{ fontSize: "9pt", color: "#94a3b8", marginTop: "2px" }}>CNPJ: {companyCnpj}</div>}
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: "9pt", color: "#94a3b8", fontFamily: "Arial, sans-serif" }}>CONTRATO Nº</div>
-              <div style={{ fontSize: "16pt", fontWeight: "700", color: "#EA580C", fontFamily: "Arial, sans-serif" }}>{contract.number}</div>
-            </div>
-          </div>
+        <div className="page-header">
+          <h1>{contract.title}</h1>
+          <p className="num">Nº {contract.number}</p>
+        </div>
+        <hr className="divider" />
+
+        <div className="body-text">
+          {bodyLines.map((line, idx) => {
+            if (isBlank(line)) return <div key={idx} style={{ height: "8px" }} />;
+            if (isClause(line)) return <p key={idx} className="clause">{line}</p>;
+            if (isSubItem(line)) return <p key={idx} className="subitem">{line}</p>;
+            return <p key={idx}>{line}</p>;
+          })}
         </div>
 
-        {/* TITLE */}
-        <div style={{ background: "#f8f9fa", border: "1px solid #e2e8f0", borderTop: "none", padding: "14px 28px", textAlign: "center", marginBottom: "20px", borderRadius: "0 0 6px 6px" }}>
-          <div style={{ fontSize: "13pt", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.08em", color: "#1a1a2e" }}>{contract.title}</div>
-        </div>
-
-        {/* PARTIES */}
-        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "24px", border: "1px solid #e2e8f0" }}>
-          <thead>
-            <tr style={{ background: "#EA580C" }}>
-              <th style={{ padding: "8px 14px", color: "#fff", fontSize: "9pt", fontFamily: "Arial, sans-serif", textAlign: "left", width: "50%" }}>CONTRATANTE</th>
-              <th style={{ padding: "8px 14px", color: "#fff", fontSize: "9pt", fontFamily: "Arial, sans-serif", textAlign: "left", borderLeft: "1px solid rgba(255,255,255,0.3)" }}>CONTRATADA</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={{ padding: "12px 14px", verticalAlign: "top", borderRight: "1px solid #e2e8f0" }}>
-                <div style={{ fontWeight: "bold", fontSize: "11pt" }}>{contract.client.name}</div>
-                {contract.client.document && <div style={{ fontSize: "9.5pt", color: "#555", marginTop: "3px" }}>CPF/CNPJ: {contract.client.document}</div>}
-              </td>
-              <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
-                <div style={{ fontWeight: "bold", fontSize: "11pt" }}>{companyName}</div>
-                {companyCnpj && <div style={{ fontSize: "9.5pt", color: "#555", marginTop: "3px" }}>CNPJ: {companyCnpj}</div>}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        {/* BODY */}
-        <div style={{ marginBottom: "24px" }}>{bodyLines.map((line, idx) => renderBodyLine(line, idx))}</div>
-
-        {/* SERVICES TABLE */}
         {serviceItems.length > 0 && (
-          <div style={{ marginBottom: "24px" }}>
-            <div style={{ background: "#EA580C", color: "#fff", padding: "8px 14px", fontSize: "10pt", fontWeight: "bold", fontFamily: "Arial, sans-serif", textTransform: "uppercase", borderRadius: "4px 4px 0 0" }}>
-              Relação de Serviços
-            </div>
-            <table style={{ width: "100%", borderCollapse: "collapse", border: "1px solid #e2e8f0", borderTop: "none" }}>
+          <>
+            <div className="section-heading">Relação de Serviços</div>
+            <table>
               <thead>
-                <tr style={{ background: "#fff3ed" }}>
-                  <th style={{ padding: "7px 12px", textAlign: "left", fontSize: "9pt", fontFamily: "Arial, sans-serif", borderBottom: "1px solid #e2e8f0", width: "32px" }}>Nº</th>
-                  <th style={{ padding: "7px 12px", textAlign: "left", fontSize: "9pt", fontFamily: "Arial, sans-serif", borderBottom: "1px solid #e2e8f0" }}>Descrição</th>
-                  <th style={{ padding: "7px 12px", textAlign: "center", fontSize: "9pt", fontFamily: "Arial, sans-serif", borderBottom: "1px solid #e2e8f0", width: "55px" }}>Qtd</th>
-                  <th style={{ padding: "7px 12px", textAlign: "center", fontSize: "9pt", fontFamily: "Arial, sans-serif", borderBottom: "1px solid #e2e8f0", width: "50px" }}>Un</th>
-                  <th style={{ padding: "7px 12px", textAlign: "right", fontSize: "9pt", fontFamily: "Arial, sans-serif", borderBottom: "1px solid #e2e8f0", width: "100px" }}>Valor Unit.</th>
-                  <th style={{ padding: "7px 12px", textAlign: "right", fontSize: "9pt", fontFamily: "Arial, sans-serif", borderBottom: "1px solid #e2e8f0", width: "110px" }}>Subtotal</th>
+                <tr>
+                  <th style={{ width: "32px" }}>Nº</th>
+                  <th>Descrição do Serviço</th>
+                  <th className="tc" style={{ width: "55px" }}>Qtd</th>
+                  <th className="tc" style={{ width: "55px" }}>Un</th>
+                  <th className="tr" style={{ width: "110px" }}>Val. Unit.</th>
+                  <th className="tr" style={{ width: "115px" }}>Subtotal</th>
                 </tr>
               </thead>
               <tbody>
                 {serviceItems.map((item: any, idx: number) => (
-                  <tr key={idx} style={{ background: idx % 2 === 0 ? "#fff" : "#fafafa" }}>
-                    <td style={{ padding: "6px 12px", fontSize: "9pt", color: "#888", fontFamily: "Arial, sans-serif" }}>{idx + 1}</td>
-                    <td style={{ padding: "6px 12px", fontSize: "10pt" }}>{item.name}</td>
-                    <td style={{ padding: "6px 12px", fontSize: "10pt", textAlign: "center", fontFamily: "Arial, sans-serif" }}>{item.quantity}</td>
-                    <td style={{ padding: "6px 12px", fontSize: "9.5pt", textAlign: "center", color: "#666", fontFamily: "Arial, sans-serif" }}>{UNIT_LABELS[item.unit] ?? item.unit}</td>
-                    <td style={{ padding: "6px 12px", fontSize: "10pt", textAlign: "right", fontFamily: "Arial, sans-serif" }}>{fmt(Number(item.unitPrice))}</td>
-                    <td style={{ padding: "6px 12px", fontSize: "10pt", textAlign: "right", fontWeight: "600", fontFamily: "Arial, sans-serif" }}>{fmt(Number(item.subtotal))}</td>
+                  <tr key={idx}>
+                    <td className="tc" style={{ color: "#555" }}>{idx + 1}</td>
+                    <td>{item.name}</td>
+                    <td className="tc">{item.quantity}</td>
+                    <td className="tc" style={{ color: "#555" }}>{UNIT_LABELS[item.unit] ?? item.unit}</td>
+                    <td className="tr">{fmt(Number(item.unitPrice))}</td>
+                    <td className="tr">{fmt(Number(item.subtotal))}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr style={{ background: "#1a1a2e" }}>
-                  <td colSpan={5} style={{ padding: "9px 12px", textAlign: "right", fontSize: "10pt", fontWeight: "bold", color: "#fff", fontFamily: "Arial, sans-serif" }}>VALOR TOTAL</td>
-                  <td style={{ padding: "9px 12px", textAlign: "right", fontSize: "12pt", fontWeight: "bold", color: "#EA580C", fontFamily: "Arial, sans-serif" }}>{fmt(totalAmount)}</td>
+                <tr>
+                  <td colSpan={5} className="tr">VALOR TOTAL DOS SERVIÇOS</td>
+                  <td className="tr">{fmt(totalAmount)}</td>
                 </tr>
               </tfoot>
             </table>
-          </div>
+          </>
         )}
 
-        {/* PAYMENT TABLE */}
         {paymentSchedule.length > 0 && (
-          <div style={{ marginBottom: "32px" }}>
-            <div style={{ background: "#1a1a2e", color: "#fff", padding: "8px 14px", fontSize: "10pt", fontWeight: "bold", fontFamily: "Arial, sans-serif", textTransform: "uppercase", borderRadius: "4px 4px 0 0" }}>
-              Condições de Pagamento
-            </div>
-            <table style={{ width: "100%", borderCollapse: "collapse", border: "1px solid #e2e8f0", borderTop: "none" }}>
+          <>
+            <div className="section-heading">Condições de Pagamento</div>
+            <table>
               <thead>
-                <tr style={{ background: "#f1f5f9" }}>
-                  <th style={{ padding: "7px 12px", textAlign: "center", fontSize: "9pt", fontFamily: "Arial, sans-serif", borderBottom: "1px solid #e2e8f0", width: "70px" }}>Parcela</th>
-                  <th style={{ padding: "7px 12px", textAlign: "left", fontSize: "9pt", fontFamily: "Arial, sans-serif", borderBottom: "1px solid #e2e8f0" }}>Descrição</th>
-                  <th style={{ padding: "7px 12px", textAlign: "center", fontSize: "9pt", fontFamily: "Arial, sans-serif", borderBottom: "1px solid #e2e8f0", width: "130px" }}>Vencimento</th>
-                  <th style={{ padding: "7px 12px", textAlign: "right", fontSize: "9pt", fontFamily: "Arial, sans-serif", borderBottom: "1px solid #e2e8f0", width: "130px" }}>Valor</th>
+                <tr>
+                  <th className="tc" style={{ width: "70px" }}>Parcela</th>
+                  <th>Descrição</th>
+                  <th className="tc" style={{ width: "130px" }}>Vencimento</th>
+                  <th className="tr" style={{ width: "130px" }}>Valor</th>
                 </tr>
               </thead>
               <tbody>
                 {paymentSchedule.map((inst: any, idx: number) => (
-                  <tr key={idx} style={{ background: idx % 2 === 0 ? "#fff" : "#fafafa" }}>
-                    <td style={{ padding: "7px 12px", fontSize: "10pt", textAlign: "center", fontFamily: "Arial, sans-serif", color: "#EA580C", fontWeight: "600" }}>{inst.installment}ª</td>
-                    <td style={{ padding: "7px 12px", fontSize: "10pt" }}>{inst.description || "—"}</td>
-                    <td style={{ padding: "7px 12px", fontSize: "10pt", textAlign: "center", fontFamily: "Arial, sans-serif" }}>{inst.dueDate}</td>
-                    <td style={{ padding: "7px 12px", fontSize: "10pt", textAlign: "right", fontWeight: "600", fontFamily: "Arial, sans-serif" }}>{fmt(Number(inst.amount))}</td>
+                  <tr key={idx}>
+                    <td className="tc">{inst.installment}ª</td>
+                    <td>{inst.description || "—"}</td>
+                    <td className="tc">{inst.dueDate}</td>
+                    <td className="tr">{fmt(Number(inst.amount))}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </>
         )}
 
-        {/* SIGNATURES */}
-        <div style={{ borderTop: "2px solid #e2e8f0", paddingTop: "28px" }}>
-          {sigCity && sigDate && (
-            <p style={{ textAlign: "center", fontSize: "11pt", marginBottom: "36px", color: "#333" }}>{sigCity}, {sigDate}.</p>
+        <div className="sig-section">
+          {(sigCity || sigDate) && (
+            <p className="sig-date">{[sigCity, sigDate].filter(Boolean).join(", ")}.</p>
           )}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "40px" }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ borderTop: "1.5px solid #1a1a2e", paddingTop: "10px" }}>
-                <div style={{ fontWeight: "bold", fontSize: "10.5pt" }}>CONTRATANTE</div>
-                <div style={{ fontSize: "10.5pt", marginTop: "4px" }}>{contract.client.name}</div>
+          <div className="sig-grid">
+            <div className="sig-block">
+              <div className="sig-line">
+                <p className="sig-label">CONTRATANTE</p>
+                <p>{contract.client.name}</p>
+                {contract.client.document && <p className="sig-doc">CPF/CNPJ: {contract.client.document}</p>}
               </div>
             </div>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ borderTop: "1.5px solid #1a1a2e", paddingTop: "10px" }}>
-                <div style={{ fontWeight: "bold", fontSize: "10.5pt" }}>CONTRATADA</div>
-                <div style={{ fontSize: "10.5pt", marginTop: "4px" }}>{companyName}</div>
+            <div className="sig-block">
+              <div className="sig-line">
+                <p className="sig-label">CONTRATADA</p>
+                {companyName && <p>{companyName}</p>}
+                {companyCnpj && <p className="sig-doc">CNPJ: {companyCnpj}</p>}
               </div>
             </div>
           </div>
           {responsavel && (
-            <div style={{ marginTop: "36px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "40px" }}>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ borderTop: "1.5px solid #aaa", paddingTop: "10px" }}>
-                  <div style={{ fontSize: "9.5pt", color: "#555" }}>TESTEMUNHA</div>
-                  <div style={{ fontSize: "10pt", marginTop: "3px" }}>{responsavel}</div>
-                  {responsavelCpf && <div style={{ fontSize: "9pt", color: "#666" }}>CPF: {responsavelCpf}</div>}
+            <div className="sig-grid" style={{ marginTop: "48px" }}>
+              <div className="sig-block">
+                <div className="sig-line">
+                  <p className="sig-label">TESTEMUNHA</p>
+                  <p>{responsavel}</p>
+                  {responsavelCpf && <p className="sig-doc">CPF: {responsavelCpf}</p>}
                 </div>
               </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ borderTop: "1.5px solid #aaa", paddingTop: "10px" }}>
-                  <div style={{ fontSize: "9.5pt", color: "#555" }}>TESTEMUNHA</div>
+              <div className="sig-block">
+                <div className="sig-line">
+                  <p className="sig-label">TESTEMUNHA</p>
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        <div style={{ marginTop: "28px", borderTop: "1px solid #e2e8f0", paddingTop: "10px", textAlign: "center", fontSize: "8pt", color: "#aaa", fontFamily: "Arial, sans-serif" }}>
-          {companyName} · Contrato Nº {contract.number} · Documento gerado pelo sistema Contécnica
+        <div className="footer">
+          Contrato Nº {contract.number}{companyName ? ` · ${companyName}` : ""} · Gerado pelo sistema Contécnica
         </div>
 
-        <script dangerouslySetInnerHTML={{ __html: "window.onload = function() { window.print(); }" }} />
+        <script dangerouslySetInnerHTML={{ __html: "window.onload=function(){window.print()}" }} />
       </body>
     </html>
   );

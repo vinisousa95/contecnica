@@ -173,16 +173,15 @@ export default function ContratosPage() {
                             </Button>
                           </a>
                         )}
-                        {c.status === "DRAFT" && (
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            className="text-red-400 hover:text-red-600"
-                            onClick={() => setDeleteId(c.id)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="text-red-400 hover:text-red-600"
+                          title="Excluir contrato"
+                          onClick={() => setDeleteId(c.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

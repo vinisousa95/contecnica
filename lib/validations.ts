@@ -3,14 +3,14 @@ import { z } from "zod";
 // ── Auth ──────────────────────────────────────────────────────
 export const loginSchema = z.object({
   email: z.string().email("E-mail inválido"),
-  password: z.string().min(6, "Senha deve ter ao menos 6 caracteres"),
+  password: z.string().min(8, "Senha deve ter ao menos 8 caracteres"),
 });
 
 // ── Users ─────────────────────────────────────────────────────
 export const createUserSchema = z.object({
   name: z.string().min(2, "Nome deve ter ao menos 2 caracteres"),
   email: z.string().email("E-mail inválido"),
-  password: z.string().min(6, "Senha deve ter ao menos 6 caracteres"),
+  password: z.string().min(8, "Senha deve ter ao menos 8 caracteres"),
   role: z.enum(["ADMIN", "MANAGER", "EMPLOYEE"]).default("ADMIN"),
   phone: z.string().optional(),
 });
@@ -18,7 +18,7 @@ export const createUserSchema = z.object({
 export const updateUserSchema = createUserSchema
   .omit({ password: true })
   .extend({
-    password: z.string().min(6).optional().or(z.literal("")),
+    password: z.string().min(8).optional().or(z.literal("")),
     isActive: z.boolean().optional(),
   });
 

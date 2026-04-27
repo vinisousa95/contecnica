@@ -6,7 +6,17 @@ import { apiError } from "@/lib/utils";
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_IMAGE = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
-const ALLOWED_DOC = ["application/pdf", "image/jpeg", "image/png", ...ALLOWED_IMAGE];
+const ALLOWED_DOC = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+
+// Whitelist de extensões por MIME — evita path traversal via extensão
+const MIME_TO_EXT: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+  "application/pdf": "pdf",
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,13 +32,14 @@ export async function POST(request: NextRequest) {
 
     const allowed = type === "document" ? ALLOWED_DOC : ALLOWED_IMAGE;
     if (!allowed.includes(file.type)) {
-      return apiError(`Tipo de arquivo não permitido: ${file.type}`, 400);
+      return apiError("Tipo de arquivo não permitido", 400);
     }
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
+    // Extensão derivada do MIME type (não do nome do arquivo) — evita path traversal
+    const ext = MIME_TO_EXT[file.type] ?? "bin";
     const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const subdir = type === "document" ? "documents" : "photos";
 
@@ -38,8 +49,8 @@ export async function POST(request: NextRequest) {
 
     const url = `/uploads/${subdir}/${safeName}`;
     return NextResponse.json({ success: true, data: { url } }, { status: 200 });
-  } catch (err: any) {
+  } catch (err) {
     console.error("[upload]", err);
-    return NextResponse.json({ success: false, error: err?.message ?? "Erro ao fazer upload" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Erro ao fazer upload" }, { status: 500 });
   }
 }

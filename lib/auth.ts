@@ -3,8 +3,12 @@ import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? "contecnica-secret-fallback"
+  process.env.JWT_SECRET
 );
+
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET não definido. Configure a variável de ambiente.");
+}
 
 const COOKIE_NAME = "contecnica_session";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days

@@ -25,7 +25,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "pdf";
+    const MIME_EXT: Record<string, string> = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png" };
+    const ext = MIME_EXT[file.type] ?? "pdf";
     const safeName = `contract-signed-${params.id}-${Date.now()}.${ext}`;
 
     const uploadDir = join(process.cwd(), "public", "uploads", "contracts");
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     });
 
     return apiSuccess({ signedFileUrl: updated.signedFileUrl });
-  } catch (err: any) {
+  } catch (err) {
     console.error("[portal sign contract]", err);
     return apiError("Erro ao processar arquivo");
   }

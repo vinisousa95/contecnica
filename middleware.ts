@@ -108,6 +108,7 @@ export async function middleware(request: NextRequest) {
       "/dashboard", "/financeiro", "/relatorios", "/gastos-pessoais", "/configuracoes",
       "/api/v1/expenses", "/api/v1/revenues", "/api/v1/reports",
       "/api/v1/personal-expenses", "/api/v1/company-settings",
+      "/api/v1/contract-templates", "/api/v1/users",
     ];
     const isBlocked = blocked.some((p) => pathname.startsWith(p));
     if (isBlocked) {

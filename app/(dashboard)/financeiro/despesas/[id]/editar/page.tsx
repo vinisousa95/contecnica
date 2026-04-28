@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { type ExpenseInput } from "@/lib/validations";
@@ -15,6 +15,9 @@ import { format } from "date-fns";
 
 export default function EditarDespesaPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const obraId = searchParams.get("obraId");
+  const backUrl = obraId ? `/obras/${obraId}` : "/financeiro/despesas";
   const queryClient = useQueryClient();
 
   const { data: expense, isLoading } = useQuery({
@@ -28,7 +31,7 @@ export default function EditarDespesaPage({ params }: { params: { id: string } }
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast({ title: "Despesa atualizada!", variant: "success" });
-      router.push("/financeiro/despesas");
+      router.push(backUrl);
     },
     onError: (err: Error) => {
       toast({ title: "Erro ao atualizar", description: err.message, variant: "error" });
@@ -54,7 +57,7 @@ export default function EditarDespesaPage({ params }: { params: { id: string } }
         description={expense.description}
         actions={
           <Button variant="outline" size="sm" asChild>
-            <Link href="/financeiro/despesas">
+            <Link href={backUrl}>
               <ArrowLeft className="h-4 w-4" />
               Voltar
             </Link>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { type RevenueInput } from "@/lib/validations";
@@ -15,6 +15,9 @@ import { format } from "date-fns";
 
 export default function EditarReceitaPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const obraId = searchParams.get("obraId");
+  const backUrl = obraId ? `/obras/${obraId}` : "/financeiro/receitas";
   const queryClient = useQueryClient();
 
   const { data: revenue, isLoading } = useQuery({
@@ -28,7 +31,7 @@ export default function EditarReceitaPage({ params }: { params: { id: string } }
       queryClient.invalidateQueries({ queryKey: ["revenues"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast({ title: "Receita atualizada!", variant: "success" });
-      router.push("/financeiro/receitas");
+      router.push(backUrl);
     },
     onError: (err: Error) => {
       toast({ title: "Erro ao atualizar", description: err.message, variant: "error" });
@@ -55,7 +58,7 @@ export default function EditarReceitaPage({ params }: { params: { id: string } }
         description={revenue.description}
         actions={
           <Button variant="outline" size="sm" asChild>
-            <Link href="/financeiro/receitas">
+            <Link href={backUrl}>
               <ArrowLeft className="h-4 w-4" />
               Voltar
             </Link>

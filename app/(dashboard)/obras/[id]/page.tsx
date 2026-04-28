@@ -1134,7 +1134,7 @@ export default function ObraDetailPage({ params }: { params: { id: string } }) {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">
-                        <Link href={`/financeiro/despesas/${e.id}/editar`}>
+                        <Link href={`/financeiro/despesas/${e.id}/editar?obraId=${params.id}`}>
                           <Button variant="ghost" size="icon-sm" title="Editar">
                             <Pencil className="h-3.5 w-3.5 text-gray-400" />
                           </Button>
@@ -1197,7 +1197,7 @@ export default function ObraDetailPage({ params }: { params: { id: string } }) {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">
-                        <Link href={`/financeiro/receitas/${r.id}/editar`}>
+                        <Link href={`/financeiro/receitas/${r.id}/editar?obraId=${params.id}`}>
                           <Button variant="ghost" size="icon-sm" title="Editar">
                             <Pencil className="h-3.5 w-3.5 text-gray-400" />
                           </Button>

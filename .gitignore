@@ -41,5 +41,6 @@ next-env.d.ts
 prisma/migrations/
 
 # ─── UPLOADS DE USUÁRIOS ──────────────────────────────
-# Arquivos enviados ficam fora do repositório
-public/uploads/
+# Arquivos enviados ficam fora do repositório (mantém estrutura de pastas)
+public/uploads/**
+!public/uploads/**/.gitkeep

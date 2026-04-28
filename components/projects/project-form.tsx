@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HardHat, MapPin, DollarSign, ImagePlus, X, Loader2 } from "lucide-react";
 import { useCepLookup } from "@/hooks/use-cep-lookup";
 import { maskCep } from "@/lib/masks";
+import { toast } from "@/hooks/use-toast";
 
 interface ProjectFormProps {
   defaultValues?: Partial<ProjectInput>;
@@ -77,6 +78,8 @@ export function ProjectForm({
       if (!res.ok) throw new Error(json.error ?? "Erro no upload");
       setPreviewUrl(json.data.url);
       setValue("coverPhoto", json.data.url);
+    } catch (err: any) {
+      toast({ title: "Erro ao enviar foto", description: err.message, variant: "error" });
     } finally {
       setUploading(false);
     }

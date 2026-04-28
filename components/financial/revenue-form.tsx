@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatCurrencyInput, parseCurrencyInput } from "@/lib/masks";
+import { CurrencyInput } from "@/components/ui/currency-input";
 
 interface RevenueFormProps {
   defaultValues?: Partial<RevenueInput>;
@@ -120,13 +120,12 @@ export function RevenueForm({
             {...register("categoryId")}
           />
 
-          <Input
+          <CurrencyInput
             label="Valor (R$)"
             required
             placeholder="0,00"
-            inputMode="numeric"
-            value={formatCurrencyInput(watch("amount"))}
-            onChange={(e) => setValue("amount", parseCurrencyInput(e.target.value), { shouldValidate: true })}
+            value={watch("amount") ?? ""}
+            onChange={(v) => setValue("amount", v, { shouldValidate: true })}
             error={errors.amount?.message}
           />
 

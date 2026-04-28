@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { PERSONAL_EXPENSE_CATEGORY_LABELS, PERSONAL_PAYMENT_METHOD_LABELS, PERSONAL_RECURRENCE_LABELS } from "@/lib/utils";
-import { formatCurrencyInput, parseCurrencyInput } from "@/lib/masks";
+import { CurrencyInput } from "@/components/ui/currency-input";
 
 interface PersonalExpenseFormProps {
   defaultValues?: Partial<PersonalExpenseInput>;
@@ -63,12 +63,11 @@ export function PersonalExpenseForm({
           {...register("category")}
         />
 
-        <Input
+        <CurrencyInput
           label="Valor *"
           placeholder="0,00"
-          inputMode="numeric"
-          value={formatCurrencyInput(watch("amount"))}
-          onChange={(e) => setValue("amount", parseCurrencyInput(e.target.value), { shouldValidate: true })}
+          value={watch("amount") ?? ""}
+          onChange={(v) => setValue("amount", v, { shouldValidate: true })}
           error={errors.amount?.message}
         />
 

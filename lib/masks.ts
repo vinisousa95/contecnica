@@ -36,13 +36,22 @@ export function maskCep(value: string): string {
   return `${digits.slice(0, 5)}-${digits.slice(5)}`;
 }
 
-// Currency mask — formats as user types: "26000" → "26.000,00"
+// Currency mask — formats as user types: "2005" or 2005 → "2.005,00"
 export function formatCurrencyInput(value: string | number | null | undefined): string {
   if (value === null || value === undefined || value === "") return "";
-  const raw = typeof value === "number" ? value.toFixed(2) : String(value);
-  // Handle already-masked values like "26.000,00"
-  const clean = raw.replace(/\./g, "").replace(",", ".");
-  const num = parseFloat(clean);
+  let num: number;
+  if (typeof value === "number") {
+    num = value;
+  } else {
+    const str = String(value);
+    if (str.includes(",")) {
+      // Already in Brazilian format "2.005,00" — dot = thousands, comma = decimal
+      num = parseFloat(str.replace(/\./g, "").replace(",", "."));
+    } else {
+      // Plain decimal string "2005.00" or "2005" — dot = decimal separator
+      num = parseFloat(str);
+    }
+  }
   if (isNaN(num)) return "";
   const cents = Math.round(num * 100);
   const digits = String(cents).padStart(3, "0");

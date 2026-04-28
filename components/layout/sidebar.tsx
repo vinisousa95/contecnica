@@ -25,6 +25,7 @@ import {
   Wrench,
   Wallet,
   UserX,
+  AlertTriangle,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -108,6 +109,7 @@ const navigation: NavItem[] = [
       { label: "Deslocamentos", href: "/operacional", icon: MapPin },
       { label: "Veículos", href: "/operacional/veiculos", icon: Truck },
       { label: "Faltas", href: "/operacional/faltas", icon: UserX },
+      { label: "Multas", href: "/operacional/multas", icon: AlertTriangle },
     ],
   },
   {

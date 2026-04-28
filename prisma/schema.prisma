@@ -605,6 +605,7 @@ model Vehicle {
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
   assignments WorkAssignment[]
+  fines       VehicleFine[]
 
   @@map("vehicles")
 }
@@ -630,6 +631,7 @@ model WorkAssignment {
   status        AssignmentStatus @default(SCHEDULED)
   createdAt     DateTime         @default(now()) @map("created_at")
   updatedAt     DateTime         @updatedAt @map("updated_at")
+  fines         VehicleFine[]
 
   @@map("work_assignments")
 }
@@ -890,4 +892,29 @@ model CompanySettings {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("company_settings")
+}
+
+// ── Vehicle Fines ─────────────────────────────────────────────
+model VehicleFine {
+  id           String          @id @default(cuid())
+  vehicleId    String          @map("vehicle_id")
+  vehicle      Vehicle         @relation(fields: [vehicleId], references: [id])
+  assignmentId String?         @map("assignment_id")
+  assignment   WorkAssignment? @relation(fields: [assignmentId], references: [id])
+  date         DateTime
+  amount       Decimal         @db.Decimal(10, 2)
+  reason       String
+  points       Int?
+  status       FineStatus      @default(PENDING)
+  notes        String?
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  @@map("vehicle_fines")
+}
+
+enum FineStatus {
+  PENDING
+  PAID
+  CONTESTED
 }

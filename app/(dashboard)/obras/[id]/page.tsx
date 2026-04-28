@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { LoadingPage } from "@/components/ui/loading";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { formatCurrencyInput } from "@/lib/masks";
 import { toast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Pencil, MapPin, Calendar, DollarSign,
@@ -802,11 +803,21 @@ function PrestadoresSection({ projectId }: { projectId: string }) {
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Valor Combinado (R$)</label>
                 <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.agreedAmount}
-                  onChange={(e) => setForm((f) => ({ ...f, agreedAmount: e.target.value }))}
+                  inputMode="numeric"
+                  value={formatCurrencyInput(form.agreedAmount)}
+                  onChange={() => {}}
+                  onKeyDown={(e) => {
+                    const cents = form.agreedAmount ? Math.round(parseFloat(form.agreedAmount) * 100) : 0;
+                    if (e.key === "Backspace") {
+                      e.preventDefault();
+                      const n = Math.floor(cents / 10);
+                      setForm((f) => ({ ...f, agreedAmount: n === 0 ? "" : (n / 100).toFixed(2) }));
+                    } else if (/^\d$/.test(e.key)) {
+                      e.preventDefault();
+                      const n = cents * 10 + parseInt(e.key, 10);
+                      if (n <= 999999999) setForm((f) => ({ ...f, agreedAmount: (n / 100).toFixed(2) }));
+                    }
+                  }}
                   placeholder="0,00"
                   className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
                 />

@@ -648,6 +648,7 @@ function PrestadoresSection({ projectId }: { projectId: string }) {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
   const [form, setForm] = useState({
     serviceProviderId: "",
     serviceDescription: "",
@@ -669,27 +670,58 @@ function PrestadoresSection({ projectId }: { projectId: string }) {
   });
   const providers: any[] = Array.isArray(providersData) ? providersData : (providersData?.data ?? []);
 
+  const resetForm = () => {
+    setForm({ serviceProviderId: "", serviceDescription: "", agreedAmount: "", startDate: "", expectedEndDate: "", generateExpense: false });
+    setEditingLinkId(null);
+    setShowForm(false);
+  };
+
+  const handleEdit = (l: any) => {
+    setForm({
+      serviceProviderId: l.serviceProviderId,
+      serviceDescription: l.serviceDescription ?? "",
+      agreedAmount: l.agreedAmount ? String(l.agreedAmount) : "",
+      startDate: l.startDate ? String(l.startDate).slice(0, 10) : "",
+      expectedEndDate: l.expectedEndDate ? String(l.expectedEndDate).slice(0, 10) : "",
+      generateExpense: false,
+    });
+    setEditingLinkId(l.id);
+    setShowForm(true);
+  };
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.serviceProviderId || !form.serviceDescription.trim()) return;
     setSaving(true);
     try {
-      await apiFetch(`/api/v1/projects/${projectId}/service-providers`, {
-        method: "POST",
-        body: JSON.stringify({
-          serviceProviderId: form.serviceProviderId,
-          serviceDescription: form.serviceDescription.trim(),
-          ...(form.agreedAmount ? { agreedAmount: form.agreedAmount } : {}),
-          ...(form.startDate ? { startDate: form.startDate } : {}),
-          ...(form.expectedEndDate ? { expectedEndDate: form.expectedEndDate } : {}),
-          generateExpense: form.generateExpense,
-          projectId,
-        }),
-      });
-      toast({ title: "Prestador vinculado à obra" });
+      if (editingLinkId) {
+        await apiFetch(`/api/v1/projects/${projectId}/service-providers/${editingLinkId}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            serviceDescription: form.serviceDescription.trim(),
+            ...(form.agreedAmount ? { agreedAmount: form.agreedAmount } : { agreedAmount: null }),
+            ...(form.startDate ? { startDate: form.startDate } : { startDate: null }),
+            ...(form.expectedEndDate ? { expectedEndDate: form.expectedEndDate } : { expectedEndDate: null }),
+          }),
+        });
+        toast({ title: "Prestador atualizado com sucesso" });
+      } else {
+        await apiFetch(`/api/v1/projects/${projectId}/service-providers`, {
+          method: "POST",
+          body: JSON.stringify({
+            serviceProviderId: form.serviceProviderId,
+            serviceDescription: form.serviceDescription.trim(),
+            ...(form.agreedAmount ? { agreedAmount: form.agreedAmount } : {}),
+            ...(form.startDate ? { startDate: form.startDate } : {}),
+            ...(form.expectedEndDate ? { expectedEndDate: form.expectedEndDate } : {}),
+            generateExpense: form.generateExpense,
+            projectId,
+          }),
+        });
+        toast({ title: "Prestador vinculado à obra" });
+      }
       qc.invalidateQueries({ queryKey: ["project-service-providers", projectId] });
-      setForm({ serviceProviderId: "", serviceDescription: "", agreedAmount: "", startDate: "", expectedEndDate: "", generateExpense: false });
-      setShowForm(false);
+      resetForm();
     } catch (e: any) {
       toast({ title: "Erro", description: e.message, variant: "error" });
     } finally {
@@ -813,9 +845,9 @@ function PrestadoresSection({ projectId }: { projectId: string }) {
             )}
             <div className="flex gap-2">
               <Button type="submit" size="sm" disabled={saving}>
-                {saving ? "Salvando…" : "Vincular"}
+                {saving ? "Salvando…" : editingLinkId ? "Salvar Alterações" : "Vincular"}
               </Button>
-              <Button type="button" size="sm" variant="outline" onClick={() => setShowForm(false)}>
+              <Button type="button" size="sm" variant="outline" onClick={resetForm}>
                 Cancelar
               </Button>
             </div>
@@ -883,12 +915,22 @@ function PrestadoresSection({ projectId }: { projectId: string }) {
                     )}
                   </TableCell>
                   <TableCell>
-                    <button
-                      onClick={() => handleRemove(l.id)}
-                      className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleEdit(l)}
+                        className="p-1.5 rounded-lg text-gray-300 hover:text-blue-500 hover:bg-blue-50 transition-colors"
+                        title="Editar"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleRemove(l.id)}
+                        className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        title="Excluir"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingPage } from "@/components/ui/loading";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Pencil, MapPin, Calendar, DollarSign,
@@ -900,10 +901,46 @@ function PrestadoresSection({ projectId }: { projectId: string }) {
 }
 
 export default function ObraDetailPage({ params }: { params: { id: string } }) {
+  const queryClient = useQueryClient();
   const { data: project, isLoading } = useQuery({
     queryKey: ["project", params.id],
     queryFn: () => api.projects.get(params.id) as Promise<any>,
   });
+
+  const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
+  const [deleteRevenueId, setDeleteRevenueId] = useState<string | null>(null);
+  const [deletingExpense, setDeletingExpense] = useState(false);
+  const [deletingRevenue, setDeletingRevenue] = useState(false);
+
+  const handleDeleteExpense = async () => {
+    if (!deleteExpenseId) return;
+    setDeletingExpense(true);
+    try {
+      await api.expenses.delete(deleteExpenseId);
+      queryClient.invalidateQueries({ queryKey: ["project", params.id] });
+      toast({ title: "Despesa excluída", variant: "success" });
+      setDeleteExpenseId(null);
+    } catch {
+      toast({ title: "Erro ao excluir despesa", variant: "error" });
+    } finally {
+      setDeletingExpense(false);
+    }
+  };
+
+  const handleDeleteRevenue = async () => {
+    if (!deleteRevenueId) return;
+    setDeletingRevenue(true);
+    try {
+      await api.revenues.delete(deleteRevenueId);
+      queryClient.invalidateQueries({ queryKey: ["project", params.id] });
+      toast({ title: "Receita excluída", variant: "success" });
+      setDeleteRevenueId(null);
+    } catch {
+      toast({ title: "Erro ao excluir receita", variant: "error" });
+    } finally {
+      setDeletingRevenue(false);
+    }
+  };
 
   if (isLoading) return <LoadingPage />;
   if (!project) return null;
@@ -1038,6 +1075,7 @@ export default function ObraDetailPage({ params }: { params: { id: string } }) {
                   <TableHead>Vencimento</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1051,6 +1089,18 @@ export default function ObraDetailPage({ params }: { params: { id: string } }) {
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${EXPENSE_STATUS_COLORS[e.status]}`}>
                         {EXPENSE_STATUS_LABELS[e.status]}
                       </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        <Link href={`/financeiro/despesas/${e.id}/editar`}>
+                          <Button variant="ghost" size="icon-sm" title="Editar">
+                            <Pencil className="h-3.5 w-3.5 text-gray-400" />
+                          </Button>
+                        </Link>
+                        <Button variant="ghost" size="icon-sm" title="Excluir" onClick={() => setDeleteExpenseId(e.id)}>
+                          <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -1088,6 +1138,7 @@ export default function ObraDetailPage({ params }: { params: { id: string } }) {
                   <TableHead>Vencimento</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1101,6 +1152,18 @@ export default function ObraDetailPage({ params }: { params: { id: string } }) {
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${REVENUE_STATUS_COLORS[r.status]}`}>
                         {REVENUE_STATUS_LABELS[r.status]}
                       </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        <Link href={`/financeiro/receitas/${r.id}/editar`}>
+                          <Button variant="ghost" size="icon-sm" title="Editar">
+                            <Pencil className="h-3.5 w-3.5 text-gray-400" />
+                          </Button>
+                        </Link>
+                        <Button variant="ghost" size="icon-sm" title="Excluir" onClick={() => setDeleteRevenueId(r.id)}>
+                          <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -1118,6 +1181,27 @@ export default function ObraDetailPage({ params }: { params: { id: string } }) {
           </CardContent>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={!!deleteExpenseId}
+        onOpenChange={(open) => !open && setDeleteExpenseId(null)}
+        title="Excluir despesa"
+        description="Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        variant="danger"
+        loading={deletingExpense}
+        onConfirm={handleDeleteExpense}
+      />
+      <ConfirmDialog
+        open={!!deleteRevenueId}
+        onOpenChange={(open) => !open && setDeleteRevenueId(null)}
+        title="Excluir receita"
+        description="Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        variant="danger"
+        loading={deletingRevenue}
+        onConfirm={handleDeleteRevenue}
+      />
     </div>
   );
 }

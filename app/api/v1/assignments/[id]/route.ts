@@ -39,7 +39,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       where: { id: params.id },
       data: {
         ...rest,
-        date: new Date(date),
+        date: new Date(date + "T12:00:00.000Z"),
         vehicleId: vehicleId || null,
       },
       include: {

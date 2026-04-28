@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     const assignment = await prisma.workAssignment.create({
       data: {
         ...rest,
-        date: new Date(date),
+        date: new Date(date + "T12:00:00.000Z"),
         vehicleId: vehicleId || null,
       },
       include: {

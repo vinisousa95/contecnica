@@ -61,7 +61,7 @@ export default function EditarRegistroPage({ params }: { params: { id: string } 
         employeeId: assignment.employeeId,
         vehicleId: assignment.vehicleId ?? "",
         projectId: assignment.projectId,
-        date: format(new Date(assignment.date), "yyyy-MM-dd"),
+        date: String(assignment.date).slice(0, 10),
         departureTime: assignment.departureTime ?? "",
         returnTime: assignment.returnTime ?? "",
         notes: assignment.notes ?? "",

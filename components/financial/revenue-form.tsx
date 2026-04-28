@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatCurrencyInput, parseCurrencyInput } from "@/lib/masks";
 
 interface RevenueFormProps {
   defaultValues?: Partial<RevenueInput>;
@@ -63,6 +64,8 @@ export function RevenueForm({
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<RevenueInput>({
     resolver: zodResolver(revenueSchema),
@@ -119,13 +122,12 @@ export function RevenueForm({
 
           <Input
             label="Valor (R$)"
-            type="number"
-            step="0.01"
-            min="0"
             required
             placeholder="0,00"
+            inputMode="numeric"
+            value={formatCurrencyInput(watch("amount"))}
+            onChange={(e) => setValue("amount", parseCurrencyInput(e.target.value), { shouldValidate: true })}
             error={errors.amount?.message}
-            {...register("amount")}
           />
 
           <Input

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Upload, FileText, X, ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { formatCurrencyInput, parseCurrencyInput } from "@/lib/masks";
 
 interface ExpenseFormProps {
   defaultValues?: Partial<ExpenseInput>;
@@ -83,6 +84,8 @@ export function ExpenseForm({
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<ExpenseInput>({
     resolver: zodResolver(expenseSchema),
@@ -143,13 +146,12 @@ export function ExpenseForm({
 
           <Input
             label="Valor (R$)"
-            type="number"
-            step="0.01"
-            min="0"
             required
             placeholder="0,00"
+            inputMode="numeric"
+            value={formatCurrencyInput(watch("amount"))}
+            onChange={(e) => setValue("amount", parseCurrencyInput(e.target.value), { shouldValidate: true })}
             error={errors.amount?.message}
-            {...register("amount")}
           />
 
           <Input

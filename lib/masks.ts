@@ -35,3 +35,26 @@ export function maskCep(value: string): string {
   if (digits.length <= 5) return digits;
   return `${digits.slice(0, 5)}-${digits.slice(5)}`;
 }
+
+// Currency mask — formats as user types: "26000" → "26.000,00"
+export function formatCurrencyInput(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "";
+  const raw = typeof value === "number" ? value.toFixed(2) : String(value);
+  // Handle already-masked values like "26.000,00"
+  const clean = raw.replace(/\./g, "").replace(",", ".");
+  const num = parseFloat(clean);
+  if (isNaN(num)) return "";
+  const cents = Math.round(num * 100);
+  const digits = String(cents).padStart(3, "0");
+  const centsStr = digits.slice(-2);
+  const intRaw = digits.slice(0, -2).replace(/^0+/, "") || "0";
+  const intFormatted = intRaw.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${intFormatted},${centsStr}`;
+}
+
+// Convert masked currency input back to raw decimal string for API: "26.000,00" → "26000.00"
+export function parseCurrencyInput(masked: string): string {
+  const digits = masked.replace(/\D/g, "");
+  if (!digits) return "";
+  return (parseInt(digits, 10) / 100).toFixed(2);
+}

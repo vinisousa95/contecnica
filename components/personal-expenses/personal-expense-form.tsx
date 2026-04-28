@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { PERSONAL_EXPENSE_CATEGORY_LABELS, PERSONAL_PAYMENT_METHOD_LABELS, PERSONAL_RECURRENCE_LABELS } from "@/lib/utils";
+import { formatCurrencyInput, parseCurrencyInput } from "@/lib/masks";
 
 interface PersonalExpenseFormProps {
   defaultValues?: Partial<PersonalExpenseInput>;
@@ -29,6 +30,7 @@ export function PersonalExpenseForm({
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<PersonalExpenseInput>({
     resolver: zodResolver(personalExpenseSchema),
@@ -64,8 +66,10 @@ export function PersonalExpenseForm({
         <Input
           label="Valor *"
           placeholder="0,00"
+          inputMode="numeric"
+          value={formatCurrencyInput(watch("amount"))}
+          onChange={(e) => setValue("amount", parseCurrencyInput(e.target.value), { shouldValidate: true })}
           error={errors.amount?.message}
-          {...register("amount")}
         />
 
         <Input

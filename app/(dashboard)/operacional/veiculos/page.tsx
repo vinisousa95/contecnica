@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EmptyState, LoadingPage } from "@/components/ui/loading";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Search, Truck, Pencil, Trash2, History } from "lucide-react";
+import { Plus, Search, Truck, Pencil, Trash2, History, Droplets, AlertTriangle } from "lucide-react";
 
 const VEHICLE_STATUS_LABELS: Record<string, string> = {
   ACTIVE: "Ativo",
@@ -26,6 +26,74 @@ const VEHICLE_STATUS_COLORS: Record<string, string> = {
   MAINTENANCE: "bg-amber-100 text-amber-700",
   INACTIVE: "bg-gray-100 text-gray-500",
 };
+
+type OilStatus = "ok" | "soon" | "overdue" | "unknown";
+
+function getOilStatus(v: any): OilStatus {
+  const hasKmConfig = v.lastOilChangeKm != null && v.oilChangeIntervalKm != null;
+  const hasDateConfig = v.lastOilChangeDate != null && v.oilChangeIntervalDays != null;
+  if (!hasKmConfig && !hasDateConfig) return "unknown";
+
+  let overdue = false;
+  let soon = false;
+
+  if (hasKmConfig && v.currentKm != null) {
+    const nextKm = v.lastOilChangeKm + v.oilChangeIntervalKm;
+    const soonThreshold = nextKm - Math.round(v.oilChangeIntervalKm * 0.1);
+    if (v.currentKm >= nextKm) overdue = true;
+    else if (v.currentKm >= soonThreshold) soon = true;
+  }
+
+  if (hasDateConfig) {
+    const lastDate = new Date(v.lastOilChangeDate);
+    const nextDate = new Date(lastDate.getTime() + v.oilChangeIntervalDays * 24 * 60 * 60 * 1000);
+    const today = new Date();
+    const diffDays = (nextDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000);
+    if (diffDays <= 0) overdue = true;
+    else if (diffDays <= 7) soon = true;
+  }
+
+  if (overdue) return "overdue";
+  if (soon) return "soon";
+  return "ok";
+}
+
+function OilBadge({ v }: { v: any }) {
+  const status = getOilStatus(v);
+  if (status === "unknown") return <span className="text-gray-300">—</span>;
+
+  if (status === "overdue") {
+    return (
+      <span
+        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700"
+        title="Troca de óleo atrasada"
+      >
+        <AlertTriangle className="h-3 w-3" />
+        Atrasada
+      </span>
+    );
+  }
+  if (status === "soon") {
+    return (
+      <span
+        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700"
+        title="Troca de óleo próxima"
+      >
+        <Droplets className="h-3 w-3" />
+        Próxima
+      </span>
+    );
+  }
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700"
+      title="Troca de óleo em dia"
+    >
+      <Droplets className="h-3 w-3" />
+      Em dia
+    </span>
+  );
+}
 
 export default function VeiculosPage() {
   const queryClient = useQueryClient();
@@ -61,6 +129,8 @@ export default function VeiculosPage() {
   const vehicles = data?.data ?? [];
   const pagination = data?.pagination;
 
+  const overdueCount = vehicles.filter((v: any) => getOilStatus(v) === "overdue").length;
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -75,6 +145,16 @@ export default function VeiculosPage() {
           </Button>
         }
       />
+
+      {overdueCount > 0 && (
+        <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>
+            <strong>{overdueCount}</strong> veículo{overdueCount > 1 ? "s" : ""} com troca de óleo atrasada.
+            Verifique o agendamento de manutenção.
+          </span>
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1">
@@ -127,6 +207,7 @@ export default function VeiculosPage() {
                   <TableHead>Tipo</TableHead>
                   <TableHead>Ano</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Troca de Óleo</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -151,6 +232,9 @@ export default function VeiculosPage() {
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${VEHICLE_STATUS_COLORS[v.status]}`}>
                         {VEHICLE_STATUS_LABELS[v.status]}
                       </span>
+                    </TableCell>
+                    <TableCell>
+                      <OilBadge v={v} />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">

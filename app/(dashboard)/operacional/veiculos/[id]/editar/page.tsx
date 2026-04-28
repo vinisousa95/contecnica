@@ -14,13 +14,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoadingPage } from "@/components/ui/loading";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Droplets } from "lucide-react";
+
+type FormState = VehicleInput & {
+  currentKm: number | null;
+  lastOilChangeDate: string;
+  lastOilChangeKm: number | null;
+  oilChangeIntervalKm: number | null;
+  oilChangeIntervalDays: number | null;
+};
 
 export default function EditarVeiculoPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const [form, setForm] = useState<VehicleInput>({
+  const [form, setForm] = useState<FormState>({
     name: "",
     model: "",
     plate: "",
@@ -29,9 +37,14 @@ export default function EditarVeiculoPage({ params }: { params: { id: string } }
     year: undefined,
     status: "ACTIVE",
     notes: "",
+    currentKm: null,
+    lastOilChangeDate: "",
+    lastOilChangeKm: null,
+    oilChangeIntervalKm: null,
+    oilChangeIntervalDays: null,
   });
 
-  const [errors, setErrors] = useState<Partial<Record<keyof VehicleInput, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [initialized, setInitialized] = useState(false);
 
   const { data: vehicle, isLoading } = useQuery({
@@ -50,6 +63,13 @@ export default function EditarVeiculoPage({ params }: { params: { id: string } }
         year: vehicle.year ?? undefined,
         status: vehicle.status,
         notes: vehicle.notes ?? "",
+        currentKm: vehicle.currentKm ?? null,
+        lastOilChangeDate: vehicle.lastOilChangeDate
+          ? String(vehicle.lastOilChangeDate).slice(0, 10)
+          : "",
+        lastOilChangeKm: vehicle.lastOilChangeKm ?? null,
+        oilChangeIntervalKm: vehicle.oilChangeIntervalKm ?? null,
+        oilChangeIntervalDays: vehicle.oilChangeIntervalDays ?? null,
       });
       setInitialized(true);
     }
@@ -69,7 +89,7 @@ export default function EditarVeiculoPage({ params }: { params: { id: string } }
   });
 
   function validate(): boolean {
-    const newErrors: Partial<Record<keyof VehicleInput, string>> = {};
+    const newErrors: Partial<Record<keyof FormState, string>> = {};
     if (!form.name || form.name.length < 2) newErrors.name = "Nome é obrigatório (mínimo 2 caracteres)";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -85,12 +105,13 @@ export default function EditarVeiculoPage({ params }: { params: { id: string } }
       type: form.type || null,
       color: form.color || null,
       notes: form.notes || null,
+      lastOilChangeDate: form.lastOilChangeDate || null,
     });
   }
 
-  function handleChange(field: keyof VehicleInput, value: string | number | null) {
+  function handleChange(field: keyof FormState, value: string | number | null) {
     setForm((prev) => ({ ...prev, [field]: value }));
-    if (errors[field as keyof typeof errors]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   }
 
   if (isLoading) return <LoadingPage />;
@@ -111,7 +132,7 @@ export default function EditarVeiculoPage({ params }: { params: { id: string } }
         }
       />
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="space-y-5">
         <Card>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -181,17 +202,75 @@ export default function EditarVeiculoPage({ params }: { params: { id: string } }
               onChange={(e) => handleChange("notes", e.target.value)}
               rows={3}
             />
-
-            <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline" type="button" asChild>
-                <Link href={`/operacional/veiculos/${params.id}`}>Cancelar</Link>
-              </Button>
-              <Button type="submit" loading={mutation.isPending}>
-                Salvar Alterações
-              </Button>
-            </div>
           </CardContent>
         </Card>
+
+        {/* Oil Change Section */}
+        <Card>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
+              <Droplets className="h-4 w-4 text-amber-500" />
+              <h3 className="text-sm font-semibold text-gray-700">Manutenção — Troca de Óleo</h3>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="KM Atual"
+                type="number"
+                placeholder="Ex: 85000"
+                min={0}
+                value={form.currentKm ?? ""}
+                onChange={(e) => handleChange("currentKm", e.target.value ? parseInt(e.target.value) : null)}
+              />
+              <Input
+                label="Data da Última Troca"
+                type="date"
+                value={form.lastOilChangeDate}
+                onChange={(e) => handleChange("lastOilChangeDate", e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Input
+                label="KM da Última Troca"
+                type="number"
+                placeholder="Ex: 80000"
+                min={0}
+                value={form.lastOilChangeKm ?? ""}
+                onChange={(e) => handleChange("lastOilChangeKm", e.target.value ? parseInt(e.target.value) : null)}
+              />
+              <Input
+                label="Intervalo (KM)"
+                type="number"
+                placeholder="Ex: 5000"
+                min={0}
+                value={form.oilChangeIntervalKm ?? ""}
+                onChange={(e) => handleChange("oilChangeIntervalKm", e.target.value ? parseInt(e.target.value) : null)}
+              />
+              <Input
+                label="Intervalo (Dias)"
+                type="number"
+                placeholder="Ex: 180"
+                min={0}
+                value={form.oilChangeIntervalDays ?? ""}
+                onChange={(e) => handleChange("oilChangeIntervalDays", e.target.value ? parseInt(e.target.value) : null)}
+              />
+            </div>
+
+            <p className="text-xs text-gray-400">
+              Preencha o intervalo em KM e/ou dias para receber alertas de próxima troca de óleo.
+            </p>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" type="button" asChild>
+            <Link href={`/operacional/veiculos/${params.id}`}>Cancelar</Link>
+          </Button>
+          <Button type="submit" loading={mutation.isPending}>
+            Salvar Alterações
+          </Button>
+        </div>
       </form>
     </div>
   );

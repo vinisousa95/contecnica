@@ -226,6 +226,11 @@ export const vehicleSchema = z.object({
   year: z.number().int().optional().nullable(),
   status: z.enum(["ACTIVE", "MAINTENANCE", "INACTIVE"]).default("ACTIVE"),
   notes: z.string().optional().nullable(),
+  currentKm: z.number().int().optional().nullable(),
+  lastOilChangeDate: z.string().optional().nullable(),
+  lastOilChangeKm: z.number().int().optional().nullable(),
+  oilChangeIntervalKm: z.number().int().optional().nullable(),
+  oilChangeIntervalDays: z.number().int().optional().nullable(),
 });
 
 // ── Assignments ───────────────────────────────────────────────

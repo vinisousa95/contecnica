@@ -28,11 +28,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return apiError(parsed.error.errors[0].message);
     }
 
+    const { lastOilChangeDate, ...rest } = parsed.data;
     const vehicle = await prisma.vehicle.update({
       where: { id: params.id },
       data: {
-        ...parsed.data,
-        plate: parsed.data.plate || null,
+        ...rest,
+        plate: rest.plate || null,
+        lastOilChangeDate: lastOilChangeDate
+          ? new Date(lastOilChangeDate + "T12:00:00.000Z")
+          : null,
       },
     });
 

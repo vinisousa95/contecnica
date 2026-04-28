@@ -600,12 +600,18 @@ model Vehicle {
   type        String?
   color       String?
   year        Int?
-  status      VehicleStatus @default(ACTIVE)
-  notes       String?
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
-  assignments WorkAssignment[]
-  fines       VehicleFine[]
+  status                VehicleStatus @default(ACTIVE)
+  notes                 String?
+  // Manutenção — Troca de Óleo
+  currentKm             Int?          @map("current_km")
+  lastOilChangeDate     DateTime?     @map("last_oil_change_date")
+  lastOilChangeKm       Int?          @map("last_oil_change_km")
+  oilChangeIntervalKm   Int?          @map("oil_change_interval_km")
+  oilChangeIntervalDays Int?          @map("oil_change_interval_days")
+  createdAt             DateTime      @default(now()) @map("created_at")
+  updatedAt             DateTime      @updatedAt @map("updated_at")
+  assignments           WorkAssignment[]
+  fines                 VehicleFine[]
 
   @@map("vehicles")
 }

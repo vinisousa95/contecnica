@@ -120,8 +120,8 @@ export default function OrcamentosPage() {
       {/* Filters */}
       <Card>
         <CardContent className="py-3">
-          <div className="flex flex-wrap gap-3">
-            <div className="relative flex-1 min-w-52">
+          <div className="flex flex-row items-center gap-3">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 className="pl-9"
@@ -131,7 +131,7 @@ export default function OrcamentosPage() {
               />
             </div>
             <Select
-              className="w-40"
+              className="w-44 shrink-0"
               value={status}
               onChange={(e) => { setStatus(e.target.value); setPage(1); }}
               options={[
@@ -140,7 +140,7 @@ export default function OrcamentosPage() {
               ]}
             />
             <Select
-              className="w-36"
+              className="w-44 shrink-0"
               value={tier}
               onChange={(e) => { setTier(e.target.value); setPage(1); }}
               options={[

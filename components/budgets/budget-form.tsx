@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { budgetSchema, type BudgetInput } from "@/lib/validations";
@@ -19,6 +19,7 @@ import {
   Search,
   Package,
   LayoutGrid,
+  ArrowLeft,
 } from "lucide-react";
 import { useCepLookup } from "@/hooks/use-cep-lookup";
 import { maskCep } from "@/lib/masks";
@@ -83,6 +84,26 @@ interface Client {
   name: string;
 }
 
+interface CreateItemForm {
+  name: string;
+  description: string;
+  category: string;
+  unit: string;
+  priceLow: string;
+  priceMedium: string;
+  priceHigh: string;
+}
+
+const EMPTY_CREATE_FORM: CreateItemForm = {
+  name: "",
+  description: "",
+  category: "OTHERS",
+  unit: "UNIT",
+  priceLow: "",
+  priceMedium: "",
+  priceHigh: "",
+};
+
 interface BudgetFormProps {
   defaultValues?: Partial<BudgetInput>;
   onSubmit: (data: BudgetInput) => Promise<void>;
@@ -107,6 +128,7 @@ function ItemSelectorModal({
   onSelect,
   onSelectPackage,
   onClose,
+  onCreateAndSelect,
 }: {
   reformItems: ReformItem[];
   reformPackages: ReformPackage[];
@@ -116,10 +138,15 @@ function ItemSelectorModal({
   onSelect: (item: ReformItem) => void;
   onSelectPackage: (pkg: ReformPackage) => void;
   onClose: () => void;
+  onCreateAndSelect: (form: CreateItemForm) => Promise<void>;
 }) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [showCreate, setShowCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createForm, setCreateForm] = useState<CreateItemForm>(EMPTY_CREATE_FORM);
+  const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
 
   const filtered = reformItems.filter((item) => {
     const matchesSearch =
@@ -162,21 +189,184 @@ function ItemSelectorModal({
 
   const categories = Object.keys(CATEGORY_LABELS);
 
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    const errs: Record<string, string> = {};
+    if (!createForm.name || createForm.name.length < 2) errs.name = "Nome obrigatório (mín. 2 caracteres)";
+    if (!createForm.priceLow) errs.priceLow = "Preço baixo obrigatório";
+    if (!createForm.priceMedium) errs.priceMedium = "Preço médio obrigatório";
+    if (!createForm.priceHigh) errs.priceHigh = "Preço alto obrigatório";
+    if (Object.keys(errs).length > 0) { setCreateErrors(errs); return; }
+    setCreating(true);
+    try {
+      await onCreateAndSelect(createForm);
+      setShowCreate(false);
+      setCreateForm(EMPTY_CREATE_FORM);
+      setCreateErrors({});
+    } finally {
+      setCreating(false);
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b">
-          <h2 className="text-base font-semibold text-gray-900">Adicionar itens do catálogo</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
-          >
-            ×
-          </button>
+          {showCreate ? (
+            <button
+              onClick={() => { setShowCreate(false); setCreateErrors({}); }}
+              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar ao catálogo
+            </button>
+          ) : (
+            <h2 className="text-base font-semibold text-gray-900">Adicionar itens do catálogo</h2>
+          )}
+          <div className="flex items-center gap-3">
+            {!showCreate && (
+              <button
+                onClick={() => setShowCreate(true)}
+                className="flex items-center gap-1.5 text-xs font-medium text-[#EA580C] hover:text-[#C2410C] border border-[#EA580C]/30 rounded-lg px-2.5 py-1.5 hover:bg-orange-50 transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Criar novo item
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
-        {/* Filters */}
+        {/* Create form panel */}
+        {showCreate && (
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+            <div className="bg-orange-50 border border-orange-100 rounded-lg px-4 py-3 text-sm text-orange-700">
+              O item será salvo no catálogo e adicionado ao orçamento automaticamente.
+            </div>
+            <form onSubmit={handleCreate} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Nome do item *</label>
+                <input
+                  type="text"
+                  value={createForm.name}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="Ex: Instalação de tomada"
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                />
+                {createErrors.name && <p className="text-xs text-red-500 mt-1">{createErrors.name}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Descrição</label>
+                <input
+                  type="text"
+                  value={createForm.description}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, description: e.target.value }))}
+                  placeholder="Detalhes adicionais (opcional)"
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Categoria</label>
+                  <select
+                    value={createForm.category}
+                    onChange={(e) => setCreateForm((f) => ({ ...f, category: e.target.value }))}
+                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                  >
+                    {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
+                      <option key={k} value={k}>{v}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Unidade</label>
+                  <select
+                    value={createForm.unit}
+                    onChange={(e) => setCreateForm((f) => ({ ...f, unit: e.target.value }))}
+                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                  >
+                    {Object.entries(UNIT_LABELS).map(([k, v]) => (
+                      <option key={k} value={k}>{v}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-2">Preços por padrão (R$)</label>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[10px] text-gray-400 mb-1">Preço Baixo *</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={createForm.priceLow}
+                      onChange={(e) => setCreateForm((f) => ({ ...f, priceLow: e.target.value }))}
+                      placeholder="0,00"
+                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                    />
+                    {createErrors.priceLow && <p className="text-xs text-red-500 mt-1">{createErrors.priceLow}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-400 mb-1">Preço Médio *</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={createForm.priceMedium}
+                      onChange={(e) => setCreateForm((f) => ({ ...f, priceMedium: e.target.value }))}
+                      placeholder="0,00"
+                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                    />
+                    {createErrors.priceMedium && <p className="text-xs text-red-500 mt-1">{createErrors.priceMedium}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-400 mb-1">Preço Alto *</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={createForm.priceHigh}
+                      onChange={(e) => setCreateForm((f) => ({ ...f, priceHigh: e.target.value }))}
+                      placeholder="0,00"
+                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                    />
+                    {createErrors.priceHigh && <p className="text-xs text-red-500 mt-1">{createErrors.priceHigh}</p>}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowCreate(false); setCreateErrors({}); }}
+                  className="flex-1 text-sm border border-gray-200 rounded-lg px-4 py-2 hover:bg-gray-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="flex-1 text-sm bg-[#EA580C] text-white rounded-lg px-4 py-2 hover:bg-[#C2410C] transition-colors disabled:opacity-50"
+                >
+                  {creating ? "Salvando…" : "Criar e Adicionar ao Orçamento"}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Filters — only shown when not creating */}
+        {!showCreate && (
         <div className="px-5 py-3 border-b flex gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -201,8 +391,10 @@ function ItemSelectorModal({
             ))}
           </select>
         </div>
+        )}
 
         {/* Item list */}
+        {!showCreate && (
         <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
           {/* Packages (Ambientes) */}
           {filteredPackages.length > 0 && (
@@ -332,15 +524,27 @@ function ItemSelectorModal({
             </div>
           ))}
           {Object.keys(grouped).length === 0 && filteredPackages.length === 0 && (
-            <p className="text-sm text-gray-500 text-center py-8">Nenhum item encontrado.</p>
+            <div className="text-center py-8">
+              <p className="text-sm text-gray-500">Nenhum item encontrado.</p>
+              <button
+                type="button"
+                onClick={() => setShowCreate(true)}
+                className="mt-3 text-xs text-[#EA580C] hover:underline"
+              >
+                + Criar novo item no catálogo
+              </button>
+            </div>
           )}
         </div>
+        )}
 
+        {!showCreate && (
         <div className="px-5 py-4 border-t">
           <Button type="button" onClick={onClose} className="w-full">
             Fechar
           </Button>
         </div>
+        )}
       </div>
     </div>
   );
@@ -349,6 +553,7 @@ function ItemSelectorModal({
 // ── Main Form ─────────────────────────────────────────────────
 export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "Salvar Orçamento" }: BudgetFormProps) {
   const [showItemSelector, setShowItemSelector] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients-simple"],
@@ -486,6 +691,34 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
       } as any);
     },
     [watchedItems, watchedTier, appendItem, removeItem]
+  );
+
+  const handleCreateAndSelectItem = useCallback(
+    async (formData: CreateItemForm) => {
+      const res = await fetch("/api/v1/reform-items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...formData, isActive: true, sortOrder: 0 }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error ?? "Erro ao criar item");
+
+      queryClient.invalidateQueries({ queryKey: ["reform-items-active"] });
+
+      const d = json.data;
+      handleSelectItem({
+        id: d.id,
+        name: d.name,
+        description: d.description ?? null,
+        category: d.category,
+        unit: d.unit,
+        priceLow: parseFloat(d.priceLow),
+        priceMedium: parseFloat(d.priceMedium),
+        priceHigh: parseFloat(d.priceHigh),
+        isActive: true,
+      });
+    },
+    [queryClient, handleSelectItem]
   );
 
   const handleItemQuantityChange = (idx: number, qty: number) => {
@@ -928,6 +1161,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
           onSelect={handleSelectItem}
           onSelectPackage={handleSelectPackage}
           onClose={() => setShowItemSelector(false)}
+          onCreateAndSelect={handleCreateAndSelectItem}
         />
       )}
     </form>

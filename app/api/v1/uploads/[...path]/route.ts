@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFile } from "fs/promises";
-import { join, extname, normalize, basename } from "path";
+import { join, extname, normalize, basename, sep } from "path";
 import { UPLOAD_BASE } from "@/lib/upload-config";
 
 const MIME_TYPES: Record<string, string> = {
@@ -25,11 +25,14 @@ export async function GET(
   const fileName = basename(filePath);
   const ext = extname(fileName).toLowerCase();
 
-  // Security: prevent path traversal
+  // Security: prevent path traversal — use sep so it works on both Windows (\) and Linux (/)
   const primaryPath = normalize(join(UPLOAD_BASE, filePath));
   const legacyPath = normalize(join(LEGACY_BASE, filePath));
 
-  if (!primaryPath.startsWith(UPLOAD_BASE + "/") && !legacyPath.startsWith(LEGACY_BASE + "/")) {
+  const inPrimary = primaryPath.startsWith(UPLOAD_BASE + sep) || primaryPath.startsWith(UPLOAD_BASE + "/");
+  const inLegacy = legacyPath.startsWith(LEGACY_BASE + sep) || legacyPath.startsWith(LEGACY_BASE + "/");
+
+  if (!inPrimary && !inLegacy) {
     return new NextResponse(null, { status: 400 });
   }
 

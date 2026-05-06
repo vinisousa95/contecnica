@@ -298,49 +298,64 @@ export default function OrcamentoDetailPage() {
           )}
 
           {/* Extra items */}
-          {(budget.extraItems ?? []).length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Itens Extras
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100">
-                      <th className="px-5 py-2 text-left font-medium text-gray-600">Item</th>
-                      <th className="px-3 py-2 text-right font-medium text-gray-600">Qtd</th>
-                      <th className="px-3 py-2 text-right font-medium text-gray-600">Unit.</th>
-                      <th className="px-5 py-2 text-right font-medium text-gray-600">Subtotal</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {budget.extraItems.map((e: any) => (
-                      <tr key={e.id}>
-                        <td className="px-5 py-2.5">
-                          <p className="font-medium text-gray-900">{e.name}</p>
-                          {e.description && (
-                            <p className="text-xs text-gray-500">{e.description}</p>
-                          )}
-                        </td>
-                        <td className="px-3 py-2.5 text-right text-gray-600">
-                          {Number(e.quantity).toLocaleString("pt-BR")} {UNIT_LABELS[e.unit]}
-                        </td>
-                        <td className="px-3 py-2.5 text-right text-gray-600">
-                          {formatCurrency(e.unitPrice)}
-                        </td>
-                        <td className="px-5 py-2.5 text-right font-semibold text-gray-900">
-                          {formatCurrency(e.subtotal)}
-                        </td>
+          {(budget.extraItems ?? []).length > 0 && (() => {
+            const roomMap = new Map<string, any[]>();
+            (budget.extraItems ?? []).forEach((e: any) => {
+              const room = e.room ?? "";
+              if (!roomMap.has(room)) roomMap.set(room, []);
+              roomMap.get(room)!.push(e);
+            });
+            const ungrouped = roomMap.get("") ?? [];
+            const namedRooms = [...roomMap.entries()].filter(([k]) => k !== "");
+            const renderRows = (items: any[]) => items.map((e: any) => (
+              <tr key={e.id}>
+                <td className="px-5 py-2.5">
+                  <p className="font-medium text-gray-900">{e.name}</p>
+                  {e.description && <p className="text-xs text-gray-500">{e.description}</p>}
+                </td>
+                <td className="px-3 py-2.5 text-right text-gray-600">
+                  {Number(e.quantity).toLocaleString("pt-BR")} {UNIT_LABELS[e.unit]}
+                </td>
+                <td className="px-3 py-2.5 text-right text-gray-600">{formatCurrency(e.unitPrice)}</td>
+                <td className="px-5 py-2.5 text-right font-semibold text-gray-900">{formatCurrency(e.subtotal)}</td>
+              </tr>
+            ));
+            return (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Itens Extras
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="px-5 py-2 text-left font-medium text-gray-600">Item</th>
+                        <th className="px-3 py-2 text-right font-medium text-gray-600">Qtd</th>
+                        <th className="px-3 py-2 text-right font-medium text-gray-600">Unit.</th>
+                        <th className="px-5 py-2 text-right font-medium text-gray-600">Subtotal</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </CardContent>
-            </Card>
-          )}
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {ungrouped.length > 0 && renderRows(ungrouped)}
+                      {namedRooms.map(([room, items]) => (
+                        <>
+                          <tr key={`room-${room}`}>
+                            <td colSpan={4} className="px-5 py-1.5 bg-orange-50 text-xs font-semibold text-orange-700 uppercase tracking-wide">
+                              {room}
+                            </td>
+                          </tr>
+                          {renderRows(items)}
+                        </>
+                      ))}
+                    </tbody>
+                  </table>
+                </CardContent>
+              </Card>
+            );
+          })()}
 
           {/* Notes */}
           {budget.notes && (

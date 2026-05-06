@@ -332,36 +332,54 @@ export function PrintView({ budget }: { budget: any }) {
         )}
 
         {/* ── Extra Items ── */}
-        {(budget.extraItems ?? []).length > 0 && (
-          <>
-            <div className="section-title">Itens Adicionais</div>
-            <table>
-              <thead>
-                <tr>
-                  <th style={{ width: "40%" }}>Descrição</th>
-                  <th className="right" style={{ width: "12%" }}>Qtd</th>
-                  <th style={{ width: "8%" }}>Unid.</th>
-                  <th className="right" style={{ width: "18%" }}>Valor Unit.</th>
-                  <th className="right" style={{ width: "22%" }}>Subtotal</th>
-                </tr>
-              </thead>
-              <tbody>
-                {budget.extraItems.map((e: any) => (
-                  <tr key={e.id}>
-                    <td>
-                      <div className="item-name">{e.name}</div>
-                      {e.description && <div className="item-desc">{e.description}</div>}
-                    </td>
-                    <td className="right">{fmtQty(e.quantity)}</td>
-                    <td>{UNIT_LABELS[e.unit]}</td>
-                    <td className="right">{fmt(e.unitPrice)}</td>
-                    <td className="right" style={{ fontWeight: 600 }}>{fmt(e.subtotal)}</td>
+        {(budget.extraItems ?? []).length > 0 && (() => {
+          const roomMap = new Map<string, any[]>();
+          (budget.extraItems ?? []).forEach((e: any) => {
+            const room = e.room ?? "";
+            if (!roomMap.has(room)) roomMap.set(room, []);
+            roomMap.get(room)!.push(e);
+          });
+          const ungrouped = roomMap.get("") ?? [];
+          const namedRooms = [...roomMap.entries()].filter(([k]) => k !== "");
+          const renderRows = (items: any[]) => items.map((e: any) => (
+            <tr key={e.id}>
+              <td><div className="item-name">{e.name}</div>{e.description && <div className="item-desc">{e.description}</div>}</td>
+              <td className="right">{fmtQty(e.quantity)}</td>
+              <td>{UNIT_LABELS[e.unit]}</td>
+              <td className="right">{fmt(e.unitPrice)}</td>
+              <td className="right" style={{ fontWeight: 600 }}>{fmt(e.subtotal)}</td>
+            </tr>
+          ));
+          return (
+            <>
+              <div className="section-title">Itens Adicionais</div>
+              <table>
+                <thead>
+                  <tr>
+                    <th style={{ width: "40%" }}>Descrição</th>
+                    <th className="right" style={{ width: "12%" }}>Qtd</th>
+                    <th style={{ width: "8%" }}>Unid.</th>
+                    <th className="right" style={{ width: "18%" }}>Valor Unit.</th>
+                    <th className="right" style={{ width: "22%" }}>Subtotal</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </>
-        )}
+                </thead>
+                <tbody>
+                  {ungrouped.length > 0 && renderRows(ungrouped)}
+                  {namedRooms.map(([room, items]) => (
+                    <>
+                      <tr key={`room-${room}`}>
+                        <td colSpan={5} style={{ background: "#fff7ed", fontWeight: 700, fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "#c2410c", paddingTop: "6px", paddingBottom: "6px" }}>
+                          {room}
+                        </td>
+                      </tr>
+                      {renderRows(items)}
+                    </>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          );
+        })()}
 
         {/* ── Totals ── */}
         <table className="totals-table">

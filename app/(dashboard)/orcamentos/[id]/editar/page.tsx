@@ -65,6 +65,7 @@ export default function EditarOrcamentoPage() {
     extraItems: (budget.extraItems ?? []).map((e: any) => ({
       name: e.name,
       description: e.description ?? "",
+      room: e.room ?? "",
       quantity: Number(e.quantity),
       unit: e.unit,
       unitPrice: Number(e.unitPrice),

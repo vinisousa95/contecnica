@@ -59,6 +59,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         create: original.extraItems.map((e) => ({
           name: e.name,
           description: e.description,
+          room: (e as any).room ?? null,
           quantity: e.quantity,
           unit: e.unit,
           unitPrice: e.unitPrice,

@@ -20,6 +20,7 @@ import {
   Package,
   LayoutGrid,
   ArrowLeft,
+  Pencil,
 } from "lucide-react";
 import { useCepLookup } from "@/hooks/use-cep-lookup";
 import { maskCep } from "@/lib/masks";
@@ -553,6 +554,10 @@ function ItemSelectorModal({
 // ── Main Form ─────────────────────────────────────────────────
 export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "Salvar Orçamento" }: BudgetFormProps) {
   const [showItemSelector, setShowItemSelector] = useState(false);
+  const [addingRoom, setAddingRoom] = useState(false);
+  const [newRoomName, setNewRoomName] = useState("");
+  const [editingRoom, setEditingRoom] = useState<string | null>(null);
+  const [editedRoomName, setEditedRoomName] = useState("");
   const queryClient = useQueryClient();
 
   const { data: clients = [] } = useQuery({
@@ -734,6 +739,43 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
     setValue(`extraItems.${idx}.${field}`, value);
     setValue(`extraItems.${idx}.subtotal`, qty * price);
   };
+
+  const handleAddRoom = () => {
+    const name = newRoomName.trim();
+    if (!name) return;
+    appendExtra({ name: "", description: "", room: name, quantity: 1, unit: "UNIT", unitPrice: 0, subtotal: 0 } as any);
+    setNewRoomName("");
+    setAddingRoom(false);
+  };
+
+  const handleAddItemToRoom = (roomName: string) => {
+    appendExtra({ name: "", description: "", room: roomName, quantity: 1, unit: "UNIT", unitPrice: 0, subtotal: 0 } as any);
+  };
+
+  const handleRenameRoom = (oldName: string, newName: string) => {
+    watchedExtras.forEach((e: any, idx: number) => {
+      if ((e?.room ?? "") === oldName) setValue(`extraItems.${idx}.room` as any, newName);
+    });
+    setEditingRoom(null);
+  };
+
+  const handleRemoveRoom = (roomName: string) => {
+    extraFields
+      .map((_, idx) => idx)
+      .filter((idx) => (watchedExtras[idx] as any)?.room === roomName)
+      .reverse()
+      .forEach((idx) => removeExtra(idx));
+  };
+
+  // Derive room groups from current extra items (preserves insertion order)
+  const roomMap = new Map<string, number[]>();
+  watchedExtras.forEach((e: any, idx: number) => {
+    const room = e?.room ?? "";
+    if (!roomMap.has(room)) roomMap.set(room, []);
+    roomMap.get(room)!.push(idx);
+  });
+  const ungroupedIndices = roomMap.get("") ?? [];
+  const namedRooms = [...roomMap.entries()].filter(([k]) => k !== "");
 
   const getReformItemData = (reformItemId: string) =>
     reformItems.find((r) => r.id === reformItemId);
@@ -995,94 +1037,87 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Itens Extras (Avulsos)</CardTitle>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                appendExtra({
-                  name: "",
-                  description: "",
-                  quantity: 1,
-                  unit: "UNIT",
-                  unitPrice: 0,
-                  subtotal: 0,
-                })
-              }
-            >
-              <Plus className="h-4 w-4" />
-              Adicionar Item
+            <Button type="button" variant="outline" size="sm"
+              onClick={() => { setAddingRoom(true); setNewRoomName(""); }}>
+              <Plus className="h-4 w-4" /> Adicionar Ambiente
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          {extraFields.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-4">
-              Nenhum item extra. Use para serviços ou materiais fora do catálogo.
-            </p>
-          ) : (
+        <CardContent className="space-y-4">
+          {/* Add room inline input */}
+          {addingRoom && (
+            <div className="flex gap-2 items-center p-3 bg-orange-50 rounded-lg border border-dashed border-orange-300">
+              <input
+                autoFocus
+                value={newRoomName}
+                onChange={(e) => setNewRoomName(e.target.value)}
+                placeholder="Nome do ambiente (ex: Cozinha, Sala...)"
+                className="flex-1 border border-gray-200 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-orange-400"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); handleAddRoom(); }
+                  if (e.key === "Escape") setAddingRoom(false);
+                }}
+              />
+              <Button type="button" size="sm" onClick={handleAddRoom} disabled={!newRoomName.trim()}>Criar</Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => setAddingRoom(false)}>Cancelar</Button>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {extraFields.length === 0 && !addingRoom && (
+            <div className="text-center py-6 space-y-3">
+              <p className="text-sm text-gray-400">
+                Nenhum item extra. Adicione ambientes (Cozinha, Sala...) ou itens avulsos.
+              </p>
+              <div className="flex gap-2 justify-center">
+                <Button type="button" variant="outline" size="sm"
+                  onClick={() => { setAddingRoom(true); setNewRoomName(""); }}>
+                  <Plus className="h-4 w-4" /> Adicionar Ambiente
+                </Button>
+                <Button type="button" variant="outline" size="sm"
+                  onClick={() => appendExtra({ name: "", description: "", room: "", quantity: 1, unit: "UNIT", unitPrice: 0, subtotal: 0 } as any)}>
+                  <Plus className="h-4 w-4" /> Item Avulso
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Ungrouped items (no room) */}
+          {ungroupedIndices.length > 0 && (
             <div className="space-y-3">
-              {extraFields.map((field, idx) => {
+              {ungroupedIndices.map((idx) => {
                 const extra = watchedExtras[idx];
                 return (
-                  <div key={field.id} className="border border-gray-200 rounded-lg p-3 space-y-3">
+                  <div key={extraFields[idx].id} className="border border-gray-200 rounded-lg p-3 space-y-3">
                     <div className="flex items-center gap-2">
                       <div className="flex-1">
-                        <Input
-                          {...register(`extraItems.${idx}.name`)}
-                          placeholder="Nome do item *"
-                          error={(errors.extraItems?.[idx] as any)?.name?.message}
-                        />
+                        <Input {...register(`extraItems.${idx}.name`)} placeholder="Nome do item *"
+                          error={(errors.extraItems?.[idx] as any)?.name?.message} />
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removeExtra(idx)}
-                        className="text-red-400 hover:text-red-600 p-1"
-                      >
+                      <button type="button" onClick={() => removeExtra(idx)} className="text-red-400 hover:text-red-600 p-1">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
-                    <Input
-                      {...register(`extraItems.${idx}.description`)}
-                      placeholder="Descrição (opcional)"
-                    />
+                    <Input {...register(`extraItems.${idx}.description`)} placeholder="Descrição (opcional)" />
                     <div className="grid grid-cols-4 gap-2">
                       <div>
                         <label className="text-xs text-gray-500 mb-0.5 block">Qtd</label>
-                        <input
-                          type="number"
-                          min="0.001"
-                          step="0.001"
-                          value={extra?.quantity ?? 1}
-                          onChange={(e) =>
-                            handleExtraChange(idx, "quantity", parseFloat(e.target.value) || 0)
-                          }
-                          className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
+                        <input type="number" min="0.001" step="0.001" value={extra?.quantity ?? 1}
+                          onChange={(e) => handleExtraChange(idx, "quantity", parseFloat(e.target.value) || 0)}
+                          className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" />
                       </div>
                       <div>
                         <label className="text-xs text-gray-500 mb-0.5 block">Unid.</label>
-                        <select
-                          {...register(`extraItems.${idx}.unit`)}
-                          className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        >
-                          {Object.entries(UNIT_LABELS).map(([k, v]) => (
-                            <option key={k} value={k}>{v}</option>
-                          ))}
+                        <select {...register(`extraItems.${idx}.unit`)}
+                          className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                          {Object.entries(UNIT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                         </select>
                       </div>
                       <div>
                         <label className="text-xs text-gray-500 mb-0.5 block">Valor Unit.</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={extra?.unitPrice ?? 0}
-                          onChange={(e) =>
-                            handleExtraChange(idx, "unitPrice", parseFloat(e.target.value) || 0)
-                          }
-                          className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
+                        <input type="number" min="0" step="0.01" value={extra?.unitPrice ?? 0}
+                          onChange={(e) => handleExtraChange(idx, "unitPrice", parseFloat(e.target.value) || 0)}
+                          className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" />
                       </div>
                       <div>
                         <label className="text-xs text-gray-500 mb-0.5 block">Subtotal</label>
@@ -1096,8 +1131,111 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
               })}
             </div>
           )}
+
+          {/* Named room sections */}
+          {namedRooms.map(([roomName, indices]) => (
+            <div key={roomName} className="border border-gray-200 rounded-lg overflow-hidden">
+              {/* Room header */}
+              <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 border-b border-gray-200">
+                {editingRoom === roomName ? (
+                  <>
+                    <input autoFocus value={editedRoomName}
+                      onChange={(e) => setEditedRoomName(e.target.value)}
+                      className="flex-1 border border-orange-300 rounded px-2 py-0.5 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-orange-400"
+                      onBlur={() => { if (editedRoomName.trim()) handleRenameRoom(roomName, editedRoomName.trim()); else setEditingRoom(null); }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") { e.preventDefault(); if (editedRoomName.trim()) handleRenameRoom(roomName, editedRoomName.trim()); else setEditingRoom(null); }
+                        if (e.key === "Escape") setEditingRoom(null);
+                      }} />
+                    <span className="text-xs text-gray-400">Enter para confirmar</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="flex-1 text-sm font-semibold text-gray-700">{roomName}</span>
+                    <button type="button" title="Renomear ambiente"
+                      onClick={() => { setEditingRoom(roomName); setEditedRoomName(roomName); }}
+                      className="text-gray-400 hover:text-blue-500 p-0.5">
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button type="button" title="Remover ambiente e itens"
+                      onClick={() => handleRemoveRoom(roomName)}
+                      className="text-gray-400 hover:text-red-500 p-0.5">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </>
+                )}
+              </div>
+              {/* Items in this room */}
+              <div className="p-3 space-y-3">
+                {indices.map((idx) => {
+                  const extra = watchedExtras[idx];
+                  return (
+                    <div key={extraFields[idx].id} className="border border-gray-200 rounded-lg p-3 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <Input {...register(`extraItems.${idx}.name`)} placeholder="Nome do item *"
+                            error={(errors.extraItems?.[idx] as any)?.name?.message} />
+                        </div>
+                        <button type="button" onClick={() => removeExtra(idx)} className="text-red-400 hover:text-red-600 p-1">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <Input {...register(`extraItems.${idx}.description`)} placeholder="Descrição (opcional)" />
+                      <div className="grid grid-cols-4 gap-2">
+                        <div>
+                          <label className="text-xs text-gray-500 mb-0.5 block">Qtd</label>
+                          <input type="number" min="0.001" step="0.001" value={extra?.quantity ?? 1}
+                            onChange={(e) => handleExtraChange(idx, "quantity", parseFloat(e.target.value) || 0)}
+                            className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 mb-0.5 block">Unid.</label>
+                          <select {...register(`extraItems.${idx}.unit`)}
+                            className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            {Object.entries(UNIT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 mb-0.5 block">Valor Unit.</label>
+                          <input type="number" min="0" step="0.01" value={extra?.unitPrice ?? 0}
+                            onChange={(e) => handleExtraChange(idx, "unitPrice", parseFloat(e.target.value) || 0)}
+                            className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 mb-0.5 block">Subtotal</label>
+                          <div className="border border-gray-100 bg-gray-50 rounded px-2 py-1.5 text-sm font-medium text-gray-700">
+                            {formatCurrency(extra?.subtotal ?? 0)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                <button type="button" onClick={() => handleAddItemToRoom(roomName)}
+                  className="flex items-center gap-1.5 text-sm text-[#EA580C] hover:text-orange-700 font-medium mt-1">
+                  <Plus className="h-3.5 w-3.5" /> Adicionar item neste ambiente
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {/* Bottom action buttons (when items already exist) */}
           {extraFields.length > 0 && (
-            <div className="flex justify-end mt-3 pt-3 border-t border-gray-200">
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm"
+                onClick={() => appendExtra({ name: "", description: "", room: "", quantity: 1, unit: "UNIT", unitPrice: 0, subtotal: 0 } as any)}>
+                <Plus className="h-4 w-4" /> Item avulso
+              </Button>
+              <Button type="button" variant="outline" size="sm"
+                onClick={() => { setAddingRoom(true); setNewRoomName(""); }}>
+                <Plus className="h-4 w-4" /> Novo Ambiente
+              </Button>
+            </div>
+          )}
+
+          {/* Subtotal footer */}
+          {extraFields.length > 0 && (
+            <div className="flex justify-end pt-3 border-t border-gray-200">
               <span className="text-sm font-medium text-gray-600">
                 Subtotal itens extras:{" "}
                 <span className="text-gray-900 font-semibold">{formatCurrency(extrasTotal)}</span>

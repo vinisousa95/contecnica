@@ -78,6 +78,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             create: extraItems.map((e, idx) => ({
               name: e.name,
               description: e.description,
+              room: e.room ?? null,
               quantity: e.quantity,
               unit: e.unit,
               unitPrice: e.unitPrice,

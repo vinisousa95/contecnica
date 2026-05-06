@@ -496,6 +496,7 @@ model BudgetExtraItem {
   budget      Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
   name        String
   description String?
+  room        String?
   quantity    Decimal  @db.Decimal(10, 3)
   unit        ItemUnit @default(UNIT)
   unitPrice   Decimal  @db.Decimal(10, 2) @map("unit_price")

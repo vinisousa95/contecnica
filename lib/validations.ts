@@ -127,6 +127,7 @@ export const reformItemSchema = z.object({
 export const budgetExtraItemSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   description: z.string().optional().nullable(),
+  room: z.string().optional().nullable(),
   quantity: z.number().min(0.001, "Quantidade deve ser maior que 0"),
   unit: z.enum(["UNIT","SQM","M","ML","DAILY","SERVICE","POINT","HOUR"]).default("UNIT"),
   unitPrice: z.number().min(0, "Valor deve ser maior ou igual a 0"),

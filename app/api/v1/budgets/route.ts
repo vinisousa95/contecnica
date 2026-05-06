@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
           create: extraItems.map((e, idx) => ({
             name: e.name,
             description: e.description,
+            room: e.room ?? null,
             quantity: e.quantity,
             unit: e.unit,
             unitPrice: e.unitPrice,

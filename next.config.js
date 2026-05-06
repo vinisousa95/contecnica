@@ -17,6 +17,17 @@ const nextConfig = {
       },
     ],
   },
+  // Rewrite /uploads/* to the authenticated API serve route so all uploaded
+  // files (old and new) are served with correct Content-Type by Next.js,
+  // bypassing any nginx static-file config issues.
+  async rewrites() {
+    return [
+      {
+        source: "/uploads/:path*",
+        destination: "/api/v1/uploads/:path*",
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

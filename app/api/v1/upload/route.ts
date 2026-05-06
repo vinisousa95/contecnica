@@ -23,7 +23,8 @@ export async function POST(request: NextRequest) {
     const session = await getSessionFromRequest(request);
     if (!session) return apiError("Não autorizado", 401);
 
-    const formData = await request.formData();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const formData: any = await request.formData();
     const file = formData.get("file") as File | null;
     const type = formData.get("type") as string | null;
 

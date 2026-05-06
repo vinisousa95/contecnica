@@ -176,6 +176,7 @@ export function ProjectForm({
               {uploading ? "Enviando..." : "Selecionar foto de capa"}
             </button>
           )}
+          <input type="hidden" {...register("coverPhoto")} />
           <p className="text-xs text-gray-400 mt-2">Aparece no card da obra na lista de obras.</p>
         </CardContent>
       </Card>

@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     await mkdir(uploadDir, { recursive: true });
     await writeFile(join(uploadDir, safeName), buffer);
 
-    const url = `/uploads/${subdir}/${safeName}`;
+    const url = `/api/v1/uploads/${subdir}/${safeName}`;
     return NextResponse.json({ success: true, data: { url } }, { status: 200 });
   } catch (err) {
     console.error("[upload]", err);

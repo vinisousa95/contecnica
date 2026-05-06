@@ -3,13 +3,26 @@ import { getSessionFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/utils";
 
+const includeRelations = {
+  vehicle: { select: { id: true, name: true, plate: true } },
+  employee: { select: { id: true, name: true } },
+  assignment: {
+    select: {
+      id: true,
+      date: true,
+      employee: { select: { id: true, name: true } },
+      project: { select: { id: true, name: true } },
+    },
+  },
+};
+
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 
   try {
     const body = await request.json();
-    const { date, amount, reason, points, status, notes, assignmentId } = body;
+    const { date, amount, reason, points, status, notes, employeeId, assignmentId } = body;
 
     const fine = await prisma.vehicleFine.update({
       where: { id: params.id },
@@ -20,18 +33,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         points: points !== undefined ? (points ? parseInt(points) : null) : undefined,
         ...(status ? { status } : {}),
         notes: notes?.trim() || null,
+        employeeId: employeeId || null,
         assignmentId: assignmentId || null,
       },
-      include: {
-        vehicle: { select: { id: true, name: true, plate: true } },
-        assignment: {
-          select: {
-            id: true, date: true,
-            employee: { select: { id: true, name: true } },
-            project: { select: { id: true, name: true } },
-          },
-        },
-      },
+      include: includeRelations,
     });
 
     return apiSuccess(fine);

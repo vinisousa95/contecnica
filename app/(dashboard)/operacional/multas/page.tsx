@@ -47,6 +47,7 @@ const REASON_OPTIONS = [
 
 const emptyForm = {
   vehicleId: "",
+  employeeId: "",
   assignmentId: "",
   date: "",
   amount: "",
@@ -84,6 +85,15 @@ export default function MultasPage() {
     },
   });
 
+  const { data: employeesData } = useQuery({
+    queryKey: ["employees-all"],
+    queryFn: async () => {
+      const res = await fetch("/api/v1/employees?limit=200");
+      const json = await res.json();
+      return json.data ?? [];
+    },
+  });
+
   const { data: assignmentsData } = useQuery({
     queryKey: ["assignments-for-fines", form.vehicleId],
     enabled: !!form.vehicleId,
@@ -95,6 +105,7 @@ export default function MultasPage() {
   });
 
   const vehicles: any[] = vehiclesData ?? [];
+  const employees: any[] = employeesData ?? [];
   const assignments: any[] = assignmentsData ?? [];
 
   const saveMutation = useMutation({
@@ -141,6 +152,7 @@ export default function MultasPage() {
   function handleEdit(fine: any) {
     setForm({
       vehicleId: fine.vehicleId,
+      employeeId: fine.employeeId ?? "",
       assignmentId: fine.assignmentId ?? "",
       date: String(fine.date).slice(0, 10),
       amount: String(fine.amount),
@@ -192,7 +204,6 @@ export default function MultasPage() {
         }
       />
 
-      {/* Summary card */}
       {totalPending > 0 && (
         <div className="flex items-center gap-3 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3">
           <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0" />
@@ -247,6 +258,25 @@ export default function MultasPage() {
                 />
               </div>
 
+              {/* Funcionário responsável */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Funcionário responsável <span className="text-gray-400 font-normal">(opcional)</span>
+                </label>
+                <select
+                  value={form.employeeId}
+                  onChange={(e) => setForm((f) => ({ ...f, employeeId: e.target.value }))}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                >
+                  <option value="">Nenhum funcionário específico</option>
+                  {employees.map((emp: any) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name}{emp.role ? ` — ${emp.role}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Deslocamento vinculado */}
               {form.vehicleId && (
                 <div>
@@ -269,7 +299,6 @@ export default function MultasPage() {
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Motivo */}
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Motivo *</label>
                   <select
@@ -285,7 +314,6 @@ export default function MultasPage() {
                   {errors.reason && <p className="text-xs text-red-500 mt-1">{errors.reason}</p>}
                 </div>
 
-                {/* Valor */}
                 <CurrencyInput
                   label="Valor (R$) *"
                   placeholder="0,00"
@@ -294,7 +322,6 @@ export default function MultasPage() {
                   error={errors.amount}
                 />
 
-                {/* Pontos */}
                 <Input
                   label="Pontos na CNH"
                   type="number"
@@ -371,6 +398,7 @@ export default function MultasPage() {
                 <TableRow>
                   <TableHead>Veículo</TableHead>
                   <TableHead>Data</TableHead>
+                  <TableHead>Funcionário</TableHead>
                   <TableHead>Motivo</TableHead>
                   <TableHead>Deslocamento</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
@@ -389,6 +417,9 @@ export default function MultasPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-sm text-gray-600">{formatDate(f.date)}</TableCell>
+                    <TableCell className="text-sm text-gray-600">
+                      {f.employee?.name ?? "—"}
+                    </TableCell>
                     <TableCell className="text-sm text-gray-600">{f.reason}</TableCell>
                     <TableCell className="text-sm text-gray-400">
                       {f.assignment ? (

@@ -530,6 +530,7 @@ model Employee {
   assignments   WorkAssignment[]
   assignedTasks Task[]           @relation("TaskAssignee")
   absences      EmployeeAbsence[]
+  fines         VehicleFine[]
 
   @@map("employees")
 }
@@ -905,6 +906,8 @@ model VehicleFine {
   id           String          @id @default(cuid())
   vehicleId    String          @map("vehicle_id")
   vehicle      Vehicle         @relation(fields: [vehicleId], references: [id])
+  employeeId   String?         @map("employee_id")
+  employee     Employee?       @relation(fields: [employeeId], references: [id])
   assignmentId String?         @map("assignment_id")
   assignment   WorkAssignment? @relation(fields: [assignmentId], references: [id])
   date         DateTime

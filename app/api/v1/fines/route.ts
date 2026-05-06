@@ -3,6 +3,19 @@ import { getSessionFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/utils";
 
+const includeRelations = {
+  vehicle: { select: { id: true, name: true, plate: true } },
+  employee: { select: { id: true, name: true } },
+  assignment: {
+    select: {
+      id: true,
+      date: true,
+      employee: { select: { id: true, name: true } },
+      project: { select: { id: true, name: true } },
+    },
+  },
+};
+
 export async function GET(request: NextRequest) {
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
@@ -16,17 +29,7 @@ export async function GET(request: NextRequest) {
       ...(vehicleId ? { vehicleId } : {}),
       ...(status ? { status: status as any } : {}),
     },
-    include: {
-      vehicle: { select: { id: true, name: true, plate: true } },
-      assignment: {
-        select: {
-          id: true,
-          date: true,
-          employee: { select: { id: true, name: true } },
-          project: { select: { id: true, name: true } },
-        },
-      },
-    },
+    include: includeRelations,
     orderBy: { date: "desc" },
   });
 
@@ -39,7 +42,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { vehicleId, assignmentId, date, amount, reason, points, status, notes } = body;
+    const { vehicleId, employeeId, assignmentId, date, amount, reason, points, status, notes } = body;
 
     if (!vehicleId) return apiError("Veículo é obrigatório");
     if (!date) return apiError("Data é obrigatória");
@@ -49,6 +52,7 @@ export async function POST(request: NextRequest) {
     const fine = await prisma.vehicleFine.create({
       data: {
         vehicleId,
+        employeeId: employeeId || null,
         assignmentId: assignmentId || null,
         date: new Date(date + "T12:00:00.000Z"),
         amount: parseFloat(amount),
@@ -57,16 +61,7 @@ export async function POST(request: NextRequest) {
         status: status ?? "PENDING",
         notes: notes?.trim() || null,
       },
-      include: {
-        vehicle: { select: { id: true, name: true, plate: true } },
-        assignment: {
-          select: {
-            id: true, date: true,
-            employee: { select: { id: true, name: true } },
-            project: { select: { id: true, name: true } },
-          },
-        },
-      },
+      include: includeRelations,
     });
 
     return apiSuccess(fine, 201);

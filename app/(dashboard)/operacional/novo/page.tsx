@@ -34,7 +34,11 @@ export default function NovoRegistroPage() {
 
   const { data: employeesData } = useQuery({
     queryKey: ["employees-active"],
-    queryFn: () => api.employees.list({ status: "ACTIVE", limit: "200" }),
+    queryFn: async () => {
+      const res = await fetch("/api/v1/employees?limit=200");
+      const json = await res.json();
+      return json.data ?? [];
+    },
   });
 
   const { data: projectsData } = useQuery({
@@ -44,7 +48,11 @@ export default function NovoRegistroPage() {
 
   const { data: vehiclesData } = useQuery({
     queryKey: ["vehicles-active"],
-    queryFn: () => api.vehicles.list({ status: "ACTIVE", limit: "100" }),
+    queryFn: async () => {
+      const res = await fetch("/api/v1/vehicles?status=ACTIVE&limit=100");
+      const json = await res.json();
+      return json.data ?? [];
+    },
   });
 
   const mutation = useMutation({
@@ -59,9 +67,9 @@ export default function NovoRegistroPage() {
     },
   });
 
-  const employees = employeesData?.data ?? [];
+  const employees = Array.isArray(employeesData) ? employeesData : [];
   const projects = Array.isArray(projectsData) ? projectsData : [];
-  const vehicles = vehiclesData?.data ?? [];
+  const vehicles = Array.isArray(vehiclesData) ? vehiclesData : [];
 
   function validate(): boolean {
     const newErrors: Partial<Record<keyof AssignmentInput, string>> = {};

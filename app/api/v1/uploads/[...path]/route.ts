@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import { join, extname, normalize } from "path";
 import { getSessionFromRequest } from "@/lib/auth";
+import { UPLOAD_BASE } from "@/lib/upload-config";
 
 const MIME_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -12,7 +13,8 @@ const MIME_TYPES: Record<string, string> = {
   ".pdf": "application/pdf",
 };
 
-const UPLOAD_BASE = join(process.cwd(), "public", "uploads");
+// Fallback: old location before the storage path change
+const LEGACY_BASE = join(process.cwd(), "public", "uploads");
 
 export async function GET(
   request: NextRequest,
@@ -24,23 +26,34 @@ export async function GET(
   const filePath = params.path.join("/");
   const fullPath = normalize(join(UPLOAD_BASE, filePath));
 
-  // Prevent path traversal attacks
+  // Prevent path traversal
   if (!fullPath.startsWith(UPLOAD_BASE + "/")) {
     return new NextResponse(null, { status: 400 });
   }
 
-  try {
-    const buffer = await readFile(fullPath);
-    const ext = extname(fullPath).toLowerCase();
-    const contentType = MIME_TYPES[ext] ?? "application/octet-stream";
+  let buffer: Buffer | null = null;
 
-    return new NextResponse(buffer, {
-      headers: {
-        "Content-Type": contentType,
-        "Cache-Control": "private, max-age=86400",
-      },
-    });
-  } catch {
-    return new NextResponse(null, { status: 404 });
+  // Try primary location (.uploads/ or UPLOAD_DIR)
+  try {
+    buffer = await readFile(fullPath);
+  } catch {}
+
+  // Fallback to legacy public/uploads/ location
+  if (!buffer) {
+    try {
+      buffer = await readFile(normalize(join(LEGACY_BASE, filePath)));
+    } catch {}
   }
+
+  if (!buffer) return new NextResponse(null, { status: 404 });
+
+  const ext = extname(fullPath).toLowerCase();
+  const contentType = MIME_TYPES[ext] ?? "application/octet-stream";
+
+  return new NextResponse(buffer, {
+    headers: {
+      "Content-Type": contentType,
+      "Cache-Control": "private, max-age=86400",
+    },
+  });
 }

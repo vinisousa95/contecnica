@@ -79,7 +79,12 @@ export function ProjectForm({
       setPreviewUrl(json.data.url);
       setValue("coverPhoto", json.data.url);
     } catch (err: any) {
-      toast({ title: "Erro ao enviar foto", description: err.message, variant: "error" });
+      toast({
+        title: "Erro ao enviar foto",
+        description: err.message ?? "Verifique o console do servidor para mais detalhes.",
+        variant: "error",
+      });
+      setPreviewUrl(null);
     } finally {
       setUploading(false);
     }

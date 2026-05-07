@@ -346,7 +346,6 @@ export function PrintView({ budget }: { budget: any }) {
               <td><div className="item-name">{e.name}</div>{e.description && <div className="item-desc">{e.description}</div>}</td>
               <td className="right">{fmtQty(e.quantity)}</td>
               <td>{UNIT_LABELS[e.unit]}</td>
-              <td className="right">{fmt(e.unitPrice)}</td>
               <td className="right" style={{ fontWeight: 600 }}>{fmt(e.subtotal)}</td>
             </tr>
           ));
@@ -356,25 +355,35 @@ export function PrintView({ budget }: { budget: any }) {
               <table>
                 <thead>
                   <tr>
-                    <th style={{ width: "40%" }}>Descrição</th>
+                    <th style={{ width: "52%" }}>Descrição</th>
                     <th className="right" style={{ width: "12%" }}>Qtd</th>
                     <th style={{ width: "8%" }}>Unid.</th>
-                    <th className="right" style={{ width: "18%" }}>Valor Unit.</th>
-                    <th className="right" style={{ width: "22%" }}>Subtotal</th>
+                    <th className="right" style={{ width: "28%" }}>Valor</th>
                   </tr>
                 </thead>
                 <tbody>
                   {ungrouped.length > 0 && renderRows(ungrouped)}
-                  {namedRooms.map(([room, items]) => (
-                    <>
-                      <tr key={`room-${room}`}>
-                        <td colSpan={5} style={{ background: "#fff7ed", fontWeight: 700, fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "#c2410c", paddingTop: "6px", paddingBottom: "6px" }}>
-                          {room}
-                        </td>
-                      </tr>
-                      {renderRows(items)}
-                    </>
-                  ))}
+                  {namedRooms.map(([room, items]) => {
+                    const roomTotal = items.reduce((s: number, e: any) => s + Number(e.subtotal), 0);
+                    return (
+                      <>
+                        <tr key={`room-${room}`}>
+                          <td colSpan={4} style={{ background: "#fff7ed", fontWeight: 700, fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "#c2410c", paddingTop: "6px", paddingBottom: "6px" }}>
+                            {room}
+                          </td>
+                        </tr>
+                        {renderRows(items)}
+                        <tr key={`room-total-${room}`} style={{ borderTop: "1px solid #e5e7eb" }}>
+                          <td colSpan={3} style={{ textAlign: "right", fontSize: "0.75rem", fontWeight: 600, color: "#374151", paddingTop: "4px", paddingBottom: "6px" }}>
+                            Total {room}:
+                          </td>
+                          <td className="right" style={{ fontWeight: 700, color: "#374151", paddingTop: "4px", paddingBottom: "6px" }}>
+                            {fmt(roomTotal)}
+                          </td>
+                        </tr>
+                      </>
+                    );
+                  })}
                 </tbody>
               </table>
             </>

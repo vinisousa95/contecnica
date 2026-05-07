@@ -316,7 +316,6 @@ export default function OrcamentoDetailPage() {
                 <td className="px-3 py-2.5 text-right text-gray-600">
                   {Number(e.quantity).toLocaleString("pt-BR")} {UNIT_LABELS[e.unit]}
                 </td>
-                <td className="px-3 py-2.5 text-right text-gray-600">{formatCurrency(e.unitPrice)}</td>
                 <td className="px-5 py-2.5 text-right font-semibold text-gray-900">{formatCurrency(e.subtotal)}</td>
               </tr>
             ));
@@ -334,22 +333,30 @@ export default function OrcamentoDetailPage() {
                       <tr className="border-b border-gray-100">
                         <th className="px-5 py-2 text-left font-medium text-gray-600">Item</th>
                         <th className="px-3 py-2 text-right font-medium text-gray-600">Qtd</th>
-                        <th className="px-3 py-2 text-right font-medium text-gray-600">Unit.</th>
-                        <th className="px-5 py-2 text-right font-medium text-gray-600">Subtotal</th>
+                        <th className="px-5 py-2 text-right font-medium text-gray-600">Valor</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                       {ungrouped.length > 0 && renderRows(ungrouped)}
-                      {namedRooms.map(([room, items]) => (
-                        <>
-                          <tr key={`room-${room}`}>
-                            <td colSpan={4} className="px-5 py-1.5 bg-orange-50 text-xs font-semibold text-orange-700 uppercase tracking-wide">
-                              {room}
-                            </td>
-                          </tr>
-                          {renderRows(items)}
-                        </>
-                      ))}
+                      {namedRooms.map(([room, items]) => {
+                        const roomTotal = items.reduce((s: number, e: any) => s + Number(e.subtotal), 0);
+                        return (
+                          <>
+                            <tr key={`room-${room}`}>
+                              <td colSpan={3} className="px-5 py-1.5 bg-orange-50 text-xs font-semibold text-orange-700 uppercase tracking-wide">
+                                {room}
+                              </td>
+                            </tr>
+                            {renderRows(items)}
+                            <tr key={`room-total-${room}`} className="border-t border-gray-100 bg-gray-50">
+                              <td colSpan={2} className="px-5 py-2 text-right text-xs font-semibold text-gray-600">
+                                Total {room}:
+                              </td>
+                              <td className="px-5 py-2 text-right font-bold text-gray-900">{formatCurrency(roomTotal)}</td>
+                            </tr>
+                          </>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </CardContent>

@@ -329,7 +329,7 @@ export default function OrcamentoDetailPage() {
                 <td className="px-3 py-2.5 text-right text-gray-600">
                   {Number(e.quantity).toLocaleString("pt-BR")} {UNIT_LABELS[e.unit]}
                 </td>
-                <td className="px-5 py-2.5"></td>
+                <td className="px-5 py-2.5 text-right font-semibold text-gray-900">{formatCurrency(e.subtotal)}</td>
               </tr>
             ));
             return (

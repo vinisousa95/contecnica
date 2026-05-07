@@ -355,7 +355,7 @@ export function PrintView({ budget }: { budget: any }) {
               <td><div className="item-name">{e.name}</div>{e.description && <div className="item-desc">{e.description}</div>}</td>
               <td className="right">{fmtQty(e.quantity)}</td>
               <td>{UNIT_LABELS[e.unit]}</td>
-              <td></td>
+              <td className="right">{fmt(e.subtotal)}</td>
             </tr>
           ));
           return (

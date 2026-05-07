@@ -307,7 +307,7 @@ export default function OrcamentoDetailPage() {
             });
             const ungrouped = roomMap.get("") ?? [];
             const namedRooms = [...roomMap.entries()].filter(([k]) => k !== "");
-            const renderRows = (items: any[]) => items.map((e: any) => (
+            const renderUngroupedRows = (items: any[]) => items.map((e: any) => (
               <tr key={e.id}>
                 <td className="px-5 py-2.5">
                   <p className="font-medium text-gray-900">{e.name}</p>
@@ -317,6 +317,18 @@ export default function OrcamentoDetailPage() {
                   {Number(e.quantity).toLocaleString("pt-BR")} {UNIT_LABELS[e.unit]}
                 </td>
                 <td className="px-5 py-2.5 text-right font-semibold text-gray-900">{formatCurrency(e.subtotal)}</td>
+              </tr>
+            ));
+            const renderRoomRows = (items: any[]) => items.map((e: any) => (
+              <tr key={e.id}>
+                <td className="px-5 py-2.5">
+                  <p className="font-medium text-gray-900">{e.name}</p>
+                  {e.description && <p className="text-xs text-gray-500">{e.description}</p>}
+                </td>
+                <td className="px-3 py-2.5 text-right text-gray-600">
+                  {Number(e.quantity).toLocaleString("pt-BR")} {UNIT_LABELS[e.unit]}
+                </td>
+                <td className="px-5 py-2.5"></td>
               </tr>
             ));
             return (
@@ -337,7 +349,7 @@ export default function OrcamentoDetailPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {ungrouped.length > 0 && renderRows(ungrouped)}
+                      {ungrouped.length > 0 && renderUngroupedRows(ungrouped)}
                       {namedRooms.map(([room, items]) => {
                         const roomTotal = items.reduce((s: number, e: any) => s + Number(e.subtotal), 0);
                         return (
@@ -347,7 +359,7 @@ export default function OrcamentoDetailPage() {
                                 {room}
                               </td>
                             </tr>
-                            {renderRows(items)}
+                            {renderRoomRows(items)}
                             <tr key={`room-total-${room}`} className="border-t border-gray-100 bg-gray-50">
                               <td colSpan={2} className="px-5 py-2 text-right text-xs font-semibold text-gray-600">
                                 Total {room}:

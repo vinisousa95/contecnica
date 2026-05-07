@@ -341,12 +341,20 @@ export function PrintView({ budget }: { budget: any }) {
           });
           const ungrouped = roomMap.get("") ?? [];
           const namedRooms = [...roomMap.entries()].filter(([k]) => k !== "");
-          const renderRows = (items: any[]) => items.map((e: any) => (
+          const renderUngroupedRows = (items: any[]) => items.map((e: any) => (
             <tr key={e.id}>
               <td><div className="item-name">{e.name}</div>{e.description && <div className="item-desc">{e.description}</div>}</td>
               <td className="right">{fmtQty(e.quantity)}</td>
               <td>{UNIT_LABELS[e.unit]}</td>
               <td className="right" style={{ fontWeight: 600 }}>{fmt(e.subtotal)}</td>
+            </tr>
+          ));
+          const renderRoomRows = (items: any[]) => items.map((e: any) => (
+            <tr key={e.id}>
+              <td><div className="item-name">{e.name}</div>{e.description && <div className="item-desc">{e.description}</div>}</td>
+              <td className="right">{fmtQty(e.quantity)}</td>
+              <td>{UNIT_LABELS[e.unit]}</td>
+              <td></td>
             </tr>
           ));
           return (
@@ -362,7 +370,7 @@ export function PrintView({ budget }: { budget: any }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {ungrouped.length > 0 && renderRows(ungrouped)}
+                  {ungrouped.length > 0 && renderUngroupedRows(ungrouped)}
                   {namedRooms.map(([room, items]) => {
                     const roomTotal = items.reduce((s: number, e: any) => s + Number(e.subtotal), 0);
                     return (
@@ -372,7 +380,7 @@ export function PrintView({ budget }: { budget: any }) {
                             {room}
                           </td>
                         </tr>
-                        {renderRows(items)}
+                        {renderRoomRows(items)}
                         <tr key={`room-total-${room}`} style={{ borderTop: "1px solid #e5e7eb" }}>
                           <td colSpan={3} style={{ textAlign: "right", fontSize: "0.75rem", fontWeight: 600, color: "#374151", paddingTop: "4px", paddingBottom: "6px" }}>
                             Total {room}:

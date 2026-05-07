@@ -50,6 +50,7 @@ const UNIT_LABELS: Record<string, string> = {
   UNIT: "un",
   SQM: "m²",
   M: "m",
+  ML: "ml",
   DAILY: "diária",
   SERVICE: "serviço",
   POINT: "ponto",

@@ -105,6 +105,7 @@ export default function UsuariosPage() {
       phone: u.phone ?? "",
       isActive: u.isActive,
       password: "",
+      financePin: "",
     });
   }
 
@@ -234,6 +235,17 @@ export default function UsuariosPage() {
             <Input label="E-mail" type="email" required placeholder="email@exemplo.com" error={editForm.formState.errors.email?.message} {...editForm.register("email")} />
             <Input label="Nova Senha" type="password" placeholder="Deixe em branco para não alterar" error={editForm.formState.errors.password?.message} {...editForm.register("password")} />
             <Input label="Telefone" placeholder="(00) 00000-0000" {...editForm.register("phone")} />
+            <Input
+              label="PIN Financeiro (4–10 dígitos)"
+              type="password"
+              inputMode="numeric"
+              placeholder="Deixe em branco para não alterar"
+              error={(editForm.formState.errors as any).financePin?.message}
+              {...editForm.register("financePin")}
+            />
+            <p className="text-xs text-gray-400 -mt-2">
+              Protege Financeiro e Gastos Pessoais. Apenas números.
+            </p>
             <Select
               label="Perfil de Acesso"
               options={ROLE_OPTIONS}

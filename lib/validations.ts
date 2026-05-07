@@ -19,6 +19,7 @@ export const updateUserSchema = createUserSchema
   .omit({ password: true })
   .extend({
     password: z.string().min(8).optional().or(z.literal("")),
+    financePin: z.string().min(4).max(10).regex(/^\d+$/, "PIN deve conter apenas números").optional().or(z.literal("")),
     isActive: z.boolean().optional(),
   });
 

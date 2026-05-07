@@ -26,6 +26,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (parsed.data.password) {
       updateData.passwordHash = await bcrypt.hash(parsed.data.password, 12);
     }
+    if (parsed.data.financePin) {
+      updateData.financePin = await bcrypt.hash(parsed.data.financePin, 10);
+    }
 
     const user = await prisma.user.update({
       where: { id: params.id },

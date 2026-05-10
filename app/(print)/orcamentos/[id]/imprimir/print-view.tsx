@@ -157,14 +157,14 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
         .validity-bar strong { color: #111827; }
 
         /* Signatures */
-        .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; }
-        .sig-block { text-align: center; }
+        .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; break-inside: avoid; page-break-inside: avoid; }
+        .sig-block { text-align: center; break-inside: avoid; page-break-inside: avoid; }
         .sig-line { border-top: 1px solid #374151; margin-bottom: 7px; }
         .sig-label { font-size: 10px; font-weight: 600; color: #111827; }
         .sig-sub { font-size: 9px; color: #9ca3af; margin-top: 2px; }
 
         /* Footer */
-        .footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; font-size: 8px; color: #9ca3af; }
+        .footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; font-size: 8px; color: #9ca3af; break-inside: avoid; page-break-inside: avoid; }
 
         /* Print */
         @media print {
@@ -468,28 +468,29 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
           </div>
         )}
 
-        {/* ── Signatures ── */}
-        <div className="signatures">
-          <div className="sig-block">
-            <div style={{ height: 48 }} />
-            <div className="sig-line" />
-            <div className="sig-label">{client.name}</div>
-            <div className="sig-sub">Cliente — Aprovação do Orçamento</div>
-            <div className="sig-sub" style={{ marginTop: 4 }}>Data: ______ / ______ / ________</div>
+        {/* ── Signatures + Footer (kept together, no page break inside) ── */}
+        <div style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
+          <div className="signatures">
+            <div className="sig-block">
+              <div style={{ height: 48 }} />
+              <div className="sig-line" />
+              <div className="sig-label">{client.name}</div>
+              <div className="sig-sub">Cliente — Aprovação do Orçamento</div>
+              <div className="sig-sub" style={{ marginTop: 4 }}>Data: ______ / ______ / ________</div>
+            </div>
+            <div className="sig-block">
+              <div style={{ height: 48 }} />
+              <div className="sig-line" />
+              <div className="sig-label">{company?.name || "Contécnica"}</div>
+              <div className="sig-sub">Responsável Técnico</div>
+              <div className="sig-sub" style={{ marginTop: 4 }}>Data: ______ / ______ / ________</div>
+            </div>
           </div>
-          <div className="sig-block">
-            <div style={{ height: 48 }} />
-            <div className="sig-line" />
-            <div className="sig-label">{company?.name || "Contécnica"}</div>
-            <div className="sig-sub">Responsável Técnico</div>
-            <div className="sig-sub" style={{ marginTop: 4 }}>Data: ______ / ______ / ________</div>
-          </div>
-        </div>
 
-        {/* ── Footer ── */}
-        <div className="footer">
-          <span>{company?.name || "Contécnica"}{company?.cnpj ? ` — CNPJ ${company.cnpj}` : ""}</span>
-          <span>Documento gerado em {fmtDate(new Date())} · {budget.code}</span>
+          <div className="footer">
+            <span>{company?.name || "Contécnica"}{company?.cnpj ? ` — CNPJ ${company.cnpj}` : ""}</span>
+            <span>Documento gerado em {fmtDate(new Date())} · {budget.code}</span>
+          </div>
         </div>
       </div>
     </>

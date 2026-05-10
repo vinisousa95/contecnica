@@ -347,6 +347,7 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
               <td><div className="item-name">{e.name}</div>{e.description && <div className="item-desc">{e.description}</div>}</td>
               <td className="right">{fmtQty(e.quantity)}</td>
               <td>{UNIT_LABELS[e.unit]}</td>
+              <td className="right">{fmt(e.unitPrice)}</td>
               <td className="right" style={{ fontWeight: 600 }}>{fmt(e.subtotal)}</td>
             </tr>
           ));
@@ -355,6 +356,7 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
               <td><div className="item-name">{e.name}</div>{e.description && <div className="item-desc">{e.description}</div>}</td>
               <td className="right">{fmtQty(e.quantity)}</td>
               <td>{UNIT_LABELS[e.unit]}</td>
+              <td className="right">{fmt(e.unitPrice)}</td>
               <td className="right">{fmt(e.subtotal)}</td>
             </tr>
           ));
@@ -364,10 +366,11 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
               <table>
                 <thead>
                   <tr>
-                    <th style={{ width: "52%" }}>Descrição</th>
-                    <th className="right" style={{ width: "12%" }}>Qtd</th>
+                    <th style={{ width: "40%" }}>Descrição</th>
+                    <th className="right" style={{ width: "10%" }}>Qtd</th>
                     <th style={{ width: "8%" }}>Unid.</th>
-                    <th className="right" style={{ width: "28%" }}>Valor</th>
+                    <th className="right" style={{ width: "18%" }}>Valor Unit.</th>
+                    <th className="right" style={{ width: "24%" }}>Subtotal</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -377,13 +380,13 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
                     return (
                       <>
                         <tr key={`room-${room}`}>
-                          <td colSpan={4} style={{ background: "#fff7ed", fontWeight: 700, fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "#c2410c", paddingTop: "6px", paddingBottom: "6px" }}>
+                          <td colSpan={5} style={{ background: "#fff7ed", fontWeight: 700, fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "#c2410c", paddingTop: "6px", paddingBottom: "6px" }}>
                             {room}
                           </td>
                         </tr>
                         {renderRoomRows(items)}
                         <tr key={`room-total-${room}`} style={{ borderTop: "1px solid #e5e7eb" }}>
-                          <td colSpan={3} style={{ textAlign: "right", fontSize: "0.75rem", fontWeight: 600, color: "#374151", paddingTop: "4px", paddingBottom: "6px" }}>
+                          <td colSpan={4} style={{ textAlign: "right", fontSize: "0.75rem", fontWeight: 600, color: "#374151", paddingTop: "4px", paddingBottom: "6px" }}>
                             Total {room}:
                           </td>
                           <td className="right" style={{ fontWeight: 700, color: "#374151", paddingTop: "4px", paddingBottom: "6px" }}>
@@ -400,29 +403,54 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
         })()}
 
         {/* ── Totals ── */}
-        <table className="totals-table">
-          <tbody>
-            {itemsTotal > 0 && extrasTotal > 0 && (
-              <>
-                <tr className="sub-row">
+        {(() => {
+          const grossTotal = itemsTotal + extrasTotal;
+          const discountPct = Number(budget.discount ?? 0);
+          const discountAmt = grossTotal * (discountPct / 100);
+          const hasSubtotals = itemsTotal > 0 && extrasTotal > 0;
+          const hasDiscount = discountPct > 0;
+          return (
+            <table className="totals-table">
+              <tbody>
+                {hasSubtotals && (
+                  <>
+                    <tr className="sub-row">
+                      <td></td>
+                      <td style={{ textAlign: "right" }}>Subtotal itens:</td>
+                      <td style={{ textAlign: "right", width: "22%" }}>{fmt(itemsTotal)}</td>
+                    </tr>
+                    <tr className="sub-row">
+                      <td></td>
+                      <td style={{ textAlign: "right" }}>Itens adicionais:</td>
+                      <td style={{ textAlign: "right" }}>{fmt(extrasTotal)}</td>
+                    </tr>
+                  </>
+                )}
+                {hasDiscount && (
+                  <>
+                    {!hasSubtotals && (
+                      <tr className="sub-row">
+                        <td></td>
+                        <td style={{ textAlign: "right" }}>Subtotal:</td>
+                        <td style={{ textAlign: "right", width: "22%" }}>{fmt(grossTotal)}</td>
+                      </tr>
+                    )}
+                    <tr className="sub-row">
+                      <td></td>
+                      <td style={{ textAlign: "right", color: "#16a34a" }}>Desconto ({discountPct}%):</td>
+                      <td style={{ textAlign: "right", color: "#16a34a" }}>- {fmt(discountAmt)}</td>
+                    </tr>
+                  </>
+                )}
+                <tr className="total-row">
                   <td></td>
-                  <td style={{ textAlign: "right" }}>Subtotal itens:</td>
-                  <td style={{ textAlign: "right", width: "22%" }}>{fmt(itemsTotal)}</td>
+                  <td style={{ textAlign: "right" }}>TOTAL DO ORÇAMENTO</td>
+                  <td style={{ textAlign: "right", width: "22%" }}>{fmt(budget.totalAmount)}</td>
                 </tr>
-                <tr className="sub-row">
-                  <td></td>
-                  <td style={{ textAlign: "right" }}>Itens adicionais:</td>
-                  <td style={{ textAlign: "right" }}>{fmt(extrasTotal)}</td>
-                </tr>
-              </>
-            )}
-            <tr className="total-row">
-              <td></td>
-              <td style={{ textAlign: "right" }}>TOTAL DO ORÇAMENTO</td>
-              <td style={{ textAlign: "right", width: "22%" }}>{fmt(budget.totalAmount)}</td>
-            </tr>
-          </tbody>
-        </table>
+              </tbody>
+            </table>
+          );
+        })()}
 
         {/* ── Notes ── */}
         {budget.notes && (

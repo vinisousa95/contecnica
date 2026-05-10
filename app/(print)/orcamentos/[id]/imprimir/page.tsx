@@ -43,6 +43,7 @@ export default async function ImprimirOrcamentoPage({ params }: { params: { id: 
   const data = {
     ...budget,
     totalAmount: Number(budget.totalAmount),
+    discount: Number(budget.discount),
     items: budget.items.map((i: any) => ({
       ...i,
       quantity: Number(i.quantity),

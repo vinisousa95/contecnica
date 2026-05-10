@@ -98,10 +98,10 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #1a1a1a; background: white; }
 
-        .page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 14mm 14mm 18mm 14mm; }
+        .page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 8mm 14mm 18mm 14mm; }
 
         /* Header */
-        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 3px solid #EA580C; margin-bottom: 16px; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 3px solid #EA580C; margin-bottom: 14px; }
         .logo-block { display: flex; align-items: center; gap: 10px; }
         .logo-icon { width: 48px; height: 48px; background: #EA580C; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; color: white; flex-shrink: 0; }
         .logo-text h1 { font-size: 20px; font-weight: 800; color: #111827; letter-spacing: -0.5px; }
@@ -196,7 +196,7 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
             <img
               src="/logo.png"
               alt="Contécnica"
-              style={{ height: 160, width: "auto", objectFit: "contain" }}
+              style={{ height: 220, width: "auto", objectFit: "contain" }}
               onError={(e) => {
                 const t = e.currentTarget;
                 t.style.display = "none";

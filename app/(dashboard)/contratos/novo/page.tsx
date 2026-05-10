@@ -102,6 +102,7 @@ export default function NovoContratoPage() {
     valor_total_extenso: "",
   });
   const [showPreview, setShowPreview] = useState(false);
+  const [discount, setDiscount] = useState(0); // percentage
 
   const clientList = Array.isArray(clients) ? clients : (clients as any)?.data ?? [];
 
@@ -170,6 +171,8 @@ export default function NovoContratoPage() {
 
     if (items.length > 0) {
       setServiceItems(items);
+      const budgetDiscount = Number(linkedBudget.discount ?? 0);
+      if (budgetDiscount > 0) setDiscount(budgetDiscount);
       toast({ title: `${items.length} item(s) importados do orçamento vinculado`, variant: "success" });
     }
   }, [linkedBudget]);
@@ -181,7 +184,9 @@ export default function NovoContratoPage() {
     }
   }, [templateId, templates]);
 
-  const totalAmount = serviceItems.reduce((s, i) => s + (i.subtotal || 0), 0);
+  const grossTotal = serviceItems.reduce((s, i) => s + (i.subtotal || 0), 0);
+  const discountAmount = grossTotal * (discount / 100);
+  const totalAmount = grossTotal - discountAmount;
 
   const buildVars = useCallback((): Record<string, string> => {
     const company = companySettings as any;
@@ -201,12 +206,15 @@ export default function NovoContratoPage() {
       cliente_endereco: clientAddr,
       obra_endereco: projectAddr,
       obra_descricao: selectedProject?.description ?? "",
+      valor_bruto: formatCurrency(grossTotal),
+      desconto_pct: discount > 0 ? `${discount.toFixed(2)}%` : "0%",
+      desconto_valor: discount > 0 ? formatCurrency(discountAmount) : "R$ 0,00",
       valor_total: formatCurrency(totalAmount),
       itens_servico: buildServiceItemsText(serviceItems),
       parcelas: buildParcelasText(installments),
       ...vars,
     };
-  }, [companySettings, selectedClient, selectedProject, totalAmount, serviceItems, installments, vars]);
+  }, [companySettings, selectedClient, selectedProject, grossTotal, discountAmount, totalAmount, discount, serviceItems, installments, vars]);
 
   const previewBody = templateBody ? replaceVars(templateBody, buildVars()) : "";
 
@@ -447,10 +455,41 @@ export default function NovoContratoPage() {
                     ))}
                   </tbody>
                   <tfoot>
+                    {discount > 0 && (
+                      <>
+                        <tr>
+                          <td colSpan={4} className="pt-3 text-right text-sm text-gray-500">Subtotal:</td>
+                          <td className="pt-3 text-right text-sm text-gray-500">{formatCurrency(grossTotal)}</td>
+                          <td />
+                        </tr>
+                        <tr>
+                          <td colSpan={4} className="text-right text-sm text-green-600">Desconto ({discount.toFixed(2)}%):</td>
+                          <td className="text-right text-sm text-green-600">− {formatCurrency(discountAmount)}</td>
+                          <td />
+                        </tr>
+                      </>
+                    )}
                     <tr>
-                      <td colSpan={4} className="pt-3 text-right text-sm font-semibold text-gray-700">Total:</td>
-                      <td className="pt-3 text-right font-bold text-[#EA580C]">{formatCurrency(totalAmount)}</td>
+                      <td colSpan={4} className="pt-2 text-right text-sm font-semibold text-gray-700">Total:</td>
+                      <td className="pt-2 text-right font-bold text-[#EA580C]">{formatCurrency(totalAmount)}</td>
                       <td />
+                    </tr>
+                    <tr>
+                      <td colSpan={6} className="pt-2">
+                        <div className="flex items-center gap-2 justify-end">
+                          <label className="text-xs text-gray-500">Desconto (%):</label>
+                          <input
+                            type="number"
+                            min={0}
+                            max={100}
+                            step="any"
+                            value={discount || ""}
+                            onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                            className="w-20 h-7 px-2 rounded border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-[#EA580C]"
+                            placeholder="0"
+                          />
+                        </div>
+                      </td>
                     </tr>
                   </tfoot>
                 </table>

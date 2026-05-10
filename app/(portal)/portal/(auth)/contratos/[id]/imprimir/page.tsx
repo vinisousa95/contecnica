@@ -61,7 +61,7 @@ export default async function PortalImprimirContrato({ params }: { params: { id:
     .divider { border: none; border-top: 2px solid #000; margin: 0 auto 28px; }
     .body-text { margin-bottom: 28px; }
     .body-text p { margin-bottom: 8px; text-align: justify; font-size: 12pt; }
-    .clause { font-weight: bold; text-transform: uppercase; margin-top: 20px; margin-bottom: 6px; break-after: avoid; page-break-after: avoid; }
+    .clause { font-weight: bold; text-transform: uppercase; margin-top: 20px; margin-bottom: 6px; }
     .subitem { padding-left: 24px; margin-bottom: 4px; }
     .section-heading { font-weight: bold; text-transform: uppercase; font-size: 11pt; letter-spacing: 0.04em; border-bottom: 1.5px solid #000; padding-bottom: 4px; margin-bottom: 10px; margin-top: 8px; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 28px; font-size: 11pt; }
@@ -95,12 +95,31 @@ export default async function PortalImprimirContrato({ params }: { params: { id:
         <hr className="divider" />
 
         <div className="body-text">
-          {bodyLines.map((line, idx) => {
-            if (isBlank(line)) return <div key={idx} style={{ height: "8px" }} />;
-            if (isClause(line)) return <p key={idx} className="clause">{line}</p>;
-            if (isSubItem(line)) return <p key={idx} className="subitem">{line}</p>;
-            return <p key={idx}>{line}</p>;
-          })}
+          {(() => {
+            type Group = { clause: boolean; lines: string[] };
+            const groups: Group[] = [];
+            for (const line of bodyLines) {
+              if (isClause(line)) {
+                groups.push({ clause: true, lines: [line] });
+              } else if (groups.length > 0 && groups[groups.length - 1].clause) {
+                groups[groups.length - 1].lines.push(line);
+              } else {
+                if (groups.length === 0 || groups[groups.length - 1].clause) groups.push({ clause: false, lines: [] });
+                groups[groups.length - 1].lines.push(line);
+              }
+            }
+            return groups.map((g, gi) => {
+              const content = g.lines.map((line, li) => {
+                if (isBlank(line)) return <div key={li} style={{ height: "8px" }} />;
+                if (isClause(line)) return <p key={li} className="clause">{line}</p>;
+                if (isSubItem(line)) return <p key={li} className="subitem">{line}</p>;
+                return <p key={li}>{line}</p>;
+              });
+              return g.clause
+                ? <div key={gi} style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>{content}</div>
+                : <div key={gi}>{content}</div>;
+            });
+          })()}
         </div>
 
         {serviceItems.length > 0 && (

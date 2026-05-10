@@ -86,8 +86,6 @@ export default async function ImprimirContratoPage({ params }: { params: { id: s
           .body-text .clause {
             font-weight: bold; text-transform: uppercase;
             margin-top: 20px; margin-bottom: 6px; font-size: 12pt;
-            break-after: avoid;
-            page-break-after: avoid;
           }
           .body-text .subitem { padding-left: 24px; margin-bottom: 4px; }
 
@@ -157,12 +155,39 @@ export default async function ImprimirContratoPage({ params }: { params: { id: s
 
         {/* ── CORPO DO CONTRATO ── */}
         <div className="body-text">
-          {bodyLines.map((line, idx) => {
-            if (isBlank(line)) return <div key={idx} style={{ height: "8px" }} />;
-            if (isClause(line)) return <p key={idx} className="clause">{line}</p>;
-            if (isSubItem(line)) return <p key={idx} className="subitem">{line}</p>;
-            return <p key={idx}>{line}</p>;
-          })}
+          {(() => {
+            // Group lines by clause so each clause stays together on one page
+            type Group = { clause: boolean; lines: string[] };
+            const groups: Group[] = [];
+            for (const line of bodyLines) {
+              if (isClause(line)) {
+                groups.push({ clause: true, lines: [line] });
+              } else if (groups.length > 0 && groups[groups.length - 1].clause) {
+                groups[groups.length - 1].lines.push(line);
+              } else {
+                if (groups.length === 0 || groups[groups.length - 1].clause) {
+                  groups.push({ clause: false, lines: [] });
+                }
+                groups[groups.length - 1].lines.push(line);
+              }
+            }
+            return groups.map((g, gi) => {
+              const content = g.lines.map((line, li) => {
+                if (isBlank(line)) return <div key={li} style={{ height: "8px" }} />;
+                if (isClause(line)) return <p key={li} className="clause">{line}</p>;
+                if (isSubItem(line)) return <p key={li} className="subitem">{line}</p>;
+                return <p key={li}>{line}</p>;
+              });
+              if (g.clause) {
+                return (
+                  <div key={gi} style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
+                    {content}
+                  </div>
+                );
+              }
+              return <div key={gi}>{content}</div>;
+            });
+          })()}
         </div>
 
         {/* ── TABELA DE SERVIÇOS ── */}

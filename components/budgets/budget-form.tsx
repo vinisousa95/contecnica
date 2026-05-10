@@ -1287,17 +1287,37 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
             <span>Subtotal</span>
             <span className="font-medium">{formatCurrency(subtotalBeforeDiscount)}</span>
           </div>
-          <div className="flex items-center gap-3">
-            <label className="text-sm text-blue-700 font-medium whitespace-nowrap">Desconto (%)</label>
-            <input
-              type="number"
-              min={0}
-              max={100}
-              step={0.1}
-              {...register("discount", { valueAsNumber: true })}
-              className="w-24 h-8 px-2 rounded-md border border-blue-300 bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
-              placeholder="0"
-            />
+          <div className="flex items-center gap-3 flex-wrap">
+            <label className="text-sm text-blue-700 font-medium whitespace-nowrap">Desconto</label>
+            <div className="flex items-center gap-1">
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step={0.01}
+                {...register("discount", { valueAsNumber: true })}
+                className="w-20 h-8 px-2 rounded-md border border-blue-300 bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                placeholder="0"
+              />
+              <span className="text-sm text-blue-600 font-medium">%</span>
+            </div>
+            <span className="text-sm text-blue-500">ou</span>
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-blue-600 font-medium">R$</span>
+              <input
+                type="number"
+                min={0}
+                step={0.01}
+                value={discountAmount > 0 ? discountAmount.toFixed(2) : ""}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value) || 0;
+                  const pct = subtotalBeforeDiscount > 0 ? (val / subtotalBeforeDiscount) * 100 : 0;
+                  setValue("discount", Math.min(parseFloat(pct.toFixed(4)), 100), { shouldDirty: true });
+                }}
+                className="w-28 h-8 px-2 rounded-md border border-blue-300 bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                placeholder="0,00"
+              />
+            </div>
             {discountAmount > 0 && (
               <span className="text-sm text-green-700 font-medium ml-auto">
                 − {formatCurrency(discountAmount)}

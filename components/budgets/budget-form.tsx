@@ -561,6 +561,8 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
   const [editingRoom, setEditingRoom] = useState<string | null>(null);
   const [editedRoomName, setEditedRoomName] = useState("");
   const [focusExtraIdx, setFocusExtraIdx] = useState<number | null>(null);
+  const [discountValueStr, setDiscountValueStr] = useState("");
+  const discountValueFocused = useRef(false);
   const queryClient = useQueryClient();
 
   const { data: clients = [] } = useQuery({
@@ -1305,12 +1307,20 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
             <div className="flex items-center gap-1">
               <span className="text-sm text-blue-600 font-medium">R$</span>
               <input
-                type="number"
-                min={0}
-                step={0.01}
-                value={discountAmount > 0 ? discountAmount.toFixed(2) : ""}
+                type="text"
+                inputMode="decimal"
+                value={discountValueStr}
+                onFocus={() => { discountValueFocused.current = true; }}
+                onBlur={() => {
+                  discountValueFocused.current = false;
+                  // Sync display to actual calculated amount on blur
+                  const actual = subtotalBeforeDiscount * ((watchedDiscount ?? 0) / 100);
+                  setDiscountValueStr(actual > 0 ? actual.toFixed(2).replace(".", ",") : "");
+                }}
                 onChange={(e) => {
-                  const val = parseFloat(e.target.value) || 0;
+                  const raw = e.target.value.replace(",", ".");
+                  setDiscountValueStr(e.target.value);
+                  const val = parseFloat(raw) || 0;
                   const pct = subtotalBeforeDiscount > 0 ? (val / subtotalBeforeDiscount) * 100 : 0;
                   setValue("discount", Math.min(parseFloat(pct.toFixed(4)), 100), { shouldDirty: true });
                 }}

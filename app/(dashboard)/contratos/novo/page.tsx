@@ -102,7 +102,7 @@ export default function NovoContratoPage() {
     valor_total_extenso: "",
   });
   const [showPreview, setShowPreview] = useState(false);
-  const [discount, setDiscount] = useState(0); // percentage
+  const [discountAmountFixed, setDiscountAmountFixed] = useState<number | null>(null); // R$ absolute
 
   const clientList = Array.isArray(clients) ? clients : (clients as any)?.data ?? [];
 
@@ -171,8 +171,11 @@ export default function NovoContratoPage() {
 
     if (items.length > 0) {
       setServiceItems(items);
-      const budgetDiscount = Number(linkedBudget.discount ?? 0);
-      if (budgetDiscount > 0) setDiscount(budgetDiscount);
+      // Use totalAmount from budget directly to avoid precision loss from stored %
+      const budgetTotal = Number(linkedBudget.totalAmount ?? 0);
+      const budgetGross = items.reduce((s: number, i: any) => s + i.subtotal, 0);
+      const budgetDiscAmt = budgetGross - budgetTotal;
+      if (budgetDiscAmt > 0.005) setDiscountAmountFixed(Math.round(budgetDiscAmt * 100) / 100);
       toast({ title: `${items.length} item(s) importados do orçamento vinculado`, variant: "success" });
     }
   }, [linkedBudget]);
@@ -185,8 +188,12 @@ export default function NovoContratoPage() {
   }, [templateId, templates]);
 
   const grossTotal = serviceItems.reduce((s, i) => s + (i.subtotal || 0), 0);
-  const discountAmount = grossTotal * (discount / 100);
-  const totalAmount = grossTotal - discountAmount;
+  // Use fixed R$ amount when imported from budget (avoids % round-trip precision loss)
+  const discountAmount = discountAmountFixed !== null
+    ? discountAmountFixed
+    : 0;
+  const discount = grossTotal > 0 ? (discountAmount / grossTotal) * 100 : 0;
+  const totalAmount = Math.round((grossTotal - discountAmount) * 100) / 100;
 
   const buildVars = useCallback((): Record<string, string> => {
     const company = companySettings as any;
@@ -483,8 +490,11 @@ export default function NovoContratoPage() {
                             min={0}
                             max={100}
                             step="any"
-                            value={discount || ""}
-                            onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                            value={discount > 0 ? parseFloat(discount.toFixed(4)) : ""}
+                            onChange={(e) => {
+                              const pct = parseFloat(e.target.value) || 0;
+                              setDiscountAmountFixed(Math.round(grossTotal * (pct / 100) * 100) / 100);
+                            }}
                             className="w-20 h-7 px-2 rounded border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-[#EA580C]"
                             placeholder="0"
                           />

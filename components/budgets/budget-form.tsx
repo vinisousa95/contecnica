@@ -1297,7 +1297,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
                 type="number"
                 min={0}
                 max={100}
-                step={0.01}
+                step="any"
                 {...register("discount", { valueAsNumber: true })}
                 className="w-20 h-8 px-2 rounded-md border border-blue-300 bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
                 placeholder="0"

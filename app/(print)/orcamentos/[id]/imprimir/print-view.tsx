@@ -59,7 +59,7 @@ function fmtQty(value: number) {
 }
 
 // ── Component ─────────────────────────────────────────────────
-export function PrintView({ budget }: { budget: any }) {
+export function PrintView({ budget, company }: { budget: any; company?: any }) {
   useEffect(() => {
     // Small delay so styles render before print dialog opens
     const timer = setTimeout(() => window.print(), 600);
@@ -213,10 +213,10 @@ export function PrintView({ budget }: { budget: any }) {
             </div>
           </div>
           <div className="company-info">
-            <strong>Contécnica Reformas Ltda.</strong><br />
-            contecnica@email.com.br<br />
-            (11) 99999-0000<br />
-            CNPJ: 00.000.000/0001-00
+            <strong>{company?.name || "Contécnica"}</strong><br />
+            {company?.email && <>{company.email}<br /></>}
+            {company?.phone && <>{company.phone}<br /></>}
+            {company?.cnpj && <>CNPJ: {company.cnpj}</>}
           </div>
         </div>
 
@@ -452,7 +452,7 @@ export function PrintView({ budget }: { budget: any }) {
           <div className="sig-block">
             <div style={{ height: 48 }} />
             <div className="sig-line" />
-            <div className="sig-label">Contécnica Reformas Ltda.</div>
+            <div className="sig-label">{company?.name || "Contécnica"}</div>
             <div className="sig-sub">Responsável Técnico</div>
             <div className="sig-sub" style={{ marginTop: 4 }}>Data: ______ / ______ / ________</div>
           </div>
@@ -460,7 +460,7 @@ export function PrintView({ budget }: { budget: any }) {
 
         {/* ── Footer ── */}
         <div className="footer">
-          <span>Contécnica Reformas Ltda. — CNPJ 00.000.000/0001-00</span>
+          <span>{company?.name || "Contécnica"}{company?.cnpj ? ` — CNPJ ${company.cnpj}` : ""}</span>
           <span>Documento gerado em {fmtDate(new Date())} · {budget.code}</span>
         </div>
       </div>

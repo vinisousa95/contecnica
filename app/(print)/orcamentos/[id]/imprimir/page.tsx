@@ -33,6 +33,12 @@ export default async function ImprimirOrcamentoPage({ params }: { params: { id: 
 
   if (!budget) notFound();
 
+  const company = await prisma.companySettings.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: { id: "singleton", name: "" },
+  });
+
   // Serialize Decimal → number
   const data = {
     ...budget,
@@ -71,5 +77,5 @@ export default async function ImprimirOrcamentoPage({ params }: { params: { id: 
     })),
   };
 
-  return <PrintView budget={data as any} />;
+  return <PrintView budget={data as any} company={company} />;
 }

@@ -31,12 +31,35 @@ const schema = z.object({
   totalAmount: z.number().default(0),
 });
 
-async function generateNumber(): Promise<string> {
+async function generateNumber(projectId?: string | null): Promise<string> {
   const year = new Date().getFullYear();
+  // If project has a linked budget, derive number from budget code (e.g. ORC-2026-0002 → CON-2026-0002)
+  if (projectId) {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { linkedBudgetId: true },
+    });
+    if (project?.linkedBudgetId) {
+      const budget = await prisma.budget.findUnique({
+        where: { id: project.linkedBudgetId },
+        select: { code: true },
+      });
+      if (budget?.code) {
+        // Extract sequential part: "ORC-2026-0002" → "0002"
+        const seq = budget.code.split("-").pop() ?? "";
+        if (seq) {
+          const candidate = `CON-${year}-${seq}`;
+          // Avoid duplicate if contract already exists with this number
+          const exists = await prisma.contract.findUnique({ where: { number: candidate }, select: { id: true } });
+          if (!exists) return candidate;
+        }
+      }
+    }
+  }
   const count = await prisma.contract.count({
     where: { createdAt: { gte: new Date(`${year}-01-01`) } },
   });
-  return `${year}-${String(count + 1).padStart(4, "0")}`;
+  return `CON-${year}-${String(count + 1).padStart(4, "0")}`;
 }
 
 export async function GET(request: NextRequest) {
@@ -86,7 +109,7 @@ export async function POST(request: NextRequest) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) return apiError(parsed.error.errors[0].message);
 
-  const number = await generateNumber();
+  const number = await generateNumber(parsed.data.projectId);
 
   const contract = await prisma.contract.create({
     data: {

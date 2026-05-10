@@ -97,6 +97,12 @@ export default async function ImprimirContratoPage({ params }: { params: { id: s
             font-size: 11pt; letter-spacing: 0.04em;
             border-bottom: 1.5px solid #000;
             padding-bottom: 4px; margin-bottom: 10px; margin-top: 8px;
+            break-after: avoid;
+            page-break-after: avoid;
+          }
+          .section-block {
+            break-inside: avoid;
+            page-break-inside: avoid;
           }
           table { width: 100%; border-collapse: collapse; margin-bottom: 28px; font-size: 11pt; }
           thead tr th {
@@ -161,7 +167,7 @@ export default async function ImprimirContratoPage({ params }: { params: { id: s
 
         {/* ── TABELA DE SERVIÇOS ── */}
         {serviceItems.length > 0 && (
-          <>
+          <div className="section-block">
             <div className="section-heading">Relação de Serviços</div>
             <table>
               <thead>
@@ -193,12 +199,12 @@ export default async function ImprimirContratoPage({ params }: { params: { id: s
                 </tr>
               </tfoot>
             </table>
-          </>
+          </div>
         )}
 
         {/* ── TABELA DE PAGAMENTO ── */}
         {paymentSchedule.length > 0 && (
-          <>
+          <div className="section-block">
             <div className="section-heading">Condições de Pagamento</div>
             <table>
               <thead>
@@ -220,7 +226,7 @@ export default async function ImprimirContratoPage({ params }: { params: { id: s
                 ))}
               </tbody>
             </table>
-          </>
+          </div>
         )}
 
         {/* ── ASSINATURAS ── */}

@@ -26,6 +26,18 @@ export function ExtraItemAutocomplete({ value, onChange, onSelect, placeholder, 
   const [highlighted, setHighlighted] = useState(-1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Imperative focus — autoFocus HTML attr is unreliable on dynamic elements.
+  // Use two-pass: first tick lets RHF register all refs, second tick we steal focus back.
+  useEffect(() => {
+    if (!autoFocus) return;
+    const t1 = setTimeout(() => {
+      const t2 = setTimeout(() => inputRef.current?.focus(), 80);
+      return () => clearTimeout(t2);
+    }, 0);
+    return () => clearTimeout(t1);
+  }, [autoFocus]);
 
   const fetchSuggestions = useCallback(async (q: string) => {
     if (!q.trim()) { setSuggestions([]); setOpen(false); return; }
@@ -73,13 +85,13 @@ export function ExtraItemAutocomplete({ value, onChange, onSelect, placeholder, 
   return (
     <div ref={containerRef} className="relative w-full">
       <input
+        ref={inputRef}
         type="text"
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         onFocus={() => { if (suggestions.length > 0) setOpen(true); }}
         placeholder={placeholder}
-        autoFocus={autoFocus}
         autoComplete="off"
         className={
           className ??

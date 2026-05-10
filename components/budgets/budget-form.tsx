@@ -744,11 +744,12 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
 
   const applyExtraTemplate = (idx: number, t: { name: string; description?: string | null; unit: string; unitPrice: number }) => {
     const qty = watchedExtras[idx]?.quantity ?? 1;
-    setValue(`extraItems.${idx}.name`, t.name);
-    setValue(`extraItems.${idx}.description` as any, t.description ?? "");
-    setValue(`extraItems.${idx}.unit` as any, t.unit);
-    setValue(`extraItems.${idx}.unitPrice`, t.unitPrice);
-    setValue(`extraItems.${idx}.subtotal`, qty * t.unitPrice);
+    const opts = { shouldDirty: true };
+    setValue(`extraItems.${idx}.name`, t.name, opts);
+    setValue(`extraItems.${idx}.description` as any, t.description ?? "", opts);
+    setValue(`extraItems.${idx}.unit` as any, t.unit, opts);
+    setValue(`extraItems.${idx}.unitPrice`, t.unitPrice, opts);
+    setValue(`extraItems.${idx}.subtotal`, qty * t.unitPrice, opts);
   };
 
   const handleAddRoom = () => {
@@ -1103,7 +1104,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
                     <div className="flex items-center gap-2">
                       <div className="flex-1">
                         <ExtraItemAutocomplete
-                          value={watch(`extraItems.${idx}.name`) ?? ""}
+                          value={extra?.name ?? ""}
                           onChange={(v) => setValue(`extraItems.${idx}.name`, v)}
                           onSelect={(t) => applyExtraTemplate(idx, t)}
                           placeholder="Nome do item *"
@@ -1190,7 +1191,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
                       <div className="flex items-center gap-2">
                         <div className="flex-1">
                           <ExtraItemAutocomplete
-                            value={watch(`extraItems.${idx}.name`) ?? ""}
+                            value={extra?.name ?? ""}
                             onChange={(v) => setValue(`extraItems.${idx}.name`, v)}
                             onSelect={(t) => applyExtraTemplate(idx, t)}
                             placeholder="Nome do item *"

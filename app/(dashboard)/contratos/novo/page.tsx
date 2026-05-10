@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
+import { numberToWordsBRL } from "@/lib/masks";
 import { Plus, Trash2, ArrowLeft, Eye, X } from "lucide-react";
 
 const UNIT_OPTIONS = [
@@ -41,6 +42,7 @@ interface Installment {
   installment: number;
   dueDate: string;
   amount: number;
+  amountStr: string;
   description: string;
 }
 
@@ -88,7 +90,7 @@ export default function NovoContratoPage() {
     { name: "", quantity: 1, unit: "SERVICE", unitPrice: 0, subtotal: 0 },
   ]);
   const [installments, setInstallments] = useState<Installment[]>([
-    { installment: 1, dueDate: "", amount: 0, description: "Entrada" },
+    { installment: 1, dueDate: "", amount: 0, amountStr: "", description: "Entrada" },
   ]);
   const [vars, setVars] = useState<Record<string, string>>({
     cidade: "",
@@ -239,9 +241,16 @@ export default function NovoContratoPage() {
   function addInstallment() {
     setInstallments((prev) => [
       ...prev,
-      { installment: prev.length + 1, dueDate: "", amount: 0, description: "" },
+      { installment: prev.length + 1, dueDate: "", amount: 0, amountStr: "", description: "" },
     ]);
   }
+
+  // Auto-fill "valor por extenso" when totalAmount changes
+  useEffect(() => {
+    if (totalAmount > 0) {
+      setVars((v) => ({ ...v, valor_total_extenso: numberToWordsBRL(totalAmount) }));
+    }
+  }, [totalAmount]);
 
   function removeInstallment(idx: number) {
     setInstallments((prev) =>
@@ -469,15 +478,28 @@ export default function NovoContratoPage() {
                       value={inst.description}
                       onChange={(e) => updateInstallment(idx, "description", e.target.value)}
                     />
-                    <input
-                      type="number"
-                      className="w-32 border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#EA580C]"
-                      placeholder="Valor"
-                      value={inst.amount}
-                      min={0}
-                      step={0.01}
-                      onChange={(e) => updateInstallment(idx, "amount", Number(e.target.value))}
-                    />
+                    <div className="flex items-center border border-gray-200 rounded overflow-hidden w-36 focus-within:ring-1 focus-within:ring-[#EA580C]">
+                      <span className="text-xs text-gray-500 px-1.5 bg-gray-50 border-r border-gray-200 select-none">R$</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        className="flex-1 px-2 py-1.5 text-sm focus:outline-none"
+                        placeholder="0,00"
+                        value={inst.amountStr}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(",", ".");
+                          const num = parseFloat(raw) || 0;
+                          updateInstallment(idx, "amountStr" as any, e.target.value);
+                          updateInstallment(idx, "amount", num);
+                        }}
+                        onBlur={() => {
+                          const formatted = inst.amount > 0
+                            ? inst.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                            : "";
+                          updateInstallment(idx, "amountStr" as any, formatted);
+                        }}
+                      />
+                    </div>
                     <input
                       type="date"
                       className="w-36 border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#EA580C]"

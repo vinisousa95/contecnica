@@ -67,3 +67,51 @@ export function parseCurrencyInput(masked: string): string {
   if (!digits) return "";
   return (parseInt(digits, 10) / 100).toFixed(2);
 }
+
+// ── Number to words (Brazilian Portuguese) ────────────────────
+
+const UNITS = [
+  "", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove",
+  "dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove",
+];
+const TENS = ["", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
+const HUNDREDS = ["", "cem", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
+
+function chunkToWords(n: number): string {
+  if (n === 0) return "";
+  if (n === 100) return "cem";
+  const h = Math.floor(n / 100);
+  const rest = n % 100;
+  const parts: string[] = [];
+  if (h > 0) parts.push(h === 1 && rest > 0 ? "cento" : HUNDREDS[h]);
+  if (rest < 20 && rest > 0) parts.push(UNITS[rest]);
+  else if (rest >= 20) {
+    parts.push(TENS[Math.floor(rest / 10)]);
+    if (rest % 10 > 0) parts.push(UNITS[rest % 10]);
+  }
+  return parts.join(" e ");
+}
+
+function integerToWords(n: number): string {
+  if (n === 0) return "zero";
+  if (n === 1000) return "mil";
+  const parts: string[] = [];
+  const millions = Math.floor(n / 1_000_000);
+  const thousands = Math.floor((n % 1_000_000) / 1_000);
+  const remainder = n % 1_000;
+  if (millions > 0) parts.push(`${chunkToWords(millions)} ${millions === 1 ? "milhão" : "milhões"}`);
+  if (thousands > 0) parts.push(thousands === 1 ? "mil" : `${chunkToWords(thousands)} mil`);
+  if (remainder > 0) parts.push(chunkToWords(remainder));
+  return parts.join(" e ");
+}
+
+export function numberToWordsBRL(value: number): string {
+  if (value < 0) return "";
+  const intPart = Math.floor(value);
+  const decPart = Math.round((value - intPart) * 100);
+  const parts: string[] = [];
+  if (intPart > 0) parts.push(`${integerToWords(intPart)} ${intPart === 1 ? "real" : "reais"}`);
+  if (decPart > 0) parts.push(`${integerToWords(decPart)} ${decPart === 1 ? "centavo" : "centavos"}`);
+  if (parts.length === 0) return "zero reais";
+  return parts.join(" e ");
+}

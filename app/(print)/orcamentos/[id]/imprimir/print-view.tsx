@@ -106,8 +106,8 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
         .logo-icon { width: 48px; height: 48px; background: #EA580C; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; color: white; flex-shrink: 0; }
         .logo-text h1 { font-size: 20px; font-weight: 800; color: #111827; letter-spacing: -0.5px; }
         .logo-text p { font-size: 9px; color: #6b7280; margin-top: 2px; }
-        .company-info { text-align: right; color: #6b7280; font-size: 9.5px; line-height: 1.7; }
-        .company-info strong { color: #111827; font-size: 10.5px; font-weight: 700; display: block; margin-bottom: 2px; }
+        .company-info { text-align: right; color: #6b7280; font-size: 9.5px; line-height: 1.5; }
+        .company-info strong { color: #111827; font-size: 10.5px; font-weight: 700; display: block; margin-bottom: 0px; }
 
         /* Budget meta bar */
         .budget-meta { background: #1F2937; color: white; border-radius: 6px; padding: 11px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }

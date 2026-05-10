@@ -563,6 +563,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
   const [focusExtraIdx, setFocusExtraIdx] = useState<number | null>(null);
   const [discountValueStr, setDiscountValueStr] = useState("");
   const discountValueFocused = useRef(false);
+  const lastTypedDiscountValue = useRef(0);
   const queryClient = useQueryClient();
 
   const { data: clients = [] } = useQuery({
@@ -1313,16 +1314,18 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
                 onFocus={() => { discountValueFocused.current = true; }}
                 onBlur={() => {
                   discountValueFocused.current = false;
-                  // Sync display to actual calculated amount on blur
-                  const actual = subtotalBeforeDiscount * ((watchedDiscount ?? 0) / 100);
-                  setDiscountValueStr(actual > 0 ? actual.toFixed(2).replace(".", ",") : "");
+                  // Show the value the user typed (no recalculation to avoid float errors)
+                  const v = lastTypedDiscountValue.current;
+                  setDiscountValueStr(v > 0 ? v.toFixed(2).replace(".", ",") : "");
                 }}
                 onChange={(e) => {
                   const raw = e.target.value.replace(",", ".");
                   setDiscountValueStr(e.target.value);
                   const val = parseFloat(raw) || 0;
+                  lastTypedDiscountValue.current = val;
+                  // Store pct without rounding to avoid round-trip error
                   const pct = subtotalBeforeDiscount > 0 ? (val / subtotalBeforeDiscount) * 100 : 0;
-                  setValue("discount", Math.min(parseFloat(pct.toFixed(4)), 100), { shouldDirty: true });
+                  setValue("discount", Math.min(pct, 100), { shouldDirty: true });
                 }}
                 className="w-28 h-8 px-2 rounded-md border border-blue-300 bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
                 placeholder="0,00"

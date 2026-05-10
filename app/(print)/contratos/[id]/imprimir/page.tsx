@@ -86,6 +86,8 @@ export default async function ImprimirContratoPage({ params }: { params: { id: s
           .body-text .clause {
             font-weight: bold; text-transform: uppercase;
             margin-top: 20px; margin-bottom: 6px; font-size: 12pt;
+            break-after: avoid;
+            page-break-after: avoid;
           }
           .body-text .subitem { padding-left: 24px; margin-bottom: 4px; }
 

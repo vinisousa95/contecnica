@@ -61,7 +61,7 @@ export default async function PortalImprimirContrato({ params }: { params: { id:
     .divider { border: none; border-top: 2px solid #000; margin: 0 auto 28px; }
     .body-text { margin-bottom: 28px; }
     .body-text p { margin-bottom: 8px; text-align: justify; font-size: 12pt; }
-    .clause { font-weight: bold; text-transform: uppercase; margin-top: 20px; margin-bottom: 6px; }
+    .clause { font-weight: bold; text-transform: uppercase; margin-top: 20px; margin-bottom: 6px; break-after: avoid; page-break-after: avoid; }
     .subitem { padding-left: 24px; margin-bottom: 4px; }
     .section-heading { font-weight: bold; text-transform: uppercase; font-size: 11pt; letter-spacing: 0.04em; border-bottom: 1.5px solid #000; padding-bottom: 4px; margin-bottom: 10px; margin-top: 8px; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 28px; font-size: 11pt; }

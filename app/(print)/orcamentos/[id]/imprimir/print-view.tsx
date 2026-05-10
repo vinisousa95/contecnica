@@ -196,7 +196,7 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
             <img
               src="/logo.png"
               alt="Contécnica"
-              style={{ height: 110, width: "auto", objectFit: "contain" }}
+              style={{ height: 160, width: "auto", objectFit: "contain" }}
               onError={(e) => {
                 const t = e.currentTarget;
                 t.style.display = "none";

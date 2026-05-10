@@ -3,6 +3,40 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
+
+const MONTHS_PT = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+function formatDateLong(isoDate: string): string {
+  if (!isoDate) return "";
+  const [y, m, d] = isoDate.split("-");
+  return `${parseInt(d)} de ${MONTHS_PT[parseInt(m) - 1]} de ${y}`;
+}
+
+function DateVarInput({ label, varKey, vars, setVars }: { label: string; varKey: string; vars: Record<string, string>; setVars: React.Dispatch<React.SetStateAction<Record<string, string>>> }) {
+  const [dateVal, setDateVal] = useState("");
+  return (
+    <div className="space-y-1">
+      <label className="text-sm font-medium text-gray-700">{label}</label>
+      <div className="flex gap-2">
+        <input
+          type="date"
+          value={dateVal}
+          onChange={(e) => {
+            setDateVal(e.target.value);
+            setVars((v) => ({ ...v, [varKey]: formatDateLong(e.target.value) }));
+          }}
+          className="w-40 border border-gray-200 rounded px-2 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#EA580C]"
+        />
+        <input
+          type="text"
+          value={vars[varKey]}
+          onChange={(e) => setVars((v) => ({ ...v, [varKey]: e.target.value }))}
+          placeholder="ou digite manualmente"
+          className="flex-1 border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#EA580C]"
+        />
+      </div>
+    </div>
+  );
+}
 import { api } from "@/lib/api-client";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -601,18 +635,8 @@ export default function NovoContratoPage() {
                 onChange={(e) => setVars((v) => ({ ...v, cidade: e.target.value }))}
                 placeholder="ex: São Paulo"
               />
-              <Input
-                label="Data de assinatura"
-                value={vars.data_assinatura}
-                onChange={(e) => setVars((v) => ({ ...v, data_assinatura: e.target.value }))}
-                placeholder="ex: 26 de abril de 2026"
-              />
-              <Input
-                label="Data de início"
-                value={vars.data_inicio}
-                onChange={(e) => setVars((v) => ({ ...v, data_inicio: e.target.value }))}
-                placeholder="ex: 01 de maio de 2026"
-              />
+              <DateVarInput label="Data de assinatura" varKey="data_assinatura" vars={vars} setVars={setVars} />
+              <DateVarInput label="Data de início" varKey="data_inicio" vars={vars} setVars={setVars} />
               <Input
                 label="Prazo (dias)"
                 value={vars.prazo_dias}

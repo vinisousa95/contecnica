@@ -14,7 +14,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { LoadingPage } from "@/components/ui/loading";
 import { toast } from "@/hooks/use-toast";
 import { formatDate, formatCurrency } from "@/lib/utils";
-import { Plus, FileText, Eye, Printer, Trash2, Send, FileCheck } from "lucide-react";
+import { Plus, FileText, Eye, Printer, Trash2, Send, FileCheck, Pencil } from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: "Rascunho",
@@ -149,6 +149,11 @@ export default function ContratosPage() {
                         <Link href={`/contratos/${c.id}`}>
                           <Button variant="ghost" size="icon-sm" title="Ver detalhes">
                             <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                        </Link>
+                        <Link href={`/contratos/${c.id}/editar`}>
+                          <Button variant="ghost" size="icon-sm" title="Editar">
+                            <Pencil className="h-3.5 w-3.5" />
                           </Button>
                         </Link>
                         <a href={`/contratos/${c.id}/imprimir`} target="_blank" rel="noopener noreferrer">

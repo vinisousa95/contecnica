@@ -213,7 +213,7 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
             </div>
           </div>
           <div className="company-info">
-            <strong>{company?.name || "Contécnica"}</strong><br />
+            <strong>{company?.name || "Contécnica"}</strong>
             {company?.email && <>{company.email}<br /></>}
             {company?.phone && <>{company.phone}<br /></>}
             {company?.cnpj && <>CNPJ: {company.cnpj}</>}

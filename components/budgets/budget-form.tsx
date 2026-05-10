@@ -560,6 +560,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
   const [newRoomName, setNewRoomName] = useState("");
   const [editingRoom, setEditingRoom] = useState<string | null>(null);
   const [editedRoomName, setEditedRoomName] = useState("");
+  const [focusExtraIdx, setFocusExtraIdx] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
   const { data: clients = [] } = useQuery({
@@ -752,16 +753,21 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
     setValue(`extraItems.${idx}.subtotal`, qty * t.unitPrice, opts);
   };
 
+  const addExtra = (room: string) => {
+    appendExtra({ name: "", description: "", room, quantity: 1, unit: "UNIT", unitPrice: 0, subtotal: 0 } as any);
+    setFocusExtraIdx(extraFields.length);
+  };
+
   const handleAddRoom = () => {
     const name = newRoomName.trim();
     if (!name) return;
-    appendExtra({ name: "", description: "", room: name, quantity: 1, unit: "UNIT", unitPrice: 0, subtotal: 0 } as any);
+    addExtra(name);
     setNewRoomName("");
     setAddingRoom(false);
   };
 
   const handleAddItemToRoom = (roomName: string) => {
-    appendExtra({ name: "", description: "", room: roomName, quantity: 1, unit: "UNIT", unitPrice: 0, subtotal: 0 } as any);
+    addExtra(roomName);
   };
 
   const handleRenameRoom = (oldName: string, newName: string) => {
@@ -1087,7 +1093,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
                   <Plus className="h-4 w-4" /> Adicionar Ambiente
                 </Button>
                 <Button type="button" variant="outline" size="sm"
-                  onClick={() => appendExtra({ name: "", description: "", room: "", quantity: 1, unit: "UNIT", unitPrice: 0, subtotal: 0 } as any)}>
+                  onClick={() => addExtra("")}>
                   <Plus className="h-4 w-4" /> Item Avulso
                 </Button>
               </div>
@@ -1108,6 +1114,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
                           onChange={(v) => setValue(`extraItems.${idx}.name`, v)}
                           onSelect={(t) => applyExtraTemplate(idx, t)}
                           placeholder="Nome do item *"
+                          autoFocus={focusExtraIdx === idx}
                           error={(errors.extraItems?.[idx] as any)?.name?.message}
                         />
                       </div>
@@ -1195,6 +1202,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
                             onChange={(v) => setValue(`extraItems.${idx}.name`, v)}
                             onSelect={(t) => applyExtraTemplate(idx, t)}
                             placeholder="Nome do item *"
+                            autoFocus={focusExtraIdx === idx}
                             error={(errors.extraItems?.[idx] as any)?.name?.message}
                           />
                         </div>
@@ -1245,7 +1253,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
           {extraFields.length > 0 && (
             <div className="flex gap-2">
               <Button type="button" variant="outline" size="sm"
-                onClick={() => appendExtra({ name: "", description: "", room: "", quantity: 1, unit: "UNIT", unitPrice: 0, subtotal: 0 } as any)}>
+                onClick={() => addExtra("")}>
                 <Plus className="h-4 w-4" /> Item avulso
               </Button>
               <Button type="button" variant="outline" size="sm"

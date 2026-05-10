@@ -17,9 +17,10 @@ interface Props {
   placeholder?: string;
   error?: string;
   className?: string;
+  autoFocus?: boolean;
 }
 
-export function ExtraItemAutocomplete({ value, onChange, onSelect, placeholder, error, className }: Props) {
+export function ExtraItemAutocomplete({ value, onChange, onSelect, placeholder, error, className, autoFocus }: Props) {
   const [suggestions, setSuggestions] = useState<Template[]>([]);
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(-1);
@@ -78,6 +79,7 @@ export function ExtraItemAutocomplete({ value, onChange, onSelect, placeholder, 
         onKeyDown={handleKeyDown}
         onFocus={() => { if (suggestions.length > 0) setOpen(true); }}
         placeholder={placeholder}
+        autoFocus={autoFocus}
         autoComplete="off"
         className={
           className ??

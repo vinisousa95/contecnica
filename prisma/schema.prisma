@@ -507,6 +507,18 @@ model BudgetExtraItem {
   @@map("budget_extra_items")
 }
 
+model ExtraItemTemplate {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  unit        ItemUnit @default(UNIT)
+  unitPrice   Decimal  @db.Decimal(10, 2) @map("unit_price")
+  usageCount  Int      @default(1) @map("usage_count")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("extra_item_templates")
+}
+
 // ─────────────────────────────────────────────
 // OPERATIONAL — Employees, Vehicles, Assignments
 // ─────────────────────────────────────────────

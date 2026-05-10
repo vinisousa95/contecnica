@@ -95,10 +95,36 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       });
     });
 
+    // Save extra items to template library (fire-and-forget)
+    void saveExtraItemTemplates(extraItems);
+
     return apiSuccess(serializeBudget(budget));
   } catch (err: unknown) {
     if ((err as { code?: string }).code === "P2025") return apiError("Orçamento não encontrado", 404);
     return apiError("Erro ao atualizar orçamento", 500);
+  }
+}
+
+async function saveExtraItemTemplates(extraItems: { name: string; description?: string | null; unit: string; unitPrice: number }[]) {
+  for (const e of extraItems) {
+    if (!e.name?.trim()) continue;
+    try {
+      await prisma.extraItemTemplate.upsert({
+        where: { name: e.name.trim() },
+        update: {
+          description: e.description ?? undefined,
+          unit: e.unit as any,
+          unitPrice: e.unitPrice,
+          usageCount: { increment: 1 },
+        },
+        create: {
+          name: e.name.trim(),
+          description: e.description ?? null,
+          unit: e.unit as any,
+          unitPrice: e.unitPrice,
+        },
+      });
+    } catch { /* ignore individual failures */ }
   }
 }
 

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useCepLookup } from "@/hooks/use-cep-lookup";
 import { maskCep } from "@/lib/masks";
+import { ExtraItemAutocomplete } from "./extra-item-autocomplete";
 
 // ── Constants ─────────────────────────────────────────────────
 const TIER_LABELS: Record<string, string> = {
@@ -741,6 +742,15 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
     setValue(`extraItems.${idx}.subtotal`, qty * price);
   };
 
+  const applyExtraTemplate = (idx: number, t: { name: string; description?: string | null; unit: string; unitPrice: number }) => {
+    const qty = watchedExtras[idx]?.quantity ?? 1;
+    setValue(`extraItems.${idx}.name`, t.name);
+    setValue(`extraItems.${idx}.description` as any, t.description ?? "");
+    setValue(`extraItems.${idx}.unit` as any, t.unit);
+    setValue(`extraItems.${idx}.unitPrice`, t.unitPrice);
+    setValue(`extraItems.${idx}.subtotal`, qty * t.unitPrice);
+  };
+
   const handleAddRoom = () => {
     const name = newRoomName.trim();
     if (!name) return;
@@ -1092,8 +1102,13 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
                   <div key={extraFields[idx].id} className="border border-gray-200 rounded-lg p-3 space-y-3">
                     <div className="flex items-center gap-2">
                       <div className="flex-1">
-                        <Input {...register(`extraItems.${idx}.name`)} placeholder="Nome do item *"
-                          error={(errors.extraItems?.[idx] as any)?.name?.message} />
+                        <ExtraItemAutocomplete
+                          value={watch(`extraItems.${idx}.name`) ?? ""}
+                          onChange={(v) => setValue(`extraItems.${idx}.name`, v)}
+                          onSelect={(t) => applyExtraTemplate(idx, t)}
+                          placeholder="Nome do item *"
+                          error={(errors.extraItems?.[idx] as any)?.name?.message}
+                        />
                       </div>
                       <button type="button" onClick={() => removeExtra(idx)} className="text-red-400 hover:text-red-600 p-1">
                         <Trash2 className="h-4 w-4" />
@@ -1174,8 +1189,13 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
                     <div key={extraFields[idx].id} className="border border-gray-200 rounded-lg p-3 space-y-3">
                       <div className="flex items-center gap-2">
                         <div className="flex-1">
-                          <Input {...register(`extraItems.${idx}.name`)} placeholder="Nome do item *"
-                            error={(errors.extraItems?.[idx] as any)?.name?.message} />
+                          <ExtraItemAutocomplete
+                            value={watch(`extraItems.${idx}.name`) ?? ""}
+                            onChange={(v) => setValue(`extraItems.${idx}.name`, v)}
+                            onSelect={(t) => applyExtraTemplate(idx, t)}
+                            placeholder="Nome do item *"
+                            error={(errors.extraItems?.[idx] as any)?.name?.message}
+                          />
                         </div>
                         <button type="button" onClick={() => removeExtra(idx)} className="text-red-400 hover:text-red-600 p-1">
                           <Trash2 className="h-4 w-4" />

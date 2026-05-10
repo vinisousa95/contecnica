@@ -123,9 +123,35 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Save extra items to template library (fire-and-forget)
+    void saveExtraItemTemplates(extraItems);
+
     return apiSuccess(serializeBudget(budget));
   } catch (err) {
     console.error(err);
     return apiError("Erro ao criar orçamento", 500);
+  }
+}
+
+async function saveExtraItemTemplates(extraItems: { name: string; description?: string | null; unit: string; unitPrice: number }[]) {
+  for (const e of extraItems) {
+    if (!e.name?.trim()) continue;
+    try {
+      await prisma.extraItemTemplate.upsert({
+        where: { name: e.name.trim() },
+        update: {
+          description: e.description ?? undefined,
+          unit: e.unit as any,
+          unitPrice: e.unitPrice,
+          usageCount: { increment: 1 },
+        },
+        create: {
+          name: e.name.trim(),
+          description: e.description ?? null,
+          unit: e.unit as any,
+          unitPrice: e.unitPrice,
+        },
+      });
+    } catch { /* ignore individual failures */ }
   }
 }

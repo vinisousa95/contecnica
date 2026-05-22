@@ -15,7 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LoadingPage } from "@/components/ui/loading";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
-import { maskPhone, maskCpfCnpj, maskCep } from "@/lib/masks";
+import { maskPhone, maskCpfCnpj, maskCep, formatCurrencyInput, parseCurrencyInput } from "@/lib/masks";
 
 export default function EditarFuncionarioPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -38,6 +38,7 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
     status: "ACTIVE",
     notes: "",
   });
+  const [dailyRateStr, setDailyRateStr] = useState("");
   const [cepLoading, setCepLoading] = useState(false);
 
   const lookupCep = useCallback(async (cep: string) => {
@@ -89,6 +90,9 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
         status: employee.status,
         notes: employee.notes ?? "",
       });
+      if (employee.dailyRate) {
+        setDailyRateStr(formatCurrencyInput(String(Number(employee.dailyRate))));
+      }
       setInitialized(true);
     }
   }, [employee, initialized]);
@@ -116,6 +120,7 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
+    const dailyRateNum = parseCurrencyInput(dailyRateStr);
     mutation.mutate({
       ...form,
       cpf: form.cpf || null,
@@ -131,6 +136,7 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
       state: form.state || null,
       zipCode: form.zipCode || null,
       notes: form.notes || null,
+      dailyRate: dailyRateNum ? Number(dailyRateNum) : null,
     });
   }
 
@@ -214,6 +220,13 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
                   { value: "ACTIVE", label: "Ativo" },
                   { value: "INACTIVE", label: "Inativo" },
                 ]}
+              />
+              <Input
+                label="Valor da Diária (R$)"
+                placeholder="0,00"
+                inputMode="numeric"
+                value={dailyRateStr}
+                onChange={(e) => setDailyRateStr(formatCurrencyInput(e.target.value))}
               />
             </div>
 

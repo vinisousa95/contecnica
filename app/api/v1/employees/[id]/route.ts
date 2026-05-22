@@ -13,7 +13,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   });
 
   if (!employee) return apiError("Funcionário não encontrado", 404);
-  return apiSuccess(employee);
+  return apiSuccess({ ...employee, dailyRate: employee.dailyRate !== null ? Number(employee.dailyRate) : null });
 }
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
@@ -34,7 +34,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       data: { ...rest, birthDate: birthDate ? new Date(birthDate) : null },
     });
 
-    return apiSuccess(employee);
+    return apiSuccess({ ...employee, dailyRate: employee.dailyRate !== null ? Number(employee.dailyRate) : null });
   } catch (error: unknown) {
     if ((error as { code?: string }).code === "P2025") return apiError("Funcionário não encontrado", 404);
     return apiError("Erro ao atualizar funcionário", 500);

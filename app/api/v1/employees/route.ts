@@ -35,9 +35,10 @@ export async function GET(request: NextRequest) {
     prisma.employee.count({ where }),
   ]);
 
-  return apiSuccess(employees, {
-    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  });
+  return apiSuccess(
+    employees.map((e) => ({ ...e, dailyRate: e.dailyRate !== null ? Number(e.dailyRate) : null })),
+    { pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } }
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
       data: { ...rest, ...(birthDate ? { birthDate: new Date(birthDate) } : {}) },
     });
 
-    return apiSuccess(employee);
+    return apiSuccess({ ...employee, dailyRate: employee.dailyRate !== null ? Number(employee.dailyRate) : null });
   } catch (error) {
     console.error(error);
     return apiError("Erro ao criar funcionário", 500);

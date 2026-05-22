@@ -537,6 +537,7 @@ model Employee {
   city          String?
   state         String?
   zipCode       String?        @map("zip_code")
+  dailyRate     Decimal?       @db.Decimal(10, 2) @map("daily_rate")
   status        EmployeeStatus @default(ACTIVE)
   notes         String?
   createdAt     DateTime       @default(now()) @map("created_at")

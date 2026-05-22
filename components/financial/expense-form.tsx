@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Upload, FileText, X, ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { formatCurrencyInput } from "@/lib/masks";
 
 interface ExpenseFormProps {
   defaultValues?: Partial<ExpenseInput>;
@@ -54,9 +55,18 @@ export function ExpenseForm({
     queryKey: ["categories", "EXPENSE"],
     queryFn: () => api.categories.list({ type: "EXPENSE" }) as Promise<any>,
   });
+  const { data: employeesData } = useQuery({
+    queryKey: ["employees", "all"],
+    queryFn: () => api.employees.list({ limit: "200", status: "ACTIVE" }) as Promise<any>,
+  });
 
   const projects = Array.isArray(projectsData) ? projectsData : [];
   const categories = Array.isArray(categoriesData) ? categoriesData : [];
+  const employeesList: any[] = Array.isArray(employeesData)
+    ? employeesData
+    : Array.isArray(employeesData?.data)
+    ? employeesData.data
+    : [];
 
   const [attachmentUrl, setAttachmentUrl] = useState<string>(defaultValues?.attachmentUrl ?? "");
   const [uploading, setUploading] = useState(false);
@@ -143,6 +153,30 @@ export function ExpenseForm({
             error={errors.supplier?.message}
             {...register("supplier")}
           />
+
+          {employeesList.length > 0 && (
+            <Select
+              label="Funcionário (preenche valor da diária)"
+              options={[
+                { value: "", label: "Selecione um funcionário..." },
+                ...employeesList.map((e: any) => ({
+                  value: e.id,
+                  label: e.name + (e.dailyRate ? ` — R$ ${formatCurrencyInput(String(Number(e.dailyRate)))}` : ""),
+                })),
+              ]}
+              value=""
+              onChange={(ev) => {
+                const emp = employeesList.find((e: any) => e.id === ev.target.value);
+                if (!emp) return;
+                if (emp.dailyRate) {
+                  setValue("amount", formatCurrencyInput(String(Number(emp.dailyRate))), { shouldValidate: true });
+                }
+                if (!watch("description")) {
+                  setValue("description", `Diária — ${emp.name}`);
+                }
+              }}
+            />
+          )}
 
           <CurrencyInput
             label="Valor (R$)"

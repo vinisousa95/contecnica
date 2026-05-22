@@ -23,21 +23,21 @@ function addDays(d: Date, n: number): Date {
 }
 
 const CSS = `
-  @page { margin: 1.4cm 1.8cm; size: A4; }
+  @page { margin: 1cm 1.6cm; size: A4; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; background: #fff; line-height: 1.42; }
-  @media screen { body { max-width: 760px; margin: 24px auto; padding: 36px; } }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 10.5pt; color: #000; background: #fff; line-height: 1.35; }
+  @media screen { body { max-width: 720px; margin: 20px auto; padding: 32px; } }
   @media print { body { margin: 0; } }
-  h1 { font-size: 12pt; font-weight: bold; text-transform: uppercase; text-align: center; letter-spacing: 0.04em; margin-bottom: 16px; }
-  hr { border: none; border-top: 2px solid #000; margin: 0 auto 16px; }
-  p { text-align: justify; text-indent: 1.5cm; margin-bottom: 7px; font-size: 11pt; }
-  p.obs { text-align: justify; text-indent: 0; margin-bottom: 7px; }
+  h1 { font-size: 11.5pt; font-weight: bold; text-transform: uppercase; text-align: center; letter-spacing: 0.03em; margin-bottom: 12px; }
+  hr { border: none; border-top: 2px solid #000; margin: 0 auto 12px; }
+  p { text-align: justify; text-indent: 1.2cm; margin-bottom: 5px; font-size: 10.5pt; }
+  p.obs { text-align: justify; text-indent: 0; margin-bottom: 5px; }
   .sig-section { page-break-inside: avoid; break-inside: avoid; }
-  .sig-date { text-align: right; margin: 20px 0 0; font-size: 11pt; text-indent: 0; }
-  .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 38px; }
+  .sig-date { text-align: right; margin: 16px 0 0; font-size: 10.5pt; text-indent: 0; }
+  .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 28px; }
   .sig-block { text-align: center; }
-  .sig-line { border-top: 1px solid #000; padding-top: 6px; font-size: 10.5pt; }
-  .sig-label { font-size: 9.5pt; color: #444; margin-top: 2px; }
+  .sig-line { border-top: 1px solid #000; padding-top: 5px; font-size: 10pt; }
+  .sig-label { font-size: 9pt; color: #444; margin-top: 1px; }
 `;
 
 export default async function ContratoFuncionarioPage({ params }: { params: { id: string } }) {

@@ -14,15 +14,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoadingPage } from "@/components/ui/loading";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Droplets } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
-type FormState = VehicleInput & {
-  currentKm: number | null;
-  lastOilChangeDate: string;
-  lastOilChangeKm: number | null;
-  oilChangeIntervalKm: number | null;
-  oilChangeIntervalDays: number | null;
-};
+type FormState = VehicleInput;
 
 export default function EditarVeiculoPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -37,11 +31,6 @@ export default function EditarVeiculoPage({ params }: { params: { id: string } }
     year: undefined,
     status: "ACTIVE",
     notes: "",
-    currentKm: null,
-    lastOilChangeDate: "",
-    lastOilChangeKm: null,
-    oilChangeIntervalKm: null,
-    oilChangeIntervalDays: null,
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
@@ -63,13 +52,6 @@ export default function EditarVeiculoPage({ params }: { params: { id: string } }
         year: vehicle.year ?? undefined,
         status: vehicle.status,
         notes: vehicle.notes ?? "",
-        currentKm: vehicle.currentKm ?? null,
-        lastOilChangeDate: vehicle.lastOilChangeDate
-          ? String(vehicle.lastOilChangeDate).slice(0, 10)
-          : "",
-        lastOilChangeKm: vehicle.lastOilChangeKm ?? null,
-        oilChangeIntervalKm: vehicle.oilChangeIntervalKm ?? null,
-        oilChangeIntervalDays: vehicle.oilChangeIntervalDays ?? null,
       });
       setInitialized(true);
     }
@@ -105,7 +87,6 @@ export default function EditarVeiculoPage({ params }: { params: { id: string } }
       type: form.type || null,
       color: form.color || null,
       notes: form.notes || null,
-      lastOilChangeDate: form.lastOilChangeDate || null,
     });
   }
 
@@ -202,64 +183,6 @@ export default function EditarVeiculoPage({ params }: { params: { id: string } }
               onChange={(e) => handleChange("notes", e.target.value)}
               rows={3}
             />
-          </CardContent>
-        </Card>
-
-        {/* Oil Change Section */}
-        <Card>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
-              <Droplets className="h-4 w-4 text-amber-500" />
-              <h3 className="text-sm font-semibold text-gray-700">Manutenção — Troca de Óleo</h3>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input
-                label="KM Atual"
-                type="number"
-                placeholder="Ex: 85000"
-                min={0}
-                value={form.currentKm ?? ""}
-                onChange={(e) => handleChange("currentKm", e.target.value ? parseInt(e.target.value) : null)}
-              />
-              <Input
-                label="Data da Última Troca"
-                type="date"
-                value={form.lastOilChangeDate}
-                onChange={(e) => handleChange("lastOilChangeDate", e.target.value)}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Input
-                label="KM da Última Troca"
-                type="number"
-                placeholder="Ex: 80000"
-                min={0}
-                value={form.lastOilChangeKm ?? ""}
-                onChange={(e) => handleChange("lastOilChangeKm", e.target.value ? parseInt(e.target.value) : null)}
-              />
-              <Input
-                label="Intervalo (KM)"
-                type="number"
-                placeholder="Ex: 5000"
-                min={0}
-                value={form.oilChangeIntervalKm ?? ""}
-                onChange={(e) => handleChange("oilChangeIntervalKm", e.target.value ? parseInt(e.target.value) : null)}
-              />
-              <Input
-                label="Intervalo (Dias)"
-                type="number"
-                placeholder="Ex: 180"
-                min={0}
-                value={form.oilChangeIntervalDays ?? ""}
-                onChange={(e) => handleChange("oilChangeIntervalDays", e.target.value ? parseInt(e.target.value) : null)}
-              />
-            </div>
-
-            <p className="text-xs text-gray-400">
-              Preencha o intervalo em KM e/ou dias para receber alertas de próxima troca de óleo.
-            </p>
           </CardContent>
         </Card>
 

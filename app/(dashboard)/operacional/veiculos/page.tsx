@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EmptyState, LoadingPage } from "@/components/ui/loading";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Search, Truck, Pencil, Trash2, History, Droplets, AlertTriangle } from "lucide-react";
+import { Plus, Search, Truck, Pencil, Trash2, History, Wrench, Droplets, AlertTriangle } from "lucide-react";
 
 const VEHICLE_STATUS_LABELS: Record<string, string> = {
   ACTIVE: "Ativo",
@@ -238,9 +238,14 @@ export default function VeiculosPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon-sm" asChild title="Histórico">
+                        <Button variant="ghost" size="icon-sm" asChild title="Histórico de uso">
                           <Link href={`/operacional/veiculos/${v.id}`}>
                             <History className="h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
+                        <Button variant="ghost" size="icon-sm" asChild title="Manutenção">
+                          <Link href={`/operacional/veiculos/${v.id}/manutencao`}>
+                            <Wrench className="h-3.5 w-3.5 text-amber-500" />
                           </Link>
                         </Button>
                         <Button variant="ghost" size="icon-sm" asChild title="Editar">

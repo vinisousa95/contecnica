@@ -628,8 +628,25 @@ model Vehicle {
   updatedAt             DateTime      @updatedAt @map("updated_at")
   assignments           WorkAssignment[]
   fines                 VehicleFine[]
+  maintenances          VehicleMaintenance[]
 
   @@map("vehicles")
+}
+
+model VehicleMaintenance {
+  id          String   @id @default(cuid())
+  vehicleId   String   @map("vehicle_id")
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  date        DateTime
+  type        String
+  description String?
+  km          Int?
+  cost        Decimal? @db.Decimal(10, 2)
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("vehicle_maintenances")
 }
 
 enum VehicleStatus {

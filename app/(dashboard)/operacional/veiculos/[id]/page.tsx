@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingPage } from "@/components/ui/loading";
-import { ArrowLeft, Pencil, Truck, MapPin } from "lucide-react";
+import { ArrowLeft, Pencil, Wrench, Truck, MapPin } from "lucide-react";
 
 const VEHICLE_STATUS_LABELS: Record<string, string> = {
   ACTIVE: "Ativo",
@@ -68,6 +68,12 @@ export default function VeiculoDetailPage({ params }: { params: { id: string } }
               <Link href="/operacional/veiculos">
                 <ArrowLeft className="h-4 w-4" />
                 Voltar
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/operacional/veiculos/${params.id}/manutencao`}>
+                <Wrench className="h-4 w-4" />
+                Manutenção
               </Link>
             </Button>
             <Button size="sm" asChild>

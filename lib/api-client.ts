@@ -234,6 +234,14 @@ export const api = {
       request(`/vehicles/${id}`, { method: "PUT", body: JSON.stringify(data) }),
     delete: (id: string) =>
       request(`/vehicles/${id}`, { method: "DELETE" }),
+    listMaintenance: (vehicleId: string) =>
+      request(`/vehicles/${vehicleId}/maintenance`),
+    createMaintenance: (vehicleId: string, data: unknown) =>
+      request(`/vehicles/${vehicleId}/maintenance`, { method: "POST", body: JSON.stringify(data) }),
+    updateMaintenance: (vehicleId: string, id: string, data: unknown) =>
+      request(`/vehicles/${vehicleId}/maintenance/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    deleteMaintenance: (vehicleId: string, id: string) =>
+      request(`/vehicles/${vehicleId}/maintenance/${id}`, { method: "DELETE" }),
   },
 
   // Assignments (deslocamentos)

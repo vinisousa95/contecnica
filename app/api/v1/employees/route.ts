@@ -36,7 +36,11 @@ export async function GET(request: NextRequest) {
   ]);
 
   return apiSuccess(
-    employees.map((e) => ({ ...e, dailyRate: e.dailyRate !== null ? Number(e.dailyRate) : null })),
+    employees.map((e) => ({
+      ...e,
+      dailyRate: e.dailyRate !== null ? Number(e.dailyRate) : null,
+      monthlyRate: e.monthlyRate !== null ? Number(e.monthlyRate) : null,
+    })),
     { pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } }
   );
 }
@@ -53,12 +57,21 @@ export async function POST(request: NextRequest) {
       return apiError(parsed.error.errors[0].message);
     }
 
-    const { birthDate, ...rest } = parsed.data;
+    const { birthDate, contractStartDate, contractEndDate, ...rest } = parsed.data;
     const employee = await prisma.employee.create({
-      data: { ...rest, ...(birthDate ? { birthDate: new Date(birthDate) } : {}) },
+      data: {
+        ...rest,
+        ...(birthDate ? { birthDate: new Date(birthDate) } : {}),
+        ...(contractStartDate ? { contractStartDate: new Date(contractStartDate + "T12:00:00.000Z") } : {}),
+        ...(contractEndDate ? { contractEndDate: new Date(contractEndDate + "T12:00:00.000Z") } : {}),
+      },
     });
 
-    return apiSuccess({ ...employee, dailyRate: employee.dailyRate !== null ? Number(employee.dailyRate) : null });
+    return apiSuccess({
+      ...employee,
+      dailyRate: employee.dailyRate !== null ? Number(employee.dailyRate) : null,
+      monthlyRate: employee.monthlyRate !== null ? Number(employee.monthlyRate) : null,
+    });
   } catch (error) {
     console.error(error);
     return apiError("Erro ao criar funcionário", 500);

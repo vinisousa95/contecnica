@@ -13,7 +13,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
 import { maskPhone, maskCpfCnpj, maskCep } from "@/lib/masks";
 import { CurrencyInput } from "@/components/ui/currency-input";
 
@@ -37,8 +37,10 @@ export default function NovoFuncionarioPage() {
     zipCode: "",
     status: "ACTIVE",
     notes: "",
+    contractCity: "",
   });
   const [dailyRateStr, setDailyRateStr] = useState("");
+  const [monthlyRateStr, setMonthlyRateStr] = useState("");
   const [cepLoading, setCepLoading] = useState(false);
 
   const lookupCep = useCallback(async (cep: string) => {
@@ -67,9 +69,10 @@ export default function NovoFuncionarioPage() {
 
   const mutation = useMutation({
     mutationFn: (data: EmployeeInput) => api.employees.create(data),
-    onSuccess: () => {
+    onSuccess: (employee: any) => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
-      toast({ title: "Funcionário cadastrado com sucesso!", variant: "success" });
+      toast({ title: "Funcionário cadastrado! Gerando contrato...", variant: "success" });
+      window.open(`/funcionarios/${employee.id}/contrato`, "_blank");
       router.push("/operacional/funcionarios");
     },
     onError: (err: Error) => {
@@ -102,7 +105,9 @@ export default function NovoFuncionarioPage() {
       state: form.state || null,
       zipCode: form.zipCode || null,
       notes: form.notes || null,
+      contractCity: form.contractCity || null,
       dailyRate: dailyRateStr ? Number(dailyRateStr) : null,
+      monthlyRate: monthlyRateStr ? Number(monthlyRateStr) : null,
     });
   }
 
@@ -126,7 +131,7 @@ export default function NovoFuncionarioPage() {
         }
       />
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="space-y-5">
         <Card>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -257,17 +262,56 @@ export default function NovoFuncionarioPage() {
               onChange={(e) => handleChange("notes", e.target.value)}
               rows={3}
             />
+          </CardContent>
+        </Card>
 
-            <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline" type="button" asChild>
-                <Link href="/operacional/funcionarios">Cancelar</Link>
-              </Button>
-              <Button type="submit" loading={mutation.isPending}>
-                Cadastrar Funcionário
-              </Button>
+        {/* Dados do Contrato */}
+        <Card>
+          <CardContent className="space-y-4 pt-5">
+            <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
+              <FileText className="h-4 w-4 text-[#EA580C]" />
+              <h3 className="text-sm font-semibold text-gray-700">Dados do Contrato de Trabalho</h3>
+            </div>
+            <p className="text-xs text-gray-400 -mt-2">
+              O contrato será gerado automaticamente após o cadastro.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <CurrencyInput
+                label="Salário Mensal (R$)"
+                placeholder="0,00"
+                value={monthlyRateStr}
+                onChange={(v) => setMonthlyRateStr(v)}
+              />
+              <Input
+                label="Cidade (assinatura)"
+                placeholder="Ex: São Paulo"
+                value={form.contractCity ?? ""}
+                onChange={(e) => handleChange("contractCity", e.target.value)}
+              />
+              <Input
+                label="Data de Início do Contrato"
+                type="date"
+                value={form.contractStartDate ?? ""}
+                onChange={(e) => handleChange("contractStartDate", e.target.value)}
+              />
+              <Input
+                label="Data de Término do Contrato"
+                type="date"
+                value={form.contractEndDate ?? ""}
+                onChange={(e) => handleChange("contractEndDate", e.target.value)}
+              />
             </div>
           </CardContent>
         </Card>
+
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" type="button" asChild>
+            <Link href="/operacional/funcionarios">Cancelar</Link>
+          </Button>
+          <Button type="submit" loading={mutation.isPending}>
+            Cadastrar e Gerar Contrato
+          </Button>
+        </div>
       </form>
     </div>
   );

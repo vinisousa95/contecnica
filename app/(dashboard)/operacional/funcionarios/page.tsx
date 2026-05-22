@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EmptyState, LoadingPage } from "@/components/ui/loading";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Search, Users, Pencil, Trash2, History } from "lucide-react";
+import { Plus, Search, Users, Pencil, Trash2, History, FileText } from "lucide-react";
 
 const EMPLOYEE_STATUS_LABELS: Record<string, string> = {
   ACTIVE: "Ativo",
@@ -147,6 +147,11 @@ export default function FuncionariosPage() {
                           <Link href={`/operacional/funcionarios/${emp.id}`}>
                             <History className="h-3.5 w-3.5" />
                           </Link>
+                        </Button>
+                        <Button variant="ghost" size="icon-sm" title="Contrato de Trabalho" asChild>
+                          <a href={`/funcionarios/${emp.id}/contrato`} target="_blank" rel="noopener noreferrer">
+                            <FileText className="h-3.5 w-3.5 text-[#EA580C]" />
+                          </a>
                         </Button>
                         <Button variant="ghost" size="icon-sm" asChild title="Editar">
                           <Link href={`/operacional/funcionarios/${emp.id}/editar`}>

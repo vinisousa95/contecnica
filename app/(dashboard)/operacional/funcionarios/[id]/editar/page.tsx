@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoadingPage } from "@/components/ui/loading";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
 import { maskPhone, maskCpfCnpj, maskCep } from "@/lib/masks";
 import { CurrencyInput } from "@/components/ui/currency-input";
 
@@ -38,8 +38,10 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
     zipCode: "",
     status: "ACTIVE",
     notes: "",
+    contractCity: "",
   });
   const [dailyRateStr, setDailyRateStr] = useState("");
+  const [monthlyRateStr, setMonthlyRateStr] = useState("");
   const [cepLoading, setCepLoading] = useState(false);
 
   const lookupCep = useCallback(async (cep: string) => {
@@ -90,10 +92,12 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
         zipCode: employee.zipCode ?? "",
         status: employee.status,
         notes: employee.notes ?? "",
+        contractCity: employee.contractCity ?? "",
+        contractStartDate: employee.contractStartDate ? String(employee.contractStartDate).slice(0, 10) : "",
+        contractEndDate: employee.contractEndDate ? String(employee.contractEndDate).slice(0, 10) : "",
       });
-      if (employee.dailyRate) {
-        setDailyRateStr(Number(employee.dailyRate).toFixed(2));
-      }
+      if (employee.dailyRate) setDailyRateStr(Number(employee.dailyRate).toFixed(2));
+      if (employee.monthlyRate) setMonthlyRateStr(Number(employee.monthlyRate).toFixed(2));
       setInitialized(true);
     }
   }, [employee, initialized]);
@@ -136,7 +140,11 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
       state: form.state || null,
       zipCode: form.zipCode || null,
       notes: form.notes || null,
+      contractCity: form.contractCity || null,
+      contractStartDate: form.contractStartDate || null,
+      contractEndDate: form.contractEndDate || null,
       dailyRate: dailyRateStr ? Number(dailyRateStr) : null,
+      monthlyRate: monthlyRateStr ? Number(monthlyRateStr) : null,
     });
   }
 
@@ -302,6 +310,52 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
               <Button type="submit" loading={mutation.isPending}>
                 Salvar Alterações
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Dados do Contrato */}
+        <Card>
+          <CardContent className="space-y-4 pt-5">
+            <div className="flex items-center justify-between pb-1 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-[#EA580C]" />
+                <h3 className="text-sm font-semibold text-gray-700">Dados do Contrato de Trabalho</h3>
+              </div>
+              <a
+                href={`/funcionarios/${params.id}/contrato`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-[#EA580C] hover:underline"
+              >
+                Imprimir contrato →
+              </a>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <CurrencyInput
+                label="Salário Mensal (R$)"
+                placeholder="0,00"
+                value={monthlyRateStr}
+                onChange={(v) => setMonthlyRateStr(v)}
+              />
+              <Input
+                label="Cidade (assinatura)"
+                placeholder="Ex: São Paulo"
+                value={form.contractCity ?? ""}
+                onChange={(e) => handleChange("contractCity", e.target.value)}
+              />
+              <Input
+                label="Data de Início do Contrato"
+                type="date"
+                value={form.contractStartDate ?? ""}
+                onChange={(e) => handleChange("contractStartDate", e.target.value)}
+              />
+              <Input
+                label="Data de Término do Contrato"
+                type="date"
+                value={form.contractEndDate ?? ""}
+                onChange={(e) => handleChange("contractEndDate", e.target.value)}
+              />
             </div>
           </CardContent>
         </Card>

@@ -215,6 +215,10 @@ export const employeeSchema = z.object({
   state: z.string().optional().nullable(),
   zipCode: z.string().optional().nullable(),
   dailyRate: z.number().optional().nullable(),
+  monthlyRate: z.number().optional().nullable(),
+  contractStartDate: z.string().optional().nullable(),
+  contractEndDate: z.string().optional().nullable(),
+  contractCity: z.string().optional().nullable(),
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
   notes: z.string().optional().nullable(),
 });

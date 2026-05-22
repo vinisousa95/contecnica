@@ -14,7 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
-import { maskPhone, maskCpfCnpj, maskCep, formatCurrencyInput, parseCurrencyInput } from "@/lib/masks";
+import { maskPhone, maskCpfCnpj, maskCep } from "@/lib/masks";
+import { CurrencyInput } from "@/components/ui/currency-input";
 
 export default function NovoFuncionarioPage() {
   const router = useRouter();
@@ -86,7 +87,6 @@ export default function NovoFuncionarioPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    const dailyRateNum = parseCurrencyInput(dailyRateStr);
     mutation.mutate({
       ...form,
       cpf: form.cpf || null,
@@ -102,7 +102,7 @@ export default function NovoFuncionarioPage() {
       state: form.state || null,
       zipCode: form.zipCode || null,
       notes: form.notes || null,
-      dailyRate: dailyRateNum ? Number(dailyRateNum) : null,
+      dailyRate: dailyRateStr ? Number(dailyRateStr) : null,
     });
   }
 
@@ -184,12 +184,11 @@ export default function NovoFuncionarioPage() {
                   { value: "INACTIVE", label: "Inativo" },
                 ]}
               />
-              <Input
+              <CurrencyInput
                 label="Valor da Diária (R$)"
                 placeholder="0,00"
-                inputMode="numeric"
                 value={dailyRateStr}
-                onChange={(e) => setDailyRateStr(formatCurrencyInput(e.target.value))}
+                onChange={(v) => setDailyRateStr(v)}
               />
             </div>
 

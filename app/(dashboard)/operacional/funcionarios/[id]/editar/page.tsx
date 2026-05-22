@@ -15,7 +15,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LoadingPage } from "@/components/ui/loading";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
-import { maskPhone, maskCpfCnpj, maskCep, formatCurrencyInput, parseCurrencyInput } from "@/lib/masks";
+import { maskPhone, maskCpfCnpj, maskCep } from "@/lib/masks";
+import { CurrencyInput } from "@/components/ui/currency-input";
 
 export default function EditarFuncionarioPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -91,7 +92,7 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
         notes: employee.notes ?? "",
       });
       if (employee.dailyRate) {
-        setDailyRateStr(formatCurrencyInput(String(Number(employee.dailyRate))));
+        setDailyRateStr(Number(employee.dailyRate).toFixed(2));
       }
       setInitialized(true);
     }
@@ -120,7 +121,6 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    const dailyRateNum = parseCurrencyInput(dailyRateStr);
     mutation.mutate({
       ...form,
       cpf: form.cpf || null,
@@ -136,7 +136,7 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
       state: form.state || null,
       zipCode: form.zipCode || null,
       notes: form.notes || null,
-      dailyRate: dailyRateNum ? Number(dailyRateNum) : null,
+      dailyRate: dailyRateStr ? Number(dailyRateStr) : null,
     });
   }
 
@@ -221,12 +221,11 @@ export default function EditarFuncionarioPage({ params }: { params: { id: string
                   { value: "INACTIVE", label: "Inativo" },
                 ]}
               />
-              <Input
+              <CurrencyInput
                 label="Valor da Diária (R$)"
                 placeholder="0,00"
-                inputMode="numeric"
                 value={dailyRateStr}
-                onChange={(e) => setDailyRateStr(formatCurrencyInput(e.target.value))}
+                onChange={(v) => setDailyRateStr(v)}
               />
             </div>
 

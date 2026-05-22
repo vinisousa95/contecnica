@@ -23,20 +23,21 @@ function addDays(d: Date, n: number): Date {
 }
 
 const CSS = `
-  @page { margin: 2.5cm 2cm; size: A4; }
+  @page { margin: 1.4cm 1.8cm; size: A4; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; line-height: 1.6; }
-  @media screen { body { max-width: 800px; margin: 30px auto; padding: 40px; } }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; background: #fff; line-height: 1.42; }
+  @media screen { body { max-width: 760px; margin: 24px auto; padding: 36px; } }
   @media print { body { margin: 0; } }
-  h1 { font-size: 13pt; font-weight: bold; text-transform: uppercase; text-align: center; letter-spacing: 0.06em; margin-bottom: 32px; }
-  hr { border: none; border-top: 2px solid #000; margin: 0 auto 28px; }
-  p { text-align: justify; text-indent: 2cm; margin-bottom: 12px; font-size: 12pt; }
-  p.obs { text-align: justify; text-indent: 0; margin-bottom: 12px; }
-  .sig-date { text-align: right; margin: 40px 0; font-size: 12pt; text-indent: 0; }
-  .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-top: 60px; }
+  h1 { font-size: 12pt; font-weight: bold; text-transform: uppercase; text-align: center; letter-spacing: 0.04em; margin-bottom: 16px; }
+  hr { border: none; border-top: 2px solid #000; margin: 0 auto 16px; }
+  p { text-align: justify; text-indent: 1.5cm; margin-bottom: 7px; font-size: 11pt; }
+  p.obs { text-align: justify; text-indent: 0; margin-bottom: 7px; }
+  .sig-section { page-break-inside: avoid; break-inside: avoid; }
+  .sig-date { text-align: right; margin: 20px 0 0; font-size: 11pt; text-indent: 0; }
+  .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 38px; }
   .sig-block { text-align: center; }
-  .sig-line { border-top: 1px solid #000; padding-top: 8px; font-size: 11pt; }
-  .sig-label { font-size: 10pt; color: #444; margin-top: 2px; }
+  .sig-line { border-top: 1px solid #000; padding-top: 6px; font-size: 10.5pt; }
+  .sig-label { font-size: 9.5pt; color: #444; margin-top: 2px; }
 `;
 
 export default async function ContratoFuncionarioPage({ params }: { params: { id: string } }) {
@@ -131,6 +132,7 @@ export default async function ContratoFuncionarioPage({ params }: { params: { id
           E por estarem de pleno acordo, assinam as partes este contrato, em duas vias de igual teor.
         </p>
 
+        <div className="sig-section">
         <p className="sig-date">{contractCity}, {fmtDateLong(startDate)}.</p>
 
         <div className="sig-grid">
@@ -148,6 +150,7 @@ export default async function ContratoFuncionarioPage({ params }: { params: { id
               <p className="sig-label" style={{ textIndent: 0, textAlign: "center" }}>Empregado</p>
             </div>
           </div>
+        </div>
         </div>
 
         <script dangerouslySetInnerHTML={{ __html: "window.onload=function(){window.print()}" }} />

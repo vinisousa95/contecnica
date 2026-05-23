@@ -361,6 +361,57 @@ export const api = {
       return request(`/personal-expenses/summary${qs}`);
     },
   },
+  // Obras Parcerias
+  partnershipBuyers: {
+    list: (params?: Record<string, string>) => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return request(`/partnership-buyers${qs}`);
+    },
+    get: (id: string) => request(`/partnership-buyers/${id}`),
+    create: (data: unknown) =>
+      request("/partnership-buyers", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: unknown) =>
+      request(`/partnership-buyers/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request(`/partnership-buyers/${id}`, { method: "DELETE" }),
+  },
+  partnershipProjects: {
+    list: (params?: Record<string, string>) => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return requestPaginated(`/partnership-projects${qs}`);
+    },
+    get: (id: string) => request(`/partnership-projects/${id}`),
+    create: (data: unknown) =>
+      request("/partnership-projects", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: unknown) =>
+      request(`/partnership-projects/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request(`/partnership-projects/${id}`, { method: "DELETE" }),
+    // Materials
+    listMaterials: (id: string) => request(`/partnership-projects/${id}/materials`),
+    createMaterial: (id: string, data: unknown) =>
+      request(`/partnership-projects/${id}/materials`, { method: "POST", body: JSON.stringify(data) }),
+    updateMaterial: (id: string, materialId: string, data: unknown) =>
+      request(`/partnership-projects/${id}/materials/${materialId}`, { method: "PUT", body: JSON.stringify(data) }),
+    deleteMaterial: (id: string, materialId: string) =>
+      request(`/partnership-projects/${id}/materials/${materialId}`, { method: "DELETE" }),
+    // Expenses
+    listExpenses: (id: string) => request(`/partnership-projects/${id}/expenses`),
+    createExpense: (id: string, data: unknown) =>
+      request(`/partnership-projects/${id}/expenses`, { method: "POST", body: JSON.stringify(data) }),
+    updateExpense: (id: string, expenseId: string, data: unknown) =>
+      request(`/partnership-projects/${id}/expenses/${expenseId}`, { method: "PUT", body: JSON.stringify(data) }),
+    deleteExpense: (id: string, expenseId: string) =>
+      request(`/partnership-projects/${id}/expenses/${expenseId}`, { method: "DELETE" }),
+    // Service Providers
+    listProviders: (id: string) => request(`/partnership-projects/${id}/service-providers`),
+    createProvider: (id: string, data: unknown) =>
+      request(`/partnership-projects/${id}/service-providers`, { method: "POST", body: JSON.stringify(data) }),
+    updateProvider: (id: string, spId: string, data: unknown) =>
+      request(`/partnership-projects/${id}/service-providers/${spId}`, { method: "PATCH", body: JSON.stringify(data) }),
+    deleteProvider: (id: string, spId: string) =>
+      request(`/partnership-projects/${id}/service-providers/${spId}`, { method: "DELETE" }),
+  },
 };
 
 export { ApiError };

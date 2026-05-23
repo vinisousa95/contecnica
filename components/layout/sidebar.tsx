@@ -26,6 +26,7 @@ import {
   Wallet,
   UserX,
   AlertTriangle,
+  Handshake,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -54,6 +55,12 @@ const navigation: NavItem[] = [
     label: "Obras",
     href: "/obras",
     icon: HardHat,
+    roles: ["ADMIN", "MANAGER"],
+  },
+  {
+    label: "Obras Parcerias",
+    href: "/obras-parcerias",
+    icon: Handshake,
     roles: ["ADMIN", "MANAGER"],
   },
   {

@@ -93,6 +93,10 @@ export async function POST(request: NextRequest) {
     // Auto-generate expense if employee has a daily rate
     if ((assignment.employee as any).dailyRate) {
       const dailyRate = Number((assignment.employee as any).dailyRate);
+      const laborCategory = await prisma.category.findFirst({
+        where: { name: { contains: "Mão de Obra", mode: "insensitive" }, type: { in: ["EXPENSE", "BOTH"] } },
+        select: { id: true },
+      });
       const expense = await prisma.expense.create({
         data: {
           description: `Diária — ${assignment.employee.name}`,
@@ -100,6 +104,7 @@ export async function POST(request: NextRequest) {
           dueDate: workDate,
           status: "PENDING",
           projectId: rest.projectId || null,
+          categoryId: laborCategory?.id ?? null,
           createdById: session.userId,
         },
       });

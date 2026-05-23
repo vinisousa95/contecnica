@@ -13,9 +13,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { LoadingPage } from "@/components/ui/loading";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Wrench, Droplets, Pencil, Trash2, X, Check } from "lucide-react";
+import { ArrowLeft, Plus, Wrench, Droplets, Pencil, Trash2, X, Check, Store } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
-import { formatCurrencyInput, parseCurrencyInput } from "@/lib/masks";
+import { parseCurrencyInput } from "@/lib/masks";
+import { CurrencyInput } from "@/components/ui/currency-input";
 
 const MAINTENANCE_TYPES = [
   "Troca de Óleo",
@@ -36,6 +37,7 @@ type MaintenanceRecord = {
   description?: string | null;
   km?: number | null;
   cost?: number | null;
+  workshop?: string | null;
   notes?: string | null;
 };
 
@@ -45,11 +47,12 @@ type FormState = {
   description: string;
   km: string;
   costStr: string;
+  workshop: string;
   notes: string;
 };
 
 function emptyForm(): FormState {
-  return { date: "", type: MAINTENANCE_TYPES[0], description: "", km: "", costStr: "", notes: "" };
+  return { date: "", type: MAINTENANCE_TYPES[0], description: "", km: "", costStr: "", workshop: "", notes: "" };
 }
 
 export default function ManutencaoVeiculoPage({ params }: { params: { id: string } }) {
@@ -143,6 +146,7 @@ export default function ManutencaoVeiculoPage({ params }: { params: { id: string
       description: f.description || null,
       km: f.km ? parseInt(f.km) : null,
       cost: costRaw ? Number(costRaw) : null,
+      workshop: f.workshop || null,
       notes: f.notes || null,
     };
   }
@@ -168,7 +172,8 @@ export default function ManutencaoVeiculoPage({ params }: { params: { id: string
       type: r.type,
       description: r.description ?? "",
       km: r.km != null ? String(r.km) : "",
-      costStr: r.cost != null ? formatCurrencyInput(r.cost) : "",
+      costStr: r.cost != null ? Number(r.cost).toFixed(2) : "",
+      workshop: r.workshop ?? "",
       notes: r.notes ?? "",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -263,14 +268,20 @@ export default function ManutencaoVeiculoPage({ params }: { params: { id: string
                   value={form.km}
                   onChange={(e) => setForm((p) => ({ ...p, km: e.target.value }))}
                 />
-                <Input
+                <CurrencyInput
                   label="Custo (R$)"
                   placeholder="0,00"
-                  inputMode="numeric"
                   value={form.costStr}
-                  onChange={(e) => setForm((p) => ({ ...p, costStr: formatCurrencyInput(e.target.value) }))}
+                  onChange={(v) => setForm((p) => ({ ...p, costStr: v }))}
                 />
               </div>
+
+              <Input
+                label="Oficina / Estabelecimento"
+                placeholder="Nome da oficina ou local do serviço"
+                value={form.workshop}
+                onChange={(e) => setForm((p) => ({ ...p, workshop: e.target.value }))}
+              />
 
               <Textarea
                 label="Observações"
@@ -334,6 +345,11 @@ export default function ManutencaoVeiculoPage({ params }: { params: { id: string
                     </div>
                     {r.description && (
                       <p className="text-sm text-gray-600 mt-1">{r.description}</p>
+                    )}
+                    {r.workshop && (
+                      <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                        <Store className="h-3 w-3" />{r.workshop}
+                      </p>
                     )}
                     {r.notes && (
                       <p className="text-xs text-gray-400 mt-0.5 italic">{r.notes}</p>

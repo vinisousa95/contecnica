@@ -10,6 +10,7 @@ const maintenanceSchema = z.object({
   description: z.string().optional().nullable(),
   km: z.number().int().optional().nullable(),
   cost: z.number().optional().nullable(),
+  workshop: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
 });
 
@@ -41,6 +42,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       description: parsed.data.description ?? null,
       km: parsed.data.km ?? null,
       cost: parsed.data.cost ?? null,
+      workshop: parsed.data.workshop ?? null,
       notes: parsed.data.notes ?? null,
     },
   });

@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
 
 export default function EditarReceitaPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -47,8 +46,8 @@ export default function EditarReceitaPage({ params }: { params: { id: string } }
     clientId: revenue.client?.id ?? "",
     categoryId: revenue.category?.id ?? "",
     amount: String(revenue.amount),
-    dueDate: revenue.dueDate ? format(new Date(revenue.dueDate), "yyyy-MM-dd") : "",
-    receivedDate: revenue.receivedDate ? format(new Date(revenue.receivedDate), "yyyy-MM-dd") : "",
+    dueDate: revenue.dueDate ? String(revenue.dueDate).slice(0, 10) : "",
+    receivedDate: revenue.receivedDate ? String(revenue.receivedDate).slice(0, 10) : "",
   };
 
   return (

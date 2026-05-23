@@ -24,7 +24,9 @@ export function parseCurrency(value: string): number {
 // ── Dates ─────────────────────────────────────────────────────
 export function formatDate(date: Date | string | null | undefined): string {
   if (!date) return "—";
-  return format(new Date(date), "dd/MM/yyyy", { locale: ptBR });
+  const iso = typeof date === "string" ? date : (date as Date).toISOString();
+  const [year, month, day] = iso.slice(0, 10).split("-");
+  return `${day}/${month}/${year}`;
 }
 
 export function formatDateTime(date: Date | string | null | undefined): string {

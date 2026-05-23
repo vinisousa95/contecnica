@@ -12,6 +12,7 @@ import { LoadingPage } from "@/components/ui/loading";
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency, formatDate, SPECIALTY_LABELS, SPECIALTY_COLORS } from "@/lib/utils";
 import { formatCurrencyInput } from "@/lib/masks";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import {
   ArrowLeft, Pencil, Plus, Trash2, Package, Wrench, DollarSign,
   Clock, CheckCircle2, XCircle, BarChart3, Phone, MapPin, Calendar,
@@ -188,7 +189,7 @@ function MateriaisTab({ projectId }: { projectId: string }) {
   };
 
   const handleEdit = (m: any) => {
-    setForm({ description: m.description, supplier: m.supplier ?? "", quantity: String(m.quantity), unitPrice: String(m.unitPrice), date: m.date ? String(m.date).slice(0, 10) : "", paymentMethod: m.paymentMethod ?? "", notes: m.notes ?? "" });
+    setForm({ description: m.description, supplier: m.supplier ?? "", quantity: String(m.quantity), unitPrice: m.unitPrice != null ? Number(m.unitPrice).toFixed(2) : "", date: m.date ? String(m.date).slice(0, 10) : "", paymentMethod: m.paymentMethod ?? "", notes: m.notes ?? "" });
     setEditId(m.id); setShowForm(true);
   };
 
@@ -234,8 +235,12 @@ function MateriaisTab({ projectId }: { projectId: string }) {
                   <input required type="number" step="0.001" min="0" value={form.quantity} onChange={f("quantity")} placeholder="0" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Valor Unitário (R$) *</label>
-                  <input required type="number" step="0.01" min="0" value={form.unitPrice} onChange={f("unitPrice")} placeholder="0,00" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]" />
+                  <CurrencyInput
+                    label="Valor Unitário (R$) *"
+                    placeholder="0,00"
+                    value={form.unitPrice}
+                    onChange={(v) => setForm(prev => ({ ...prev, unitPrice: v }))}
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Forma de Pagamento</label>
@@ -344,7 +349,7 @@ function PrestadoresTab({ projectId }: { projectId: string }) {
   };
 
   const handleEdit = (p: any) => {
-    setForm({ serviceProviderId: p.serviceProviderId, serviceDescription: p.serviceDescription, agreedAmount: p.agreedAmount ? String(p.agreedAmount) : "", paidAmount: p.paidAmount ? String(p.paidAmount) : "", dueDate: p.dueDate ? String(p.dueDate).slice(0, 10) : "", paymentDate: p.paymentDate ? String(p.paymentDate).slice(0, 10) : "", status: p.status, notes: p.notes ?? "" });
+    setForm({ serviceProviderId: p.serviceProviderId, serviceDescription: p.serviceDescription, agreedAmount: p.agreedAmount != null ? Number(p.agreedAmount).toFixed(2) : "", paidAmount: p.paidAmount != null ? Number(p.paidAmount).toFixed(2) : "", dueDate: p.dueDate ? String(p.dueDate).slice(0, 10) : "", paymentDate: p.paymentDate ? String(p.paymentDate).slice(0, 10) : "", status: p.status, notes: p.notes ?? "" });
     setEditId(p.id); setShowForm(true);
   };
 
@@ -387,12 +392,20 @@ function PrestadoresTab({ projectId }: { projectId: string }) {
                   <input required value={form.serviceDescription} onChange={f("serviceDescription")} placeholder="Ex: Instalação elétrica" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Valor Combinado (R$)</label>
-                  <input type="number" step="0.01" min="0" value={form.agreedAmount} onChange={f("agreedAmount")} placeholder="0,00" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]" />
+                  <CurrencyInput
+                    label="Valor Combinado (R$)"
+                    placeholder="0,00"
+                    value={form.agreedAmount}
+                    onChange={(v) => setForm(prev => ({ ...prev, agreedAmount: v }))}
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Valor Pago (R$)</label>
-                  <input type="number" step="0.01" min="0" value={form.paidAmount} onChange={f("paidAmount")} placeholder="0,00" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]" />
+                  <CurrencyInput
+                    label="Valor Pago (R$)"
+                    placeholder="0,00"
+                    value={form.paidAmount}
+                    onChange={(v) => setForm(prev => ({ ...prev, paidAmount: v }))}
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Vencimento</label>
@@ -509,7 +522,7 @@ function DespesasTab({ projectId }: { projectId: string }) {
   };
 
   const handleEdit = (e: any) => {
-    setForm({ description: e.description, category: e.category, amount: String(e.amount), date: e.date ? String(e.date).slice(0, 10) : "", paymentMethod: e.paymentMethod ?? "", status: e.status, notes: e.notes ?? "" });
+    setForm({ description: e.description, category: e.category, amount: e.amount != null ? Number(e.amount).toFixed(2) : "", date: e.date ? String(e.date).slice(0, 10) : "", paymentMethod: e.paymentMethod ?? "", status: e.status, notes: e.notes ?? "" });
     setEditId(e.id); setShowForm(true);
   };
 
@@ -546,8 +559,13 @@ function DespesasTab({ projectId }: { projectId: string }) {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Valor (R$) *</label>
-                <input required type="number" step="0.01" min="0" value={form.amount} onChange={f("amount")} placeholder="0,00" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]" />
+                <CurrencyInput
+                  label="Valor (R$) *"
+                  required
+                  placeholder="0,00"
+                  value={form.amount}
+                  onChange={(v) => setForm(prev => ({ ...prev, amount: v }))}
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Data</label>

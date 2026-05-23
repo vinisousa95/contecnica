@@ -100,6 +100,7 @@ export async function POST(request: NextRequest) {
       const expense = await prisma.expense.create({
         data: {
           description: `Diária — ${assignment.employee.name}`,
+          supplier: assignment.employee.name,
           amount: dailyRate,
           dueDate: workDate,
           status: "PENDING",

@@ -134,7 +134,13 @@ export default function DespesasPage() {
                 {expenses.map((e: any) => (
                   <TableRow key={e.id}>
                     <TableCell className="font-medium text-sm">{e.description}</TableCell>
-                    <TableCell className="text-sm text-gray-500">{e.supplier ?? "—"}</TableCell>
+                    <TableCell className="text-sm text-gray-500">
+                      {e.supplier
+                        ? e.supplier
+                        : e.description?.startsWith("Diária — ")
+                        ? e.description.replace("Diária — ", "")
+                        : "—"}
+                    </TableCell>
                     <TableCell className="text-sm text-gray-500">
                       {e.project ? (
                         <Link href={`/obras/${e.project.id}`} className="hover:text-blue-600">

@@ -63,6 +63,11 @@ export function ExpenseForm({
     queryKey: ["suppliers"],
     queryFn: () => api.suppliers.list() as Promise<any>,
   });
+  const { data: serviceProvidersData } = useQuery({
+    queryKey: ["service-providers-active"],
+    queryFn: () => api.serviceProviders.list({ status: "ACTIVE", limit: "200" }) as Promise<any>,
+    staleTime: 30000,
+  });
 
   const projects = Array.isArray(projectsData) ? projectsData : [];
   const categories = Array.isArray(categoriesData) ? categoriesData : [];
@@ -72,6 +77,20 @@ export function ExpenseForm({
     ? employeesData.data
     : [];
   const suppliersList: any[] = Array.isArray(suppliersData) ? suppliersData : [];
+  const serviceProvidersList: any[] = Array.isArray(serviceProvidersData)
+    ? serviceProvidersData
+    : Array.isArray(serviceProvidersData?.data)
+    ? serviceProvidersData.data
+    : [];
+
+  // Merged autocomplete list: suppliers + service providers (deduplicated by name)
+  const supplierNames = new Set(suppliersList.map((s: any) => s.name));
+  const autocompleteOptions = [
+    ...suppliersList.map((s: any) => ({ id: s.id, name: s.name })),
+    ...serviceProvidersList
+      .filter((sp: any) => !supplierNames.has(sp.name))
+      .map((sp: any) => ({ id: sp.id, name: sp.name })),
+  ];
 
   const [attachmentUrl, setAttachmentUrl] = useState<string>(defaultValues?.attachmentUrl ?? "");
   const [uploading, setUploading] = useState(false);
@@ -162,7 +181,7 @@ export function ExpenseForm({
               {...register("supplier")}
             />
             <datalist id="suppliers-datalist">
-              {suppliersList.map((s: any) => (
+              {autocompleteOptions.map((s) => (
                 <option key={s.id} value={s.name} />
               ))}
             </datalist>

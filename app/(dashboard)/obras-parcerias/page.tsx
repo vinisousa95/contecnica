@@ -75,7 +75,7 @@ export default function ObrasParcelasPage() {
             <Button variant="outline" size="sm" asChild>
               <Link href="/obras-parcerias/compradores">
                 <Users className="h-4 w-4" />
-                Compradores
+                Parceiros
               </Link>
             </Button>
             <Button asChild>

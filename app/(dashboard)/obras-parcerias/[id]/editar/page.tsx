@@ -14,7 +14,27 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { LoadingPage } from "@/components/ui/loading";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Loader2 } from "lucide-react";
+import { maskCep } from "@/lib/masks";
+
+function buildAddress(fields: { street: string; addressNumber: string; complement: string; neighborhood: string; city: string; addrState: string; cep: string }) {
+  const parts = [
+    fields.street,
+    fields.addressNumber ? `nº ${fields.addressNumber}` : "",
+    fields.complement,
+    fields.neighborhood,
+    fields.city,
+    fields.addrState,
+    fields.cep ? `CEP: ${fields.cep}` : "",
+  ].filter(Boolean);
+  return parts.join(", ");
+}
+
+// Try to extract CEP from existing address string like "..., CEP: 01234-567"
+function extractCep(address: string): string {
+  const match = address.match(/CEP:\s*([\d]{5}-?[\d]{3})/i);
+  return match ? match[1] : "";
+}
 
 export default function EditarObraParceriaPage() {
   const router = useRouter();
@@ -23,11 +43,13 @@ export default function EditarObraParceriaPage() {
   const qc = useQueryClient();
 
   const [form, setForm] = useState({
-    name: "", buyerId: "", address: "", description: "",
+    name: "", buyerId: "", description: "",
     startDate: "", expectedEndDate: "", status: "PLANNING", notes: "",
+    cep: "", street: "", addressNumber: "", complement: "", neighborhood: "", city: "", addrState: "",
   });
   const [budgetStr, setBudgetStr] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const [cepLoading, setCepLoading] = useState(false);
 
   const { data: project, isLoading: loadingProject } = useQuery({
     queryKey: ["partnership-project", id],
@@ -43,20 +65,47 @@ export default function EditarObraParceriaPage() {
   useEffect(() => {
     if (project && !loaded) {
       const p = project as any;
+      const existingAddress = p.address ?? "";
+      const cep = extractCep(existingAddress);
       setForm({
         name: p.name ?? "",
         buyerId: p.buyerId ?? "",
-        address: p.address ?? "",
         description: p.description ?? "",
         startDate: p.startDate ? String(p.startDate).slice(0, 10) : "",
         expectedEndDate: p.expectedEndDate ? String(p.expectedEndDate).slice(0, 10) : "",
         status: p.status ?? "PLANNING",
         notes: p.notes ?? "",
+        cep,
+        // Put existing address in street if it was a plain old string (no CEP structure)
+        street: cep ? "" : existingAddress,
+        addressNumber: "", complement: "", neighborhood: "", city: "", addrState: "",
       });
       if (p.budgetedAmount != null) setBudgetStr(Number(p.budgetedAmount).toFixed(2));
       setLoaded(true);
     }
   }, [project, loaded]);
+
+  async function fetchCep(raw: string) {
+    const digits = raw.replace(/\D/g, "");
+    if (digits.length !== 8) return;
+    setCepLoading(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+      const data = await res.json();
+      if (data.erro) { toast({ title: "CEP não encontrado", variant: "error" }); return; }
+      setForm(prev => ({
+        ...prev,
+        street: data.logradouro || prev.street,
+        neighborhood: data.bairro || prev.neighborhood,
+        city: data.localidade || prev.city,
+        addrState: data.uf || prev.addrState,
+      }));
+    } catch {
+      toast({ title: "Erro ao buscar CEP", variant: "error" });
+    } finally {
+      setCepLoading(false);
+    }
+  }
 
   const mutation = useMutation({
     mutationFn: (data: any) => api.partnershipProjects.update(id, data),
@@ -74,10 +123,11 @@ export default function EditarObraParceriaPage() {
     if (!form.name.trim()) return toast({ title: "Nome é obrigatório", variant: "error" });
     if (!form.buyerId) return toast({ title: "Selecione um comprador/parceiro", variant: "error" });
     mutation.mutate({
-      ...form,
+      name: form.name, buyerId: form.buyerId, description: form.description,
+      startDate: form.startDate || null, expectedEndDate: form.expectedEndDate || null,
+      status: form.status, notes: form.notes,
+      address: buildAddress(form),
       budgetedAmount: budgetStr ? Number(budgetStr) : null,
-      startDate: form.startDate || null,
-      expectedEndDate: form.expectedEndDate || null,
     });
   }
 
@@ -129,11 +179,39 @@ export default function EditarObraParceriaPage() {
                   </Button>
                 </div>
               </div>
+            </div>
 
-              <div className="sm:col-span-2">
-                <Input label="Endereço" placeholder="Rua, número, bairro..." value={form.address} onChange={f("address")} />
+            {/* Address fields */}
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-gray-700">Endereço</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input
+                  label="CEP"
+                  placeholder="00000-000"
+                  value={form.cep}
+                  onChange={(e) => setForm(prev => ({ ...prev, cep: maskCep(e.target.value) }))}
+                  onBlur={(e) => fetchCep(e.target.value)}
+                  maxLength={9}
+                  rightIcon={cepLoading ? <Loader2 className="h-4 w-4 animate-spin text-gray-400" /> : undefined}
+                />
+                <Input label="Logradouro (Rua / Av.)" placeholder="Rua das Flores" value={form.street} onChange={f("street")} />
+                <Input label="Número" placeholder="123" value={form.addressNumber} onChange={f("addressNumber")} />
+                <Input label="Complemento" placeholder="Ap 21, Bloco B..." value={form.complement} onChange={f("complement")} />
+                <Input label="Bairro" placeholder="Centro" value={form.neighborhood} onChange={f("neighborhood")} />
+                <Input label="Cidade" placeholder="São Paulo" value={form.city} onChange={f("city")} />
+                <Select
+                  label="Estado"
+                  value={form.addrState}
+                  onChange={f("addrState")}
+                  options={[
+                    { value: "", label: "Selecionar..." },
+                    ...["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"].map(s => ({ value: s, label: s }))
+                  ]}
+                />
               </div>
+            </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Select
                 label="Status"
                 value={form.status}
@@ -147,7 +225,15 @@ export default function EditarObraParceriaPage() {
                 ]}
               />
 
-              <CurrencyInput label="Valor Previsto (R$)" placeholder="0,00" value={budgetStr} onChange={setBudgetStr} />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Valor Previsto</label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3 text-sm text-gray-500 select-none pointer-events-none">R$</span>
+                  <div className="w-full [&_input]:pl-9">
+                    <CurrencyInput placeholder="0,00" value={budgetStr} onChange={setBudgetStr} />
+                  </div>
+                </div>
+              </div>
 
               <Input label="Data de Início" type="date" value={form.startDate} onChange={f("startDate")} />
               <Input label="Previsão de Término" type="date" value={form.expectedEndDate} onChange={f("expectedEndDate")} />

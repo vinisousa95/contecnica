@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { expenseSchema, type ExpenseInput } from "@/lib/validations";
 import { api } from "@/lib/api-client";
@@ -97,6 +97,7 @@ export function ExpenseForm({
     watch,
     setValue,
     formState: { errors },
+    control,
   } = useForm<ExpenseInput>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
@@ -187,19 +188,37 @@ export function ExpenseForm({
             error={errors.amount?.message}
           />
 
-          <Input
-            label="Data de Vencimento"
-            type="date"
-            required
-            error={errors.dueDate?.message}
-            {...register("dueDate")}
+          <Controller
+            control={control}
+            name="dueDate"
+            render={({ field }) => (
+              <Input
+                label="Data de Vencimento"
+                type="date"
+                required
+                error={errors.dueDate?.message}
+                value={field.value ?? ""}
+                onChange={(e) => field.onChange(e.target.value)}
+                onBlur={field.onBlur}
+                name={field.name}
+              />
+            )}
           />
 
-          <Input
-            label="Data de Pagamento"
-            type="date"
-            error={errors.paymentDate?.message}
-            {...register("paymentDate")}
+          <Controller
+            control={control}
+            name="paymentDate"
+            render={({ field }) => (
+              <Input
+                label="Data de Pagamento"
+                type="date"
+                error={errors.paymentDate?.message}
+                value={field.value ?? ""}
+                onChange={(e) => field.onChange(e.target.value ?? "")}
+                onBlur={field.onBlur}
+                name={field.name}
+              />
+            )}
           />
 
           <Select

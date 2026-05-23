@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
 
 export default function EditarDespesaPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -45,9 +44,9 @@ export default function EditarDespesaPage({ params }: { params: { id: string } }
     ...expense,
     projectId: expense.project?.id ?? "",
     categoryId: expense.category?.id ?? "",
-    amount: String(expense.amount),
-    dueDate: expense.dueDate ? format(new Date(expense.dueDate), "yyyy-MM-dd") : "",
-    paymentDate: expense.paymentDate ? format(new Date(expense.paymentDate), "yyyy-MM-dd") : "",
+    amount: expense.amount != null ? Number(expense.amount).toFixed(2) : "",
+    dueDate: expense.dueDate ? String(expense.dueDate).slice(0, 10) : "",
+    paymentDate: expense.paymentDate ? String(expense.paymentDate).slice(0, 10) : "",
   };
 
   return (

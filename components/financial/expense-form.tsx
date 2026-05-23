@@ -59,6 +59,10 @@ export function ExpenseForm({
     queryKey: ["employees", "all"],
     queryFn: () => api.employees.list({ limit: "200", status: "ACTIVE" }) as Promise<any>,
   });
+  const { data: suppliersData } = useQuery({
+    queryKey: ["suppliers"],
+    queryFn: () => api.suppliers.list() as Promise<any>,
+  });
 
   const projects = Array.isArray(projectsData) ? projectsData : [];
   const categories = Array.isArray(categoriesData) ? categoriesData : [];
@@ -67,6 +71,7 @@ export function ExpenseForm({
     : Array.isArray(employeesData?.data)
     ? employeesData.data
     : [];
+  const suppliersList: any[] = Array.isArray(suppliersData) ? suppliersData : [];
 
   const [attachmentUrl, setAttachmentUrl] = useState<string>(defaultValues?.attachmentUrl ?? "");
   const [uploading, setUploading] = useState(false);
@@ -148,12 +153,23 @@ export function ExpenseForm({
             {...register("categoryId")}
           />
 
-          <Input
-            label="Fornecedor / Credor"
-            placeholder="Nome do fornecedor"
-            error={errors.supplier?.message}
-            {...register("supplier")}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Fornecedor / Credor</label>
+            <input
+              list="suppliers-datalist"
+              placeholder="Selecione ou digite o nome"
+              className="w-full h-9 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+              {...register("supplier")}
+            />
+            <datalist id="suppliers-datalist">
+              {suppliersList.map((s: any) => (
+                <option key={s.id} value={s.name} />
+              ))}
+            </datalist>
+            {errors.supplier?.message && (
+              <p className="mt-1 text-xs text-red-500">{errors.supplier.message}</p>
+            )}
+          </div>
 
           {employeesList.length > 0 && (
             <Select

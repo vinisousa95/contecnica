@@ -361,6 +361,19 @@ export const api = {
       return request(`/personal-expenses/summary${qs}`);
     },
   },
+  // Suppliers / Creditors
+  suppliers: {
+    list: (params?: Record<string, string>) => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return request(`/suppliers${qs}`);
+    },
+    create: (data: unknown) =>
+      request("/suppliers", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: unknown) =>
+      request(`/suppliers/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request(`/suppliers/${id}`, { method: "DELETE" }),
+  },
   // Obras Parcerias
   partnershipBuyers: {
     list: (params?: Record<string, string>) => {

@@ -139,6 +139,7 @@ const navigation: NavItem[] = [
       { label: "Dados da Empresa", href: "/configuracoes/empresa", icon: Building2 },
       { label: "Usuários", href: "/configuracoes/usuarios", icon: Users },
       { label: "Categorias", href: "/configuracoes/categorias", icon: CreditCard },
+      { label: "Fornecedores", href: "/configuracoes/fornecedores", icon: Truck },
       { label: "Itens de Reforma", href: "/configuracoes/itens-reforma", icon: HardHat },
       { label: "Modelos de Contrato", href: "/configuracoes/contratos", icon: FileText },
     ],

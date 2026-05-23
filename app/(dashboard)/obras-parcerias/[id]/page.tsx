@@ -15,7 +15,7 @@ import { formatCurrencyInput } from "@/lib/masks";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import {
   ArrowLeft, Pencil, Plus, Trash2, Package, Wrench, DollarSign,
-  Clock, CheckCircle2, XCircle, BarChart3, Phone, MapPin, Calendar,
+  Clock, CheckCircle2, XCircle, BarChart3, Phone, MapPin, Calendar, FileText,
 } from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -692,6 +692,11 @@ export default function ObraParceriaDetailPage({ params }: { params: { id: strin
           <div className="flex gap-2">
             <Button variant="outline" size="sm" asChild>
               <Link href="/obras-parcerias"><ArrowLeft className="h-4 w-4" />Voltar</Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/obras-parcerias/${params.id}/relatorio`} target="_blank">
+                <FileText className="h-4 w-4" />Relatório
+              </Link>
             </Button>
             <Button size="sm" asChild>
               <Link href={`/obras-parcerias/${params.id}/editar`}><Pencil className="h-4 w-4" />Editar</Link>

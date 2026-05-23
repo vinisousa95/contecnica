@@ -177,6 +177,7 @@ model Expense {
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
   workServiceProviders WorkServiceProvider[]
+  workAssignment       WorkAssignment?       @relation("AssignmentExpense")
 
   @@map("expenses")
 }
@@ -660,21 +661,24 @@ enum VehicleStatus {
 }
 
 model WorkAssignment {
-  id            String           @id @default(cuid())
-  employeeId    String           @map("employee_id")
-  employee      Employee         @relation(fields: [employeeId], references: [id])
-  vehicleId     String?          @map("vehicle_id")
-  vehicle       Vehicle?         @relation(fields: [vehicleId], references: [id])
-  projectId     String           @map("project_id")
-  project       Project          @relation(fields: [projectId], references: [id])
-  date          DateTime
-  departureTime String?          @map("departure_time")
-  returnTime    String?          @map("return_time")
-  notes         String?
-  status        AssignmentStatus @default(SCHEDULED)
-  createdAt     DateTime         @default(now()) @map("created_at")
-  updatedAt     DateTime         @updatedAt @map("updated_at")
-  fines         VehicleFine[]
+  id              String           @id @default(cuid())
+  employeeId      String           @map("employee_id")
+  employee        Employee         @relation(fields: [employeeId], references: [id])
+  vehicleId       String?          @map("vehicle_id")
+  vehicle         Vehicle?         @relation(fields: [vehicleId], references: [id])
+  projectId       String           @map("project_id")
+  project         Project          @relation(fields: [projectId], references: [id])
+  date            DateTime
+  departureTime   String?          @map("departure_time")
+  returnTime      String?          @map("return_time")
+  notes           String?
+  status          AssignmentStatus @default(SCHEDULED)
+  workedConfirmed Boolean          @default(false) @map("worked_confirmed")
+  expenseId       String?          @unique @map("expense_id")
+  expense         Expense?         @relation("AssignmentExpense", fields: [expenseId], references: [id])
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  fines           VehicleFine[]
 
   @@map("work_assignments")
 }

@@ -53,7 +53,19 @@ const ASSIGNMENT_STATUS_COLORS: Record<string, string> = {
   CANCELLED: "bg-red-100 text-red-500",
 };
 
+const EXPENSE_BADGE: Record<string, string> = {
+  PENDING: "bg-amber-100 text-amber-700",
+  PAID: "bg-green-100 text-green-700",
+  OVERDUE: "bg-red-100 text-red-700",
+};
+const EXPENSE_LABEL: Record<string, string> = {
+  PENDING: "Pendente",
+  PAID: "Pago",
+  OVERDUE: "Vencido",
+};
+
 function EquipeSection({ projectId }: { projectId: string }) {
+  const qc = useQueryClient();
   const today = new Date().toISOString().split("T")[0];
   const [filterDate, setFilterDate] = useState(today);
 
@@ -64,6 +76,31 @@ function EquipeSection({ projectId }: { projectId: string }) {
   });
 
   const assignments: any[] = Array.isArray(data) ? data : (data?.data ?? []);
+
+  const patchAssignment = async (id: string, payload: Record<string, unknown>) => {
+    try {
+      await apiFetch(`/api/v1/assignments/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+      qc.invalidateQueries({ queryKey: ["assignments", projectId, filterDate] });
+      qc.invalidateQueries({ queryKey: ["project", projectId] });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    }
+  };
+
+  const deleteAssignment = async (id: string) => {
+    if (!window.confirm("Remover este agendamento e sua despesa vinculada?")) return;
+    try {
+      await apiFetch(`/api/v1/assignments/${id}`, { method: "DELETE" });
+      qc.invalidateQueries({ queryKey: ["assignments", projectId, filterDate] });
+      qc.invalidateQueries({ queryKey: ["project", projectId] });
+      toast({ title: "Agendamento removido", variant: "success" });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    }
+  };
 
   return (
     <Card>
@@ -102,40 +139,71 @@ function EquipeSection({ projectId }: { projectId: string }) {
             <TableHeader>
               <TableRow>
                 <TableHead>Funcionário</TableHead>
-                <TableHead>RG</TableHead>
-                <TableHead>Veículo</TableHead>
                 <TableHead>Data</TableHead>
-                <TableHead>Saída</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Trabalhou?</TableHead>
+                <TableHead>Data Pagamento</TableHead>
+                <TableHead>Despesa</TableHead>
+                <TableHead />
               </TableRow>
             </TableHeader>
             <TableBody>
               {assignments.map((a: any) => (
-                <TableRow key={a.id}>
+                <TableRow key={a.id} className={a.workedConfirmed ? "bg-green-50/40" : ""}>
                   <TableCell>
                     <p className="font-medium text-gray-900">{a.employee?.name}</p>
                     {a.employee?.role && <p className="text-xs text-gray-400">{a.employee.role}</p>}
-                  </TableCell>
-                  <TableCell className="text-sm text-gray-600">{a.employee?.rg ?? "—"}</TableCell>
-                  <TableCell>
-                    {a.vehicle ? (
-                      <div className="flex items-center gap-1.5">
-                        <Car className="h-3.5 w-3.5 text-gray-400" />
-                        <span className="text-sm text-gray-700">{a.vehicle.name}</span>
-                        {a.vehicle.plate && <span className="text-xs text-gray-400">· {a.vehicle.plate}</span>}
-                      </div>
-                    ) : (
-                      <span className="text-sm text-gray-400">—</span>
+                    {a.expense?.amount != null && (
+                      <p className="text-xs text-gray-400">R$ {formatCurrencyInput(String(Number(a.expense.amount)))}</p>
                     )}
                   </TableCell>
                   <TableCell className="text-sm text-gray-700">
                     {a.date ? formatDate(a.date) : "—"}
                   </TableCell>
-                  <TableCell className="text-sm text-gray-600">{a.departureTime ?? "—"}</TableCell>
                   <TableCell>
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${ASSIGNMENT_STATUS_COLORS[a.status] ?? "bg-gray-100 text-gray-600"}`}>
-                      {ASSIGNMENT_STATUS_LABELS[a.status] ?? a.status}
-                    </span>
+                    <button
+                      title={a.workedConfirmed ? "Confirmado — clique para desfazer" : "Confirmar que trabalhou"}
+                      onClick={() => patchAssignment(a.id, { workedConfirmed: !a.workedConfirmed })}
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        a.workedConfirmed
+                          ? "text-green-600 bg-green-100 hover:bg-green-200"
+                          : "text-gray-300 hover:text-green-500 hover:bg-green-50"
+                      }`}
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    {a.expense ? (
+                      <input
+                        type="date"
+                        defaultValue={a.expense.paymentDate ? String(a.expense.paymentDate).slice(0, 10) : ""}
+                        className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#EA580C] w-36"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          patchAssignment(a.id, { paymentDate: val || null });
+                        }}
+                      />
+                    ) : (
+                      <span className="text-xs text-gray-400">Sem diária</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {a.expense ? (
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${EXPENSE_BADGE[a.expense.status] ?? "bg-gray-100 text-gray-500"}`}>
+                        {EXPENSE_LABEL[a.expense.status] ?? a.expense.status}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <button
+                      onClick={() => deleteAssignment(a.id)}
+                      className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      title="Remover"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </TableCell>
                 </TableRow>
               ))}

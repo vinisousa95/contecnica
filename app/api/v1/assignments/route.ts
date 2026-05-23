@@ -48,9 +48,10 @@ export async function GET(request: NextRequest) {
       take: limit,
       orderBy: { date: "desc" },
       include: {
-        employee: { select: { id: true, name: true, role: true, cpf: true, rg: true } },
+        employee: { select: { id: true, name: true, role: true, cpf: true, rg: true, dailyRate: true } },
         vehicle: { select: { id: true, name: true, plate: true, color: true, model: true } },
         project: { select: { id: true, name: true } },
+        expense: { select: { id: true, status: true, paymentDate: true, amount: true } },
       },
     }),
     prisma.workAssignment.count({ where }),
@@ -74,19 +75,41 @@ export async function POST(request: NextRequest) {
     }
 
     const { date, vehicleId, ...rest } = parsed.data;
+    const workDate = new Date(date + "T12:00:00.000Z");
 
     const assignment = await prisma.workAssignment.create({
       data: {
         ...rest,
-        date: new Date(date + "T12:00:00.000Z"),
+        date: workDate,
         vehicleId: vehicleId || null,
       },
       include: {
-        employee: { select: { id: true, name: true, role: true } },
+        employee: { select: { id: true, name: true, role: true, dailyRate: true } },
         vehicle: { select: { id: true, name: true, plate: true } },
         project: { select: { id: true, name: true } },
       },
     });
+
+    // Auto-generate expense if employee has a daily rate
+    if ((assignment.employee as any).dailyRate) {
+      const dailyRate = Number((assignment.employee as any).dailyRate);
+      const expense = await prisma.expense.create({
+        data: {
+          description: `Diária — ${assignment.employee.name}`,
+          amount: dailyRate,
+          dueDate: workDate,
+          status: "PENDING",
+          projectId: rest.projectId || null,
+          createdById: session.userId,
+        },
+      });
+      await prisma.workAssignment.update({
+        where: { id: assignment.id },
+        data: { expenseId: expense.id },
+      });
+      (assignment as any).expenseId = expense.id;
+      (assignment as any).expense = { id: expense.id, status: "PENDING", paymentDate: null, amount: dailyRate };
+    }
 
     return apiSuccess(assignment);
   } catch (error) {

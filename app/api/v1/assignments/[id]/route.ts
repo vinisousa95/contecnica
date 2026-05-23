@@ -56,11 +56,68 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+  const session = await getSessionFromRequest(request);
+  if (!session) return apiError("Não autorizado", 401);
+
+  try {
+    const body = await request.json();
+    const { workedConfirmed, paymentDate } = body as { workedConfirmed?: boolean; paymentDate?: string | null };
+
+    const existing = await prisma.workAssignment.findUnique({
+      where: { id: params.id },
+      select: { expenseId: true },
+    });
+    if (!existing) return apiError("Registro não encontrado", 404);
+
+    const updateData: Record<string, unknown> = {};
+    if (workedConfirmed !== undefined) updateData.workedConfirmed = workedConfirmed;
+
+    if (Object.keys(updateData).length > 0) {
+      await prisma.workAssignment.update({ where: { id: params.id }, data: updateData });
+    }
+
+    if (existing.expenseId) {
+      if (paymentDate) {
+        await prisma.expense.update({
+          where: { id: existing.expenseId },
+          data: { paymentDate: new Date(paymentDate + "T12:00:00.000Z"), status: "PAID" },
+        });
+      } else if (paymentDate === null) {
+        await prisma.expense.update({
+          where: { id: existing.expenseId },
+          data: { paymentDate: null, status: "PENDING" },
+        });
+      }
+    }
+
+    const assignment = await prisma.workAssignment.findUnique({
+      where: { id: params.id },
+      include: {
+        employee: { select: { id: true, name: true, role: true } },
+        expense: { select: { id: true, status: true, paymentDate: true, amount: true } },
+      },
+    });
+    return apiSuccess(assignment);
+  } catch (error) {
+    console.error(error);
+    return apiError("Erro ao atualizar registro", 500);
+  }
+}
+
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 
   try {
+    // Delete linked auto-generated expense first
+    const assignment = await prisma.workAssignment.findUnique({
+      where: { id: params.id },
+      select: { expenseId: true },
+    });
+    if (assignment?.expenseId) {
+      await prisma.expense.delete({ where: { id: assignment.expenseId } }).catch(() => {});
+    }
     await prisma.workAssignment.delete({ where: { id: params.id } });
     return apiSuccess({ message: "Registro excluído com sucesso" });
   } catch {

@@ -64,6 +64,12 @@ const navigation: NavItem[] = [
     roles: ["ADMIN", "MANAGER"],
   },
   {
+    label: "Obras Pessoais",
+    href: "/obras-pessoais",
+    icon: HardHat,
+    roles: ["ADMIN", "MANAGER"],
+  },
+  {
     label: "Financeiro",
     icon: DollarSign,
     roles: ["ADMIN"],

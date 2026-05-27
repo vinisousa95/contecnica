@@ -530,6 +530,19 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
     }
   };
 
+  const handleResetPending = async (serviceId: string) => {
+    try {
+      await apiFetch(`/api/v1/projects/${projectId}/extra-services/${serviceId}`, {
+        method: "PUT",
+        body: JSON.stringify({ markPending: true }),
+      });
+      toast({ title: "Serviço voltou para aguardando cliente" });
+      qc.invalidateQueries({ queryKey: ["project-extra-services", projectId] });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    }
+  };
+
   const handleApprove = async (serviceId: string) => {
     try {
       await apiFetch(`/api/v1/projects/${projectId}/extra-services/${serviceId}`, {
@@ -712,13 +725,22 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
                   {extraServiceLabel(s)}
                 </span>
                 {s.status === "ACCEPTED" && !s.paidAt && (
-                  <button
-                    onClick={() => handleMarkPaid(s.id, true)}
-                    title="Marcar como pago"
-                    className="text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-2 py-1 hover:bg-blue-100 transition-colors whitespace-nowrap"
-                  >
-                    Marcar pago
-                  </button>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => handleMarkPaid(s.id, true)}
+                      title="Marcar como pago"
+                      className="text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-2 py-1 hover:bg-blue-100 transition-colors whitespace-nowrap"
+                    >
+                      Marcar pago
+                    </button>
+                    <button
+                      onClick={() => handleResetPending(s.id)}
+                      title="Voltar para aguardando cliente"
+                      className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 transition-colors whitespace-nowrap"
+                    >
+                      Desfazer
+                    </button>
+                  </div>
                 )}
                 {s.status === "ACCEPTED" && s.paidAt && (
                   <button

@@ -56,6 +56,7 @@ export default async function RelatorioParceriaPage({ params }: { params: { id: 
       <head>
         <meta charSet="utf-8" />
         <title>Relatório — {project.name}</title>
+        <script dangerouslySetInnerHTML={{ __html: `window.onload=function(){var b=document.getElementById('print-btn');if(b)b.onclick=function(){window.print();};};` }} />
         <style>{`
           @page { margin: 2cm 2cm; size: A4; }
           * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -139,7 +140,6 @@ export default async function RelatorioParceriaPage({ params }: { params: { id: 
       </head>
       <body>
         <button className="print-btn no-print" id="print-btn">Imprimir / Salvar PDF</button>
-        <script dangerouslySetInnerHTML={{ __html: `document.getElementById('print-btn').onclick=function(){window.print()};` }} />
 
         <div className="page">
           {/* Header */}

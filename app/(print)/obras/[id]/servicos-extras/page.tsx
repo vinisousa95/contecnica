@@ -140,24 +140,6 @@ export default async function ServicosExtrasRelatorioPage({ params }: { params: 
                   <span className="info-value">{project.client.phone}</span>
                 </div>
               )}
-              {project.address && (
-                <div className="info-row">
-                  <span className="info-label">Endereço</span>
-                  <span className="info-value">{project.address}</span>
-                </div>
-              )}
-              {project.startDate && (
-                <div className="info-row">
-                  <span className="info-label">Início</span>
-                  <span className="info-value">{fmtDate(project.startDate)}</span>
-                </div>
-              )}
-              {project.expectedEndDate && (
-                <div className="info-row">
-                  <span className="info-label">Previsão</span>
-                  <span className="info-value">{fmtDate(project.expectedEndDate)}</span>
-                </div>
-              )}
             </div>
           </div>
 

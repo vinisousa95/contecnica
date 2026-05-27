@@ -29,7 +29,7 @@ import { toast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Pencil, MapPin, Calendar, DollarSign,
   ArrowDownCircle, ArrowUpCircle, Plus, CheckCircle2,
-  Circle, Eye, EyeOff, Trash2, Link2, ListChecks, RefreshCw, Wrench, Users, Car, HardHat,
+  Circle, Eye, EyeOff, Trash2, Link2, ListChecks, RefreshCw, Wrench, Users, Car, HardHat, FileText,
 } from "lucide-react";
 
 async function apiFetch(url: string, options?: RequestInit) {
@@ -552,10 +552,18 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
             Serviços Extras
             <span className="text-xs font-normal text-gray-400 ml-1">({services.length} {services.length === 1 ? "serviço" : "serviços"})</span>
           </CardTitle>
-          <Button size="sm" variant="outline" onClick={() => setShowForm((v) => !v)}>
-            <Plus className="h-3.5 w-3.5 mr-1" />
-            Adicionar Serviço Extra
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" asChild>
+              <Link href={`/obras/${projectId}/servicos-extras`} target="_blank">
+                <FileText className="h-3.5 w-3.5 mr-1" />
+                Relatório
+              </Link>
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setShowForm((v) => !v)}>
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Adicionar Serviço Extra
+            </Button>
+          </div>
         </div>
       </CardHeader>
 

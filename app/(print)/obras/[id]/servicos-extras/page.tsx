@@ -52,7 +52,6 @@ export default async function ServicosExtrasRelatorioPage({ params }: { params: 
       <head>
         <meta charSet="utf-8" />
         <title>Serviços Extras — {project.name}</title>
-        <script dangerouslySetInnerHTML={{ __html: `window.onload=function(){var b=document.getElementById('print-btn');if(b)b.onclick=function(){window.print();};};` }} />
         <style>{`
           @page { margin: 2cm 2cm; size: A4; }
           * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -105,12 +104,9 @@ export default async function ServicosExtrasRelatorioPage({ params }: { params: 
           .total-row td { font-weight: bold; background: #f9f9f9; border-top: 1px solid #ccc; }
 
           .footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid #e5e5e5; font-size: 8pt; color: #999; text-align: center; }
-          .print-btn { position: fixed; top: 20px; right: 20px; background: #EA580C; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 10pt; font-weight: 600; cursor: pointer; z-index: 100; }
-          .print-btn:hover { background: #c2410c; }
         `}</style>
       </head>
       <body>
-        <button className="print-btn no-print" id="print-btn">Imprimir / Salvar PDF</button>
 
         <div className="page">
           {/* Header */}

@@ -530,6 +530,33 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
     }
   };
 
+  const handleApprove = async (serviceId: string) => {
+    try {
+      await apiFetch(`/api/v1/projects/${projectId}/extra-services/${serviceId}`, {
+        method: "PUT",
+        body: JSON.stringify({ markAccepted: true }),
+      });
+      toast({ title: "Serviço aprovado" });
+      qc.invalidateQueries({ queryKey: ["project-extra-services", projectId] });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    }
+  };
+
+  const handleReject = async (serviceId: string) => {
+    if (!window.confirm("Rejeitar este serviço extra?")) return;
+    try {
+      await apiFetch(`/api/v1/projects/${projectId}/extra-services/${serviceId}`, {
+        method: "PUT",
+        body: JSON.stringify({ markRejected: true }),
+      });
+      toast({ title: "Serviço rejeitado" });
+      qc.invalidateQueries({ queryKey: ["project-extra-services", projectId] });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    }
+  };
+
   const handleMarkPaid = async (serviceId: string, paid: boolean) => {
     try {
       await apiFetch(`/api/v1/projects/${projectId}/extra-services/${serviceId}`, {
@@ -702,7 +729,23 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
                     Desfazer
                   </button>
                 )}
-                {s.status !== "ACCEPTED" && <span />}
+                {s.status === "PENDING_APPROVAL" && (
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => handleApprove(s.id)}
+                      className="text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded-lg px-2 py-1 hover:bg-green-100 transition-colors whitespace-nowrap"
+                    >
+                      Aprovar
+                    </button>
+                    <button
+                      onClick={() => handleReject(s.id)}
+                      className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg px-2 py-1 hover:bg-red-100 transition-colors whitespace-nowrap"
+                    >
+                      Rejeitar
+                    </button>
+                  </div>
+                )}
+                {s.status === "REJECTED" && <span />}
                 <button
                   onClick={() => handleDelete(s.id)}
                   disabled={s.status === "ACCEPTED"}

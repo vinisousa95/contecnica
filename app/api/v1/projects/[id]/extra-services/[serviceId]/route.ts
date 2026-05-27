@@ -10,6 +10,8 @@ const schema = z.object({
   requestedBy: z.string().optional().nullable(),
   amount: z.string().optional(),
   markPaid: z.boolean().optional(),
+  markAccepted: z.boolean().optional(),
+  markRejected: z.boolean().optional(),
 });
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string; serviceId: string } }) {
@@ -20,10 +22,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   const parsed = schema.safeParse(body);
   if (!parsed.success) return apiError(parsed.error.errors[0].message);
 
-  const { markPaid, ...rest } = parsed.data;
+  const { markPaid, markAccepted, markRejected, ...rest } = parsed.data;
   const updateData: any = { ...rest };
   if (markPaid === true) updateData.paidAt = new Date();
   if (markPaid === false) updateData.paidAt = null;
+  if (markAccepted === true) { updateData.status = "ACCEPTED"; updateData.acceptedAt = new Date(); }
+  if (markRejected === true) { updateData.status = "REJECTED"; updateData.rejectedAt = new Date(); }
 
   const existing = await prisma.extraService.findUnique({
     where: { id: params.serviceId, projectId: params.id },

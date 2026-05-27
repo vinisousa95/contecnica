@@ -127,7 +127,8 @@ export default async function RelatorioObraPessoalPage({ params }: { params: { i
         `}</style>
       </head>
       <body>
-        <button className="print-btn no-print" onClick="window.print()">Imprimir / Salvar PDF</button>
+        <button className="print-btn no-print" id="print-btn">Imprimir / Salvar PDF</button>
+        <script dangerouslySetInnerHTML={{ __html: `document.getElementById('print-btn').onclick=function(){window.print()};` }} />
 
         <div className="page">
           {/* Header */}

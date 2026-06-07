@@ -160,14 +160,14 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
         tbody.room-group { break-inside: avoid; page-break-inside: avoid; }
 
         /* Signatures */
-        .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 20px; break-inside: avoid; page-break-inside: avoid; break-before: avoid; page-break-before: avoid; }
+        .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 20px; break-inside: avoid; page-break-inside: avoid; }
         .sig-block { text-align: center; break-inside: avoid; page-break-inside: avoid; }
         .sig-line { border-top: 1px solid #374151; margin-bottom: 7px; }
         .sig-label { font-size: 10px; font-weight: 600; color: #111827; }
         .sig-sub { font-size: 9px; color: #9ca3af; margin-top: 2px; }
 
         /* Footer */
-        .footer { margin-top: 16px; padding-top: 8px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; font-size: 8px; color: #9ca3af; break-inside: avoid; page-break-inside: avoid; break-before: avoid; page-break-before: avoid; }
+        .footer { margin-top: 16px; padding-top: 8px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; font-size: 8px; color: #9ca3af; }
 
         /* Print */
         @media print {
@@ -405,6 +405,8 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
           );
         })()}
 
+        {/* ── Totals + Validity + Signatures + Footer (kept together) ── */}
+        <div style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
         {/* ── Totals ── */}
         {(() => {
           const grossTotal = itemsTotal + extrasTotal;
@@ -493,6 +495,7 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
           <span>{company?.name || "Contécnica"}{company?.cnpj ? ` — CNPJ ${company.cnpj}` : ""}</span>
           <span>Documento gerado em {fmtDate(new Date())} · {budget.code}</span>
         </div>
+        </div>{/* end break-inside:avoid wrapper */}
       </div>
     </>
   );

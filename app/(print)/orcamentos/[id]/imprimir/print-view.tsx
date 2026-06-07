@@ -471,29 +471,27 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
           </div>
         )}
 
-        {/* ── Signatures + Footer (kept together, no page break inside) ── */}
-        <div style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
-          <div className="signatures">
-            <div className="sig-block">
-              <div style={{ height: 48 }} />
-              <div className="sig-line" />
-              <div className="sig-label">{client.name}</div>
-              <div className="sig-sub">Cliente — Aprovação do Orçamento</div>
-              <div className="sig-sub" style={{ marginTop: 4 }}>Data: ______ / ______ / ________</div>
-            </div>
-            <div className="sig-block">
-              <div style={{ height: 48 }} />
-              <div className="sig-line" />
-              <div className="sig-label">{company?.name || "Contécnica"}</div>
-              <div className="sig-sub">Responsável Técnico</div>
-              <div className="sig-sub" style={{ marginTop: 4 }}>Data: ______ / ______ / ________</div>
-            </div>
+        {/* ── Signatures + Footer ── */}
+        <div className="signatures">
+          <div className="sig-block">
+            <div style={{ height: 32 }} />
+            <div className="sig-line" />
+            <div className="sig-label">{client.name}</div>
+            <div className="sig-sub">Cliente — Aprovação do Orçamento</div>
+            <div className="sig-sub" style={{ marginTop: 4 }}>Data: ______ / ______ / ________</div>
           </div>
+          <div className="sig-block">
+            <div style={{ height: 32 }} />
+            <div className="sig-line" />
+            <div className="sig-label">{company?.name || "Contécnica"}</div>
+            <div className="sig-sub">Responsável Técnico</div>
+            <div className="sig-sub" style={{ marginTop: 4 }}>Data: ______ / ______ / ________</div>
+          </div>
+        </div>
 
-          <div className="footer">
-            <span>{company?.name || "Contécnica"}{company?.cnpj ? ` — CNPJ ${company.cnpj}` : ""}</span>
-            <span>Documento gerado em {fmtDate(new Date())} · {budget.code}</span>
-          </div>
+        <div className="footer">
+          <span>{company?.name || "Contécnica"}{company?.cnpj ? ` — CNPJ ${company.cnpj}` : ""}</span>
+          <span>Documento gerado em {fmtDate(new Date())} · {budget.code}</span>
         </div>
       </div>
     </>

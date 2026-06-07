@@ -657,7 +657,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
 
   // Calculate totals
   const itemsTotal = watchedItems.reduce((s, i) => s + (i.subtotal ?? 0), 0);
-  const extrasTotal = watchedExtras.reduce((s, e) => s + (e.subtotal ?? 0), 0);
+  const extrasTotal = watchedExtras.reduce((s, e) => s + ((e.unitPrice ?? 0) * (e.quantity ?? 1)), 0);
   const subtotalBeforeDiscount = itemsTotal + extrasTotal;
   const discountAmount = subtotalBeforeDiscount * ((watchedDiscount ?? 0) / 100);
   const grandTotal = subtotalBeforeDiscount - discountAmount;

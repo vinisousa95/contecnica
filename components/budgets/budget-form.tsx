@@ -21,6 +21,7 @@ import {
   LayoutGrid,
   ArrowLeft,
   Pencil,
+  Copy,
 } from "lucide-react";
 import { useCepLookup } from "@/hooks/use-cep-lookup";
 import { maskCep } from "@/lib/masks";
@@ -560,6 +561,8 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
   const [newRoomName, setNewRoomName] = useState("");
   const [editingRoom, setEditingRoom] = useState<string | null>(null);
   const [editedRoomName, setEditedRoomName] = useState("");
+  const [copyingRoom, setCopyingRoom] = useState<string | null>(null);
+  const [copyTargetName, setCopyTargetName] = useState("");
   const [focusExtraIdx, setFocusExtraIdx] = useState<number | null>(null);
   const [discountValueStr, setDiscountValueStr] = useState("");
   const discountValueFocused = useRef(false);
@@ -786,6 +789,18 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
       .filter((idx) => (watchedExtras[idx] as any)?.room === roomName)
       .reverse()
       .forEach((idx) => removeExtra(idx));
+  };
+
+  const handleCopyRoom = (sourceRoom: string, targetRoom: string) => {
+    const targetName = targetRoom.trim();
+    if (!targetName) return;
+    watchedExtras.forEach((e: any) => {
+      if ((e?.room ?? "") === sourceRoom) {
+        appendExtra({ name: e.name ?? "", description: e.description ?? "", room: targetName, quantity: e.quantity ?? 1, unit: e.unit ?? "UNIT", unitPrice: 0, subtotal: 0 } as any);
+      }
+    });
+    setCopyingRoom(null);
+    setCopyTargetName("");
   };
 
   // Derive room groups from current extra items (preserves insertion order)
@@ -1176,9 +1191,35 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
                       }} />
                     <span className="text-xs text-gray-400">Enter para confirmar</span>
                   </>
+                ) : copyingRoom === roomName ? (
+                  <>
+                    <span className="text-xs text-gray-500 whitespace-nowrap">Copiar para:</span>
+                    <input autoFocus value={copyTargetName}
+                      onChange={(e) => setCopyTargetName(e.target.value)}
+                      placeholder="Nome do novo ambiente"
+                      className="flex-1 border border-orange-300 rounded px-2 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-orange-400"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") { e.preventDefault(); handleCopyRoom(roomName, copyTargetName); }
+                        if (e.key === "Escape") { setCopyingRoom(null); setCopyTargetName(""); }
+                      }} />
+                    <button type="button" onClick={() => handleCopyRoom(roomName, copyTargetName)}
+                      disabled={!copyTargetName.trim()}
+                      className="text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded px-2 py-0.5 hover:bg-green-100 disabled:opacity-40">
+                      Copiar
+                    </button>
+                    <button type="button" onClick={() => { setCopyingRoom(null); setCopyTargetName(""); }}
+                      className="text-xs text-gray-400 hover:text-gray-600 px-1">
+                      Cancelar
+                    </button>
+                  </>
                 ) : (
                   <>
                     <span className="flex-1 text-sm font-semibold text-gray-700">{roomName}</span>
+                    <button type="button" title="Copiar ambiente"
+                      onClick={() => { setCopyingRoom(roomName); setCopyTargetName(""); }}
+                      className="text-gray-400 hover:text-orange-500 p-0.5">
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
                     <button type="button" title="Renomear ambiente"
                       onClick={() => { setEditingRoom(roomName); setEditedRoomName(roomName); }}
                       className="text-gray-400 hover:text-blue-500 p-0.5">

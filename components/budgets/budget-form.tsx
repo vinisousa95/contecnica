@@ -568,6 +568,8 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
   const discountValueFocused = useRef(false);
   const lastTypedDiscountValue = useRef(0);
   const [markupPct, setMarkupPct] = useState("");
+  const markupSnapshot = useRef<number[] | null>(null);
+  const [hasMarkupSnapshot, setHasMarkupSnapshot] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: clients = [] } = useQuery({
@@ -808,6 +810,8 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
   const handleApplyMarkup = () => {
     const pct = parseFloat(markupPct.replace(",", ".")) || 0;
     if (pct === 0) return;
+    markupSnapshot.current = watchedExtras.map((e: any) => e?.unitPrice ?? 0);
+    setHasMarkupSnapshot(true);
     const factor = 1 + pct / 100;
     watchedExtras.forEach((_: any, idx: number) => {
       const price = watchedExtras[idx]?.unitPrice ?? 0;
@@ -817,6 +821,17 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
       setValue(`extraItems.${idx}.subtotal`, newPrice * qty, { shouldDirty: true });
     });
     setMarkupPct("");
+  };
+
+  const handleUndoMarkup = () => {
+    if (!markupSnapshot.current) return;
+    markupSnapshot.current.forEach((originalPrice, idx) => {
+      const qty = watchedExtras[idx]?.quantity ?? 1;
+      setValue(`extraItems.${idx}.unitPrice`, originalPrice, { shouldDirty: true });
+      setValue(`extraItems.${idx}.subtotal`, originalPrice * qty, { shouldDirty: true });
+    });
+    markupSnapshot.current = null;
+    setHasMarkupSnapshot(false);
   };
 
   // Derive room groups from current extra items (preserves insertion order)
@@ -1418,7 +1433,16 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
               >
                 Aplicar
               </button>
-              <span className="text-xs text-blue-400">Aplica o percentual em todos os itens extras</span>
+              {hasMarkupSnapshot && (
+                <button
+                  type="button"
+                  onClick={handleUndoMarkup}
+                  className="h-8 px-3 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50"
+                >
+                  Desfazer
+                </button>
+              )}
+              {!hasMarkupSnapshot && <span className="text-xs text-blue-400">Aplica o percentual em todos os itens extras</span>}
             </div>
           )}
           <div className="border-t border-blue-200 pt-2 flex items-center justify-between">

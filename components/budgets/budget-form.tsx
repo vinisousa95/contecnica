@@ -567,6 +567,7 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
   const [discountValueStr, setDiscountValueStr] = useState("");
   const discountValueFocused = useRef(false);
   const lastTypedDiscountValue = useRef(0);
+  const [markupPct, setMarkupPct] = useState("");
   const queryClient = useQueryClient();
 
   const { data: clients = [] } = useQuery({
@@ -802,6 +803,20 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
     });
     setCopyingRoom(null);
     setCopyTargetName("");
+  };
+
+  const handleApplyMarkup = () => {
+    const pct = parseFloat(markupPct.replace(",", ".")) || 0;
+    if (pct === 0) return;
+    const factor = 1 + pct / 100;
+    watchedExtras.forEach((_: any, idx: number) => {
+      const price = watchedExtras[idx]?.unitPrice ?? 0;
+      const qty = watchedExtras[idx]?.quantity ?? 1;
+      const newPrice = Math.round(price * factor * 100) / 100;
+      setValue(`extraItems.${idx}.unitPrice`, newPrice, { shouldDirty: true });
+      setValue(`extraItems.${idx}.subtotal`, newPrice * qty, { shouldDirty: true });
+    });
+    setMarkupPct("");
   };
 
   // Derive room groups from current extra items (preserves insertion order)
@@ -1379,6 +1394,33 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
               </span>
             )}
           </div>
+          {extraFields.length > 0 && (
+            <div className="flex items-center gap-3 flex-wrap">
+              <label className="text-sm text-blue-700 font-medium whitespace-nowrap">Reajuste itens extras</label>
+              <div className="flex items-center gap-1">
+                <input
+                  type="number"
+                  min={-100}
+                  step="any"
+                  value={markupPct}
+                  onChange={(e) => setMarkupPct(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleApplyMarkup(); } }}
+                  className="w-20 h-8 px-2 rounded-md border border-blue-300 bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                  placeholder="0"
+                />
+                <span className="text-sm text-blue-600 font-medium">%</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleApplyMarkup}
+                disabled={!markupPct || parseFloat(markupPct.replace(",", ".")) === 0}
+                className="h-8 px-3 rounded-md bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Aplicar
+              </button>
+              <span className="text-xs text-blue-400">Aplica o percentual em todos os itens extras</span>
+            </div>
+          )}
           <div className="border-t border-blue-200 pt-2 flex items-center justify-between">
             <p className="text-sm text-blue-700 font-semibold">Total do Orçamento</p>
             <p className="text-2xl font-bold text-blue-800">{formatCurrency(grandTotal)}</p>

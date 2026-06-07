@@ -171,9 +171,9 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
 
         /* Print */
         @media print {
-          @page { size: A4; margin: 0; }
+          @page { size: A4; margin: 14mm 14mm 16mm 14mm; }
           body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-          .page { padding: 12mm 14mm 16mm 14mm; }
+          .page { padding: 0; }
           .no-print { display: none !important; }
         }
 

@@ -160,14 +160,14 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
         tbody.room-group { break-inside: avoid; page-break-inside: avoid; }
 
         /* Signatures */
-        .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; break-inside: avoid; page-break-inside: avoid; }
+        .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 20px; break-inside: avoid; page-break-inside: avoid; break-before: avoid; page-break-before: avoid; }
         .sig-block { text-align: center; break-inside: avoid; page-break-inside: avoid; }
         .sig-line { border-top: 1px solid #374151; margin-bottom: 7px; }
         .sig-label { font-size: 10px; font-weight: 600; color: #111827; }
         .sig-sub { font-size: 9px; color: #9ca3af; margin-top: 2px; }
 
         /* Footer */
-        .footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; font-size: 8px; color: #9ca3af; break-inside: avoid; page-break-inside: avoid; }
+        .footer { margin-top: 16px; padding-top: 8px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; font-size: 8px; color: #9ca3af; break-inside: avoid; page-break-inside: avoid; break-before: avoid; page-break-before: avoid; }
 
         /* Print */
         @media print {
@@ -474,14 +474,14 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
         {/* ── Signatures + Footer ── */}
         <div className="signatures">
           <div className="sig-block">
-            <div style={{ height: 32 }} />
+            <div style={{ height: 20 }} />
             <div className="sig-line" />
             <div className="sig-label">{client.name}</div>
             <div className="sig-sub">Cliente — Aprovação do Orçamento</div>
             <div className="sig-sub" style={{ marginTop: 4 }}>Data: ______ / ______ / ________</div>
           </div>
           <div className="sig-block">
-            <div style={{ height: 32 }} />
+            <div style={{ height: 20 }} />
             <div className="sig-line" />
             <div className="sig-label">{company?.name || "Contécnica"}</div>
             <div className="sig-sub">Responsável Técnico</div>

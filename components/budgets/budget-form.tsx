@@ -750,13 +750,12 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
   };
 
   const applyExtraTemplate = (idx: number, t: { name: string; description?: string | null; unit: string; unitPrice: number }) => {
-    const qty = watchedExtras[idx]?.quantity ?? 1;
     const opts = { shouldDirty: true };
     setValue(`extraItems.${idx}.name`, t.name, opts);
     setValue(`extraItems.${idx}.description` as any, t.description ?? "", opts);
     setValue(`extraItems.${idx}.unit` as any, t.unit, opts);
-    setValue(`extraItems.${idx}.unitPrice`, t.unitPrice, opts);
-    setValue(`extraItems.${idx}.subtotal`, qty * t.unitPrice, opts);
+    setValue(`extraItems.${idx}.unitPrice`, 0, opts);
+    setValue(`extraItems.${idx}.subtotal`, 0, opts);
   };
 
   const addExtra = (room: string) => {

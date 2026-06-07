@@ -795,7 +795,9 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
     if (!targetName) return;
     watchedExtras.forEach((e: any) => {
       if ((e?.room ?? "") === sourceRoom) {
-        appendExtra({ name: e.name ?? "", description: "", room: targetName, quantity: 1, unit: e.unit ?? "UNIT", unitPrice: 0, subtotal: 0 } as any);
+        const qty = e.quantity ?? 1;
+        const price = e.unitPrice ?? 0;
+        appendExtra({ name: e.name ?? "", description: e.description ?? "", room: targetName, quantity: qty, unit: e.unit ?? "UNIT", unitPrice: price, subtotal: qty * price } as any);
       }
     });
     setCopyingRoom(null);

@@ -379,10 +379,11 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
                 {ungrouped.length > 0 && (
                   <tbody>{renderUngroupedRows(ungrouped)}</tbody>
                 )}
-                {namedRooms.map(([room, items]) => {
+                {namedRooms.map(([room, items], roomIdx) => {
                   const roomTotal = items.reduce((s: number, e: any) => s + Number(e.subtotal), 0);
+                  const isLast = roomIdx === namedRooms.length - 1 && namedRooms.length > 1;
                   return (
-                    <tbody key={`room-${room}`} className="room-group">
+                    <tbody key={`room-${room}`} className="room-group" style={isLast ? { breakBefore: "page", pageBreakBefore: "always" } : undefined}>
                       <tr>
                         <td colSpan={5} style={{ background: "#fff7ed", fontWeight: 700, fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "#c2410c", paddingTop: "6px", paddingBottom: "6px" }}>
                           {room}

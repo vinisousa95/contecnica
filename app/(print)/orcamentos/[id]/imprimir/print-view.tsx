@@ -405,8 +405,6 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
           );
         })()}
 
-        {/* ── Totals + Validity + Signatures + Footer (kept together) ── */}
-        <div style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
         {/* ── Totals ── */}
         {(() => {
           const grossTotal = itemsTotal + extrasTotal;
@@ -465,37 +463,37 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
           </>
         )}
 
-        {/* ── Validity notice ── */}
-        {budget.validUntil && (
-          <div className="validity-bar">
-            <span>Este orçamento é válido até <strong>{fmtDate(budget.validUntil)}</strong>.</span>
-            <span>Após esta data, os valores estão sujeitos a alterações.</span>
-          </div>
-        )}
+        {/* ── Validity + Signatures + Footer (kept together) ── */}
+        <div style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
+          {budget.validUntil && (
+            <div className="validity-bar">
+              <span>Este orçamento é válido até <strong>{fmtDate(budget.validUntil)}</strong>.</span>
+              <span>Após esta data, os valores estão sujeitos a alterações.</span>
+            </div>
+          )}
 
-        {/* ── Signatures + Footer ── */}
-        <div className="signatures">
-          <div className="sig-block">
-            <div style={{ height: 20 }} />
-            <div className="sig-line" />
-            <div className="sig-label">{client.name}</div>
-            <div className="sig-sub">Cliente — Aprovação do Orçamento</div>
-            <div className="sig-sub" style={{ marginTop: 4 }}>Data: ______ / ______ / ________</div>
+          <div className="signatures">
+            <div className="sig-block">
+              <div style={{ height: 20 }} />
+              <div className="sig-line" />
+              <div className="sig-label">{client.name}</div>
+              <div className="sig-sub">Cliente — Aprovação do Orçamento</div>
+              <div className="sig-sub" style={{ marginTop: 4 }}>Data: ______ / ______ / ________</div>
+            </div>
+            <div className="sig-block">
+              <div style={{ height: 20 }} />
+              <div className="sig-line" />
+              <div className="sig-label">{company?.name || "Contécnica"}</div>
+              <div className="sig-sub">Responsável Técnico</div>
+              <div className="sig-sub" style={{ marginTop: 4 }}>Data: ______ / ______ / ________</div>
+            </div>
           </div>
-          <div className="sig-block">
-            <div style={{ height: 20 }} />
-            <div className="sig-line" />
-            <div className="sig-label">{company?.name || "Contécnica"}</div>
-            <div className="sig-sub">Responsável Técnico</div>
-            <div className="sig-sub" style={{ marginTop: 4 }}>Data: ______ / ______ / ________</div>
+
+          <div className="footer">
+            <span>{company?.name || "Contécnica"}{company?.cnpj ? ` — CNPJ ${company.cnpj}` : ""}</span>
+            <span>Documento gerado em {fmtDate(new Date())} · {budget.code}</span>
           </div>
         </div>
-
-        <div className="footer">
-          <span>{company?.name || "Contécnica"}{company?.cnpj ? ` — CNPJ ${company.cnpj}` : ""}</span>
-          <span>Documento gerado em {fmtDate(new Date())} · {budget.code}</span>
-        </div>
-        </div>{/* end break-inside:avoid wrapper */}
       </div>
     </>
   );

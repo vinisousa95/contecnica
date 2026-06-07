@@ -156,6 +156,9 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
         .validity-bar { background: #f9fafb; border: 1px solid #e5e7eb; border-left: 3px solid #EA580C; border-radius: 0 6px 6px 0; padding: 8px 12px; margin-top: 12px; font-size: 10px; color: #374151; display: flex; justify-content: space-between; align-items: center; }
         .validity-bar strong { color: #111827; }
 
+        /* Room group — keep header + rows + total together */
+        tbody.room-group { break-inside: avoid; page-break-inside: avoid; }
+
         /* Signatures */
         .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; break-inside: avoid; page-break-inside: avoid; }
         .sig-block { text-align: center; break-inside: avoid; page-break-inside: avoid; }
@@ -373,30 +376,30 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
                     <th className="right" style={{ width: "24%" }}>Subtotal</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {ungrouped.length > 0 && renderUngroupedRows(ungrouped)}
-                  {namedRooms.map(([room, items]) => {
-                    const roomTotal = items.reduce((s: number, e: any) => s + Number(e.subtotal), 0);
-                    return (
-                      <>
-                        <tr key={`room-${room}`}>
-                          <td colSpan={5} style={{ background: "#fff7ed", fontWeight: 700, fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "#c2410c", paddingTop: "6px", paddingBottom: "6px" }}>
-                            {room}
-                          </td>
-                        </tr>
-                        {renderRoomRows(items)}
-                        <tr key={`room-total-${room}`} style={{ borderTop: "1px solid #e5e7eb" }}>
-                          <td colSpan={4} style={{ textAlign: "right", fontSize: "0.75rem", fontWeight: 600, color: "#374151", paddingTop: "4px", paddingBottom: "6px" }}>
-                            Total {room}:
-                          </td>
-                          <td className="right" style={{ fontWeight: 700, color: "#374151", paddingTop: "4px", paddingBottom: "6px" }}>
-                            {fmt(roomTotal)}
-                          </td>
-                        </tr>
-                      </>
-                    );
-                  })}
-                </tbody>
+                {ungrouped.length > 0 && (
+                  <tbody>{renderUngroupedRows(ungrouped)}</tbody>
+                )}
+                {namedRooms.map(([room, items]) => {
+                  const roomTotal = items.reduce((s: number, e: any) => s + Number(e.subtotal), 0);
+                  return (
+                    <tbody key={`room-${room}`} className="room-group">
+                      <tr>
+                        <td colSpan={5} style={{ background: "#fff7ed", fontWeight: 700, fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "#c2410c", paddingTop: "6px", paddingBottom: "6px" }}>
+                          {room}
+                        </td>
+                      </tr>
+                      {renderRoomRows(items)}
+                      <tr style={{ borderTop: "1px solid #e5e7eb" }}>
+                        <td colSpan={4} style={{ textAlign: "right", fontSize: "0.75rem", fontWeight: 600, color: "#374151", paddingTop: "4px", paddingBottom: "6px" }}>
+                          Total {room}:
+                        </td>
+                        <td className="right" style={{ fontWeight: 700, color: "#374151", paddingTop: "4px", paddingBottom: "6px" }}>
+                          {fmt(roomTotal)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  );
+                })}
               </table>
             </>
           );

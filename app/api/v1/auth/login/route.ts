@@ -4,9 +4,23 @@ import { prisma } from "@/lib/prisma";
 import { createToken, setSessionCookie } from "@/lib/auth";
 import { loginSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    // Brute-force protection: max 10 attempts per IP per 15 minutes.
+    const { allowed, retryAfter } = rateLimit(
+      `login:${getClientIp(request)}`,
+      10,
+      15 * 60 * 1000
+    );
+    if (!allowed) {
+      return apiError(
+        `Muitas tentativas. Tente novamente em ${Math.ceil(retryAfter / 60)} minutos.`,
+        429
+      );
+    }
+
     const body = await request.json();
     const parsed = loginSchema.safeParse(body);
 

@@ -28,6 +28,31 @@ const nextConfig = {
       },
     ];
   },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          // Force HTTPS for 1 year (site is served over HTTPS via nginx/Certbot)
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains",
+          },
+          // Prevent the site from being embedded in iframes (clickjacking)
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          // Block MIME-type sniffing
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          // Don't leak full URLs to third parties
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          // Disable powerful browser features the app doesn't use
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

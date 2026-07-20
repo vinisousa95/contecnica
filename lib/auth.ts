@@ -21,7 +21,7 @@ export interface SessionPayload {
 }
 
 export async function createToken(payload: SessionPayload): Promise<string> {
-  return await new SignJWT({ ...payload })
+  return await new SignJWT({ ...payload, type: "admin" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
@@ -33,6 +33,11 @@ export async function verifyToken(token: string): Promise<SessionPayload | null>
     const { payload } = await jwtVerify(token, JWT_SECRET, {
       algorithms: ["HS256"],
     });
+    // Reject portal tokens: they are signed with the same secret but must never
+    // grant admin/internal access. Admin routes only accept admin sessions.
+    if ((payload as any).type === "portal") return null;
+    // A valid admin session must carry userId + role; anything else is malformed.
+    if (!(payload as any).userId || !(payload as any).role) return null;
     return payload as unknown as SessionPayload;
   } catch {
     return null;

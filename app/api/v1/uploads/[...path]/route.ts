@@ -39,14 +39,21 @@ export async function GET(
   let buffer: Buffer | null = null;
 
   // Try primary location (.uploads/ or UPLOAD_DIR env var)
-  try { buffer = await readFile(primaryPath); } catch {}
+  try { buffer = await readFile(primaryPath); } catch (e: any) {
+    console.error("[uploads] primary failed:", primaryPath, e?.message);
+  }
 
   // Fallback to legacy public/uploads/ for files uploaded before the path change
   if (!buffer) {
-    try { buffer = await readFile(legacyPath); } catch {}
+    try { buffer = await readFile(legacyPath); } catch (e: any) {
+      console.error("[uploads] legacy failed:", legacyPath, e?.message);
+    }
   }
 
-  if (!buffer) return new NextResponse(null, { status: 404 });
+  if (!buffer) {
+    console.error("[uploads] 404 - UPLOAD_BASE:", UPLOAD_BASE, "filePath:", filePath);
+    return new NextResponse(null, { status: 404 });
+  }
 
   const contentType = MIME_TYPES[ext] ?? "application/octet-stream";
 

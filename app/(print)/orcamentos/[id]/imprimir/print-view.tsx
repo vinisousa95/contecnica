@@ -125,7 +125,7 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
         .info-value { color: #111827; font-weight: 500; }
 
         /* Section title */
-        .section-title { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #374151; border-bottom: 1.5px solid #d1d5db; padding-bottom: 5px; margin-bottom: 8px; margin-top: 16px; }
+        .section-title { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #374151; border-bottom: 1.5px solid #d1d5db; padding-bottom: 5px; margin-bottom: 8px; margin-top: 16px; break-after: avoid; page-break-after: avoid; }
         .section-title span { color: #EA580C; }
 
         /* Items table */
@@ -156,8 +156,13 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
         .validity-bar { background: #f9fafb; border: 1px solid #e5e7eb; border-left: 3px solid #EA580C; border-radius: 0 6px 6px 0; padding: 8px 12px; margin-top: 12px; font-size: 10px; color: #374151; display: flex; justify-content: space-between; align-items: center; }
         .validity-bar strong { color: #111827; }
 
-        /* Room group — keep header + rows + total together */
-        tbody.room-group { break-inside: avoid; page-break-inside: avoid; }
+        /* Print pagination:
+           - never split a single row across pages
+           - keep category/room header rows glued to the items that follow them
+           Large groups (30+ items) still flow naturally across pages, so no giant
+           white gaps are left behind. */
+        tr { break-inside: avoid; page-break-inside: avoid; }
+        .cat-row, .room-head { break-after: avoid; page-break-after: avoid; }
 
         /* Signatures */
         .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 20px; break-inside: avoid; page-break-inside: avoid; }
@@ -379,12 +384,11 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
                 {ungrouped.length > 0 && (
                   <tbody>{renderUngroupedRows(ungrouped)}</tbody>
                 )}
-                {namedRooms.map(([room, items], roomIdx) => {
+                {namedRooms.map(([room, items]) => {
                   const roomTotal = items.reduce((s: number, e: any) => s + Number(e.subtotal), 0);
-                  const isLast = roomIdx === namedRooms.length - 1 && namedRooms.length > 1;
                   return (
-                    <tbody key={`room-${room}`} className="room-group" style={isLast ? { breakBefore: "page", pageBreakBefore: "always" } : undefined}>
-                      <tr>
+                    <tbody key={`room-${room}`} className="room-group">
+                      <tr className="room-head">
                         <td colSpan={5} style={{ background: "#fff7ed", fontWeight: 700, fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "#c2410c", paddingTop: "6px", paddingBottom: "6px" }}>
                           {room}
                         </td>

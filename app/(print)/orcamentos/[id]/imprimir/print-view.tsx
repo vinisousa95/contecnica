@@ -468,8 +468,12 @@ export function PrintView({ budget, company }: { budget: any; company?: any }) {
           </>
         )}
 
-        {/* ── Validity + Signatures + Footer (kept together) ── */}
-        <div style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
+        {/* ── Validity + Signatures + Footer ──
+            No break-inside:avoid on the wrapper: that forced the whole block onto
+            a new page whenever it didn't fit *entirely* after the total, leaving
+            the previous page half-empty. Content now flows right below the total;
+            only the signatures grid itself is protected from splitting. */}
+        <div>
           {budget.validUntil && (
             <div className="validity-bar">
               <span>Este orçamento é válido até <strong>{fmtDate(budget.validUntil)}</strong>.</span>

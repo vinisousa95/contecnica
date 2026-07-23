@@ -42,7 +42,8 @@ const STATUS_OPTIONS = [
 export default function ObrasPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
+  // Padrão: mostrar apenas obras em andamento (usuário pode trocar no seletor)
+  const [status, setStatus] = useState("IN_PROGRESS");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({

@@ -4,12 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { loginSchema, type LoginInput } from "@/lib/validations";
 import { api } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
+import { Logo3D } from "@/components/ui/logo-3d";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,25 +43,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="mb-4">
-            <img
-              src="/logo.png"
-              alt="Contécnica"
-              className="h-16 w-auto object-contain"
-              onError={(e) => {
-                const t = e.currentTarget;
-                t.style.display = "none";
-                const fallback = t.nextElementSibling as HTMLElement | null;
-                if (fallback) fallback.style.display = "flex";
-              }}
-            />
-            <div className="hidden items-center gap-2">
-              <div className="w-10 h-10 bg-[#EA580C] rounded-xl flex items-center justify-center">
-                <Building2 className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white">Contécnica</span>
-            </div>
-          </div>
+          <Logo3D className="mb-5" />
           <p className="text-gray-400 text-sm">Sistema de Gestão de Reformas</p>
         </div>
 

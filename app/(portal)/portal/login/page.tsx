@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Building2, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
+import { Logo3D } from "@/components/ui/logo-3d";
 
 const schema = z.object({
   email: z.string().email("E-mail inválido"),
@@ -45,25 +46,7 @@ export default function PortalLoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#1F2937] via-[#111827] to-[#0a0f16] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
-          <div className="mb-4">
-            <img
-              src="/logo.png"
-              alt="Contécnica"
-              className="h-16 w-auto object-contain"
-              onError={(e) => {
-                const t = e.currentTarget;
-                t.style.display = "none";
-                const fb = t.nextElementSibling as HTMLElement | null;
-                if (fb) fb.style.display = "flex";
-              }}
-            />
-            <div className="hidden items-center gap-2">
-              <div className="w-10 h-10 bg-[#EA580C] rounded-xl flex items-center justify-center">
-                <Building2 className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white">Contécnica</span>
-            </div>
-          </div>
+          <Logo3D className="mb-5" />
           <p className="text-gray-400 text-sm">Portal do Cliente</p>
         </div>
 

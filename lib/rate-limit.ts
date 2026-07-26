@@ -37,6 +37,13 @@ export const RATE_LIMIT_CONFIG: Record<string, RateLimitRule> = {
   mutation: { name: "mutation", limit: 100, windowMs: MINUTE },
 
   /**
+   * Endpoints que chamam APIs pagas de terceiros (leitura de nota fiscal por IA).
+   * Limite baixo porque cada chamada gasta dinheiro na nossa conta — sem isso,
+   * uma conta comprometida poderia gerar custo ilimitado.
+   */
+  ai: { name: "ai", limit: 20, windowMs: 10 * MINUTE },
+
+  /**
    * Leituras (GET/HEAD). Limite generoso porque o dashboard dispara muitas
    * queries em paralelo e vários usuários podem compartilhar o mesmo IP público.
    */
@@ -63,11 +70,17 @@ const AUTH_PATTERNS: RegExp[] = [
  */
 const AUTH_EXEMPT: RegExp[] = [/\/auth\/me$/, /\/auth\/logout$/];
 
+/** Endpoints que consomem APIs pagas de terceiros → regra `ai`. */
+const AI_PATTERNS: RegExp[] = [/\/scan-receipt$/];
+
 /** Decide qual regra se aplica a uma requisição. */
 export function resolveRule(pathname: string, method: string): RateLimitRule {
   const isExempt = AUTH_EXEMPT.some((re) => re.test(pathname));
   if (!isExempt && AUTH_PATTERNS.some((re) => re.test(pathname))) {
     return RATE_LIMIT_CONFIG.auth;
+  }
+  if (AI_PATTERNS.some((re) => re.test(pathname))) {
+    return RATE_LIMIT_CONFIG.ai;
   }
   const isRead = method === "GET" || method === "HEAD";
   return isRead ? RATE_LIMIT_CONFIG.read : RATE_LIMIT_CONFIG.mutation;
@@ -86,18 +99,18 @@ const MAX_ENTRIES = 20_000;
  * Roda apenas quando o mapa cresce, então o custo é amortizado.
  */
 function sweep(now: number) {
-  for (const [key, hit] of store) {
+  // Array.from em vez de for..of direto no Map: independe do "target" do
+  // TypeScript (o projeto não define um, então o default seria ES5).
+  Array.from(store.entries()).forEach(([key, hit]) => {
     if (now >= hit.resetAt) store.delete(key);
-  }
+  });
   // Se ainda estiver acima do teto após remover os expirados, descarta as
   // entradas mais antigas para o mapa não crescer sem limite.
   if (store.size > MAX_ENTRIES) {
     const excess = store.size - MAX_ENTRIES;
-    let removed = 0;
-    for (const key of store.keys()) {
-      store.delete(key);
-      if (++removed >= excess) break;
-    }
+    Array.from(store.keys())
+      .slice(0, excess)
+      .forEach((key) => store.delete(key));
   }
 }
 

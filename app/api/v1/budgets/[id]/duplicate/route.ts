@@ -16,7 +16,8 @@ async function generateCode(): Promise<string> {
   return `${prefix}${String(seq).padStart(4, "0")}`;
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 

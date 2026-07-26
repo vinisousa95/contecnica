@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, use } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -244,7 +244,8 @@ function AddDocForm({ projectId, onSuccess }: { projectId: string; onSuccess: ()
   );
 }
 
-export default function ProjectPortalPage({ params }: { params: { id: string } }) {
+export default function ProjectPortalPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>("updates");
 

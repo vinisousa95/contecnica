@@ -5,7 +5,8 @@ import { apiSuccess, apiError } from "@/lib/utils";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getPortalSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 

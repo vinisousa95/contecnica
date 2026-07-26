@@ -54,7 +54,7 @@ export function formatZodError(error: z.ZodError): string {
   const path = issue.path.join(".");
 
   if (issue.code === "unrecognized_keys") {
-    const keys = (issue as z.ZodInvalidTypeIssue & { keys?: string[] }).keys ?? [];
+    const keys = issue.keys ?? [];
     const where = path ? ` em "${path}"` : "";
     return `Campo${keys.length > 1 ? "s" : ""} não permitido${keys.length > 1 ? "s" : ""}${where}: ${keys.join(", ")}`;
   }

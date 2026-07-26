@@ -6,7 +6,11 @@ import { validateBody } from "@/lib/api-validation";
 import { projectProviderUpdateSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string; spId: string } }) {
+export async function PATCH(
+  request: NextRequest,
+  props: { params: Promise<{ id: string; spId: string }> }
+) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   if (!(await canAccessPersonalProject(session, params.id))) {
@@ -37,7 +41,11 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   return apiSuccess({ ...provider, agreedAmount: provider.agreedAmount ? Number(provider.agreedAmount) : null, paidAmount: provider.paidAmount ? Number(provider.paidAmount) : null });
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string; spId: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  props: { params: Promise<{ id: string; spId: string }> }
+) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   if (!(await canAccessPersonalProject(session, params.id))) {

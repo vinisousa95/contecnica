@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { PrintView } from "./print-view";
 
-export default async function ImprimirOrcamentoPage({ params }: { params: { id: string } }) {
+export default async function ImprimirOrcamentoPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const budget = await prisma.budget.findUnique({
     where: { id: params.id },
     include: {

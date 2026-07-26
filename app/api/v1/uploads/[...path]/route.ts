@@ -60,10 +60,8 @@ async function isAuthorized(request: NextRequest, filePath: string, fileName: st
   return true;
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { path: string[] } }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ path: string[] }> }) {
+  const params = await props.params;
   const filePath = params.path.join("/");
 
   // Use filename for content-type detection (not the full path, which may differ in fallback)
@@ -97,7 +95,8 @@ export async function GET(
 
   const contentType = MIME_TYPES[ext] ?? "application/octet-stream";
 
-  return new NextResponse(buffer, {
+  // new Uint8Array: BodyInit aceita Uint8Array, não Buffer (tipos do Node 22).
+  return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": contentType,
       // inline forces browser to DISPLAY the file, not download it

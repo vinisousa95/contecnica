@@ -12,7 +12,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { LoadingPage } from "@/components/ui/loading";
 import { toast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
-import { useState } from "react";
+import { useState, use } from "react";
 
 async function apiFetch(url: string, options?: RequestInit) {
   const res = await fetch(url, { headers: { "Content-Type": "application/json" }, ...options });
@@ -34,7 +34,8 @@ const resetSchema = z.object({
 type CreateForm = z.infer<typeof createSchema>;
 type ResetForm = z.infer<typeof resetSchema>;
 
-export default function ClientPortalPage({ params }: { params: { id: string } }) {
+export default function ClientPortalPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const qc = useQueryClient();
   const [showPassword, setShowPassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);

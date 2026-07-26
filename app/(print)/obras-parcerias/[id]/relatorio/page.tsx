@@ -22,7 +22,8 @@ const EXP_CATEGORY: Record<string, string> = {
   ferramentas: "Ferramentas", alimentacao: "Alimentação", outros: "Outros",
 };
 
-export default async function RelatorioParceriaPage({ params }: { params: { id: string } }) {
+export default async function RelatorioParceriaPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const [project, company] = await Promise.all([
     prisma.partnershipProject.findUnique({
       where: { id: params.id },

@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSessionFromRequest, invalidateUserCache } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { updateUserSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 
@@ -57,13 +58,17 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       select: { id: true, name: true, email: true, role: true, isActive: true, phone: true },
     });
 
+    // Cache de sessão tem TTL curto; invalidar aqui faz a mudança valer já.
+    invalidateUserCache(params.id);
+
     return apiSuccess(user);
   } catch {
     return apiError("Erro ao atualizar usuário", 500);
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   if (session.role !== "ADMIN") return apiError("Sem permissão", 403);
@@ -75,6 +80,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       // tokenVersion: derruba as sessões ativas do usuário desativado.
       data: { isActive: false, tokenVersion: { increment: 1 } },
     });
+    invalidateUserCache(params.id);
     return apiSuccess({ message: "Usuário desativado com sucesso" });
   } catch {
     return apiError("Erro ao desativar usuário", 500);

@@ -39,7 +39,8 @@ async function syncProjectTask(taskId: string, completed: boolean) {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 

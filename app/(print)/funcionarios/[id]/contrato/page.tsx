@@ -40,7 +40,8 @@ const CSS = `
   .sig-label { font-size: 9.5pt; color: #444; margin-top: 2px; }
 `;
 
-export default async function ContratoFuncionarioPage({ params }: { params: { id: string } }) {
+export default async function ContratoFuncionarioPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const [employee, company] = await Promise.all([
     prisma.employee.findUnique({ where: { id: params.id } }),
     prisma.companySettings.findUnique({ where: { id: "singleton" } }),

@@ -15,7 +15,11 @@ const schema = z.object({
   markPending: z.boolean().optional(),
 }).strict();
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string; serviceId: string } }) {
+export async function PUT(
+  request: NextRequest,
+  props: { params: Promise<{ id: string; serviceId: string }> }
+) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 
@@ -77,7 +81,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   return apiSuccess({ ...service, amount: Number(service.amount) });
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string; serviceId: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  props: { params: Promise<{ id: string; serviceId: string }> }
+) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { api } from "@/lib/api-client";
@@ -55,7 +55,8 @@ function emptyForm(): FormState {
   return { date: "", type: MAINTENANCE_TYPES[0], description: "", km: "", costStr: "", workshop: "", notes: "" };
 }
 
-export default function ManutencaoVeiculoPage({ params }: { params: { id: string } }) {
+export default function ManutencaoVeiculoPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);

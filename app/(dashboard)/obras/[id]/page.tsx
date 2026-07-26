@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { api } from "@/lib/api-client";
@@ -909,7 +909,6 @@ function PrestadoresSection({ projectId }: { projectId: string }) {
           </Button>
         </div>
       </CardHeader>
-
       {showForm && (
         <div className="px-5 pb-4 border-b border-gray-100">
           <form onSubmit={handleAdd} className="space-y-3">
@@ -1006,7 +1005,6 @@ function PrestadoresSection({ projectId }: { projectId: string }) {
           </form>
         </div>
       )}
-
       <CardContent className="p-0">
         {isLoading ? (
           <p className="text-sm text-gray-400 text-center py-8">Carregando…</p>
@@ -1094,7 +1092,8 @@ function PrestadoresSection({ projectId }: { projectId: string }) {
   );
 }
 
-export default function ObraDetailPage({ params }: { params: { id: string } }) {
+export default function ObraDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const queryClient = useQueryClient();
   const { data: project, isLoading } = useQuery({
     queryKey: ["project", params.id],

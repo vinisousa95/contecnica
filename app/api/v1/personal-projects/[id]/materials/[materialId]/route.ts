@@ -6,7 +6,11 @@ import { validateBody } from "@/lib/api-validation";
 import { projectMaterialSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string; materialId: string } }) {
+export async function PUT(
+  request: NextRequest,
+  props: { params: Promise<{ id: string; materialId: string }> }
+) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   if (!(await canAccessPersonalProject(session, params.id))) {
@@ -34,7 +38,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   return apiSuccess({ ...material, quantity: Number(material.quantity), unitPrice: Number(material.unitPrice), total: Number(material.total) });
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string; materialId: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  props: { params: Promise<{ id: string; materialId: string }> }
+) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   if (!(await canAccessPersonalProject(session, params.id))) {

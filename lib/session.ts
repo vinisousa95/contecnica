@@ -27,14 +27,53 @@ function extractToken(req: NextRequest): string | null {
   return req.cookies.get(COOKIE_NAME_EXPORT)?.value ?? null;
 }
 
+/**
+ * Cache curto do estado do usuário, para não fazer uma query por requisição.
+ *
+ * O TTL é o atraso máximo com que uma revogação passa a valer. 15s mantém a
+ * revogação praticamente imediata do ponto de vista de um ataque, e derruba
+ * quase toda a carga extra no banco (uma página do dashboard dispara muitas
+ * requisições em paralelo, que passam a compartilhar a mesma leitura).
+ *
+ * `revokeUserSessions` e as rotas que alteram usuário invalidam a entrada na
+ * hora, então o fluxo normal do app não espera o TTL.
+ */
+const USER_CACHE_TTL_MS = 15_000;
+const MAX_CACHE_ENTRIES = 5_000;
+
+type CachedUser = { isActive: boolean; role: string; tokenVersion: number };
+const userCache = new Map<string, { user: CachedUser | null; expiresAt: number }>();
+
+/** Remove a entrada de cache de um usuário (troca de senha, perfil, desativação). */
+export function invalidateUserCache(userId: string): void {
+  userCache.delete(userId);
+}
+
+async function loadUser(userId: string): Promise<CachedUser | null> {
+  const now = Date.now();
+  const hit = userCache.get(userId);
+  if (hit && now < hit.expiresAt) return hit.user;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isActive: true, role: true, tokenVersion: true },
+  });
+
+  if (userCache.size > MAX_CACHE_ENTRIES) {
+    Array.from(userCache.entries()).forEach(([k, v]) => {
+      if (now >= v.expiresAt) userCache.delete(k);
+    });
+  }
+
+  userCache.set(userId, { user, expiresAt: now + USER_CACHE_TTL_MS });
+  return user;
+}
+
 /** Revalida o payload do JWT contra o estado atual do usuário no banco. */
 async function revalidate(payload: SessionPayload | null): Promise<SessionPayload | null> {
   if (!payload?.userId) return null;
 
-  const user = await prisma.user.findUnique({
-    where: { id: payload.userId },
-    select: { isActive: true, role: true, tokenVersion: true },
-  });
+  const user = await loadUser(payload.userId);
 
   if (!user || !user.isActive) return null;
   if ((payload.tokenVersion ?? 0) !== user.tokenVersion) return null;
@@ -52,7 +91,7 @@ export async function getSessionFromRequest(req: NextRequest): Promise<SessionPa
 
 /** Sessão a partir do cookie, para Server Components. */
 export async function getSession(): Promise<SessionPayload | null> {
-  const token = cookies().get(COOKIE_NAME_EXPORT)?.value;
+  const token = (await cookies()).get(COOKIE_NAME_EXPORT)?.value;
   if (!token) return null;
   return revalidate(await verifyToken(token));
 }
@@ -66,4 +105,5 @@ export async function revokeUserSessions(userId: string): Promise<void> {
     where: { id: userId },
     data: { tokenVersion: { increment: 1 } },
   });
+  invalidateUserCache(userId);
 }

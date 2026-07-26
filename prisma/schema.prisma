@@ -1104,9 +1104,10 @@ model PersonalProject {
   status          String    @default("PLANNING")
   budgetedAmount  Decimal?  @db.Decimal(12, 2) @map("budgeted_amount")
   notes           String?
-  // Dono do projeto pessoal. Nullable só para permitir o backfill dos registros
-  // já existentes; as rotas filtram por este campo.
-  createdById     String?   @map("created_by_id")
+  // Dono do projeto pessoal — as rotas filtram por este campo.
+  // Obrigatório: garante que não nasce registro sem dono (que ficaria órfão e
+  // invisível). Aplicar somente APÓS o backfill dos registros existentes.
+  createdById     String    @map("created_by_id")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 

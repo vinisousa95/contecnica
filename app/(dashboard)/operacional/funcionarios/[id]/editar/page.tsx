@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -18,7 +18,8 @@ import { ArrowLeft, FileText } from "lucide-react";
 import { maskPhone, maskCpfCnpj, maskCep } from "@/lib/masks";
 import { CurrencyInput } from "@/components/ui/currency-input";
 
-export default function EditarFuncionarioPage({ params }: { params: { id: string } }) {
+export default function EditarFuncionarioPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const router = useRouter();
   const queryClient = useQueryClient();
 

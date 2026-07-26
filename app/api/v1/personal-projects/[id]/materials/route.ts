@@ -6,7 +6,8 @@ import { validateBody } from "@/lib/api-validation";
 import { projectMaterialSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   if (!(await canAccessPersonalProject(session, params.id))) {
@@ -19,7 +20,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   return apiSuccess(materials.map(m => ({ ...m, quantity: Number(m.quantity), unitPrice: Number(m.unitPrice), total: Number(m.total) })));
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   if (!(await canAccessPersonalProject(session, params.id))) {

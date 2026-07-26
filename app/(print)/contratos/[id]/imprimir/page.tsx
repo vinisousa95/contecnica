@@ -19,7 +19,8 @@ const isBlank = (l: string) => l.trim() === "";
 const isClause = (l: string) => /^CL[AÁ]USULA\s/i.test(l.trim());
 const isSubItem = (l: string) => /^[a-z]\)\s/.test(l.trim());
 
-export default async function ImprimirContratoPage({ params }: { params: { id: string } }) {
+export default async function ImprimirContratoPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const [contract, company] = await Promise.all([
     prisma.contract.findUnique({
       where: { id: params.id },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -18,7 +18,8 @@ import { ArrowLeft } from "lucide-react";
 
 type FormState = VehicleInput;
 
-export default function EditarVeiculoPage({ params }: { params: { id: string } }) {
+export default function EditarVeiculoPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const router = useRouter();
   const queryClient = useQueryClient();
 

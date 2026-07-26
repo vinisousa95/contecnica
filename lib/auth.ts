@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
-import { cookies } from "next/headers";
+import { cookies, type UnsafeUnwrappedCookies } from "next/headers";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET
@@ -60,7 +60,7 @@ export async function verifyToken(token: string): Promise<SessionPayload | null>
  */
 
 export function setSessionCookie(token: string) {
-  const cookieStore = cookies();
+  const cookieStore = (cookies() as unknown as UnsafeUnwrappedCookies);
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: USE_SECURE_COOKIES,
@@ -71,7 +71,7 @@ export function setSessionCookie(token: string) {
 }
 
 export function clearSessionCookie() {
-  const cookieStore = cookies();
+  const cookieStore = (cookies() as unknown as UnsafeUnwrappedCookies);
   cookieStore.delete(COOKIE_NAME);
 }
 

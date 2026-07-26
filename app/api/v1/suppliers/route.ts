@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const parsed = await validateBody(request, supplierSchema);
-  if (!parsed.ok) return apiError(parsed.error, parsed.status);
+  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: parsed.status });
   const body = parsed.data as any;
   const { name, category, cpfCnpj, phone, email, notes } = body;
 

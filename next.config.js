@@ -1,14 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  // Erros de tipo agora quebram o build de propósito: foi o `ignoreBuildErrors`
+  // que escondeu bugs reais (apiSuccess(data, 201), Buffer em BodyInit,
+  // propriedade duplicada em UNIT_LABELS). O app mobile tem tsconfig próprio e
+  // está excluído do tsconfig do web.
   eslint: {
     ignoreDuringBuilds: true,
   },
-  experimental: {
-    serverComponentsExternalPackages: ["bcryptjs"],
-  },
+  // Next 15: renomeado de experimental.serverComponentsExternalPackages
+  serverExternalPackages: ["bcryptjs"],
   images: {
     // Sem remotePatterns: todas as imagens do sistema são locais (servidas por
     // /api/v1/uploads). Com `hostname: "**"` qualquer host HTTPS podia ser

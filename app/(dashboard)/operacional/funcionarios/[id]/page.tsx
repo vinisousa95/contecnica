@@ -1,4 +1,5 @@
-"use client";
+"use client";;
+import { use } from "react";
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -34,7 +35,8 @@ const ASSIGNMENT_STATUS_COLORS: Record<string, string> = {
   CANCELLED: "bg-red-100 text-red-700",
 };
 
-export default function FuncionarioDetailPage({ params }: { params: { id: string } }) {
+export default function FuncionarioDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const { data: employee, isLoading: isLoadingEmployee } = useQuery({
     queryKey: ["employee", params.id],
     queryFn: () => api.employees.get(params.id) as Promise<any>,

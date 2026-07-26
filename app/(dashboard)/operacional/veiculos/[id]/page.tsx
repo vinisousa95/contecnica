@@ -1,4 +1,5 @@
-"use client";
+"use client";;
+import { use } from "react";
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -36,7 +37,8 @@ const ASSIGNMENT_STATUS_COLORS: Record<string, string> = {
   CANCELLED: "bg-red-100 text-red-700",
 };
 
-export default function VeiculoDetailPage({ params }: { params: { id: string } }) {
+export default function VeiculoDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const { data: vehicle, isLoading: isLoadingVehicle } = useQuery({
     queryKey: ["vehicle", params.id],
     queryFn: () => api.vehicles.get(params.id) as Promise<any>,

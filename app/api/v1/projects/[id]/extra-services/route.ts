@@ -11,7 +11,8 @@ const schema = z.object({
   amount: z.string().min(1, "Valor é obrigatório"),
 }).strict();
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 
@@ -23,7 +24,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   return apiSuccess(services.map((s) => ({ ...s, amount: Number(s.amount) })));
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 

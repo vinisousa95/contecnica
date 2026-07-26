@@ -3,7 +3,8 @@ import { getPortalSessionFromRequest } from "@/lib/portal-auth";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/utils";
 
-export async function POST(request: NextRequest, { params }: { params: { serviceId: string } }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ serviceId: string }> }) {
+  const params = await props.params;
   const session = await getPortalSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 

@@ -18,7 +18,8 @@ const isBlank = (l: string) => l.trim() === "";
 const isClause = (l: string) => /^CL[AÁ]USULA\s/i.test(l.trim());
 const isSubItem = (l: string) => /^[a-z]\)\s/.test(l.trim());
 
-export default async function PortalImprimirContrato({ params }: { params: { id: string } }) {
+export default async function PortalImprimirContrato(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getPortalSession();
   if (!session) redirect("/portal/login");
 

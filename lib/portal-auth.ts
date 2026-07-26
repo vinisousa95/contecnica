@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
-import { cookies } from "next/headers";
+import { cookies, type UnsafeUnwrappedCookies } from "next/headers";
 import { NextRequest } from "next/server";
 
 if (!process.env.JWT_SECRET) {
@@ -37,7 +37,7 @@ export async function verifyPortalToken(token: string): Promise<PortalSessionPay
 }
 
 export async function getPortalSession(): Promise<PortalSessionPayload | null> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(PORTAL_COOKIE)?.value;
   if (!token) return null;
   return verifyPortalToken(token);
@@ -50,7 +50,7 @@ export async function getPortalSessionFromRequest(req: NextRequest): Promise<Por
 }
 
 export function setPortalSessionCookie(token: string) {
-  const cookieStore = cookies();
+  const cookieStore = (cookies() as unknown as UnsafeUnwrappedCookies);
   cookieStore.set(PORTAL_COOKIE, token, {
     httpOnly: true,
     secure: process.env.APP_ENV === "production",
@@ -61,7 +61,7 @@ export function setPortalSessionCookie(token: string) {
 }
 
 export function clearPortalSessionCookie() {
-  const cookieStore = cookies();
+  const cookieStore = (cookies() as unknown as UnsafeUnwrappedCookies);
   cookieStore.delete(PORTAL_COOKIE);
 }
 

@@ -22,7 +22,8 @@ const STATUS_CHIP: Record<string, string> = {
   REJECTED: "chip-red",
 };
 
-export default async function ServicosExtrasRelatorioPage({ params }: { params: { id: string } }) {
+export default async function ServicosExtrasRelatorioPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const [project, company] = await Promise.all([
     prisma.project.findUnique({
       where: { id: params.id },

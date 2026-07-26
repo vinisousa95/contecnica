@@ -24,7 +24,8 @@ const schema = z.object({
     .refine((v) => !v.includes(".."), "URL inválida"),
 }).strict();
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   if (session.role !== "ADMIN") return apiError("Sem permissão", 403);

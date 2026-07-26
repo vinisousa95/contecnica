@@ -5,7 +5,8 @@ import { validateBody } from "@/lib/api-validation";
 import { payExpenseSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   if (session.role !== "ADMIN") return apiError("Acesso restrito a administradores", 403);

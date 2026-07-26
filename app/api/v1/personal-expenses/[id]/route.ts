@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { personalExpenseSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   if (session.role !== "ADMIN") return apiError("Acesso restrito a administradores", 403);
@@ -17,7 +18,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   return apiSuccess(item);
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   if (session.role !== "ADMIN") return apiError("Acesso restrito a administradores", 403);
@@ -52,7 +54,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   if (session.role !== "ADMIN") return apiError("Acesso restrito a administradores", 403);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { api } from "@/lib/api-client";
@@ -672,7 +672,8 @@ function HistoricoTab({ project }: { project: any }) {
 }
 
 // ── Main Page ─────────────────────────────────────────────────
-export default function ObraParceriaDetailPage({ params }: { params: { id: string } }) {
+export default function ObraParceriaDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const [activeTab, setActiveTab] = useState<Tab>("Resumo");
 
   const { data: project, isLoading } = useQuery({

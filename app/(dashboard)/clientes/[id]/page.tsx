@@ -1,4 +1,5 @@
-"use client";
+"use client";;
+import { use } from "react";
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -18,7 +19,8 @@ import { Button } from "@/components/ui/button";
 import { LoadingPage } from "@/components/ui/loading";
 import { ArrowLeft, Pencil, Phone, Mail, MapPin, FileText, HardHat } from "lucide-react";
 
-export default function ClienteDetailPage({ params }: { params: { id: string } }) {
+export default function ClienteDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const { data: client, isLoading } = useQuery({
     queryKey: ["client", params.id],
     queryFn: () => api.clients.get(params.id) as Promise<any>,

@@ -4,12 +4,13 @@ import { validateBody } from "@/lib/api-validation";
 import { supplierSchema } from "@/lib/validations";
 import { getSessionFromRequest } from "@/lib/session";
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const parsed = await validateBody(request, supplierSchema);
-  if (!parsed.ok) return apiError(parsed.error, parsed.status);
+  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: parsed.status });
   const body = parsed.data as any;
   const { name, category, cpfCnpj, phone, email, notes } = body;
 
@@ -32,7 +33,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   return NextResponse.json(supplier);
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

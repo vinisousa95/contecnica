@@ -16,8 +16,9 @@ const maintenanceSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; maintenanceId: string } }
+  props: { params: Promise<{ id: string; maintenanceId: string }> }
 ) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 
@@ -46,8 +47,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; maintenanceId: string } }
+  props: { params: Promise<{ id: string; maintenanceId: string }> }
 ) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 

@@ -1,4 +1,5 @@
-"use client";
+"use client";;
+import { use } from "react";
 
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -13,7 +14,8 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 
-export default function EditarObraPage({ params }: { params: { id: string } }) {
+export default function EditarObraPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const router = useRouter();
   const queryClient = useQueryClient();
 

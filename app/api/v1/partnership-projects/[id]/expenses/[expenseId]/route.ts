@@ -5,7 +5,11 @@ import { validateBody } from "@/lib/api-validation";
 import { projectExpenseSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string; expenseId: string } }) {
+export async function PUT(
+  request: NextRequest,
+  props: { params: Promise<{ id: string; expenseId: string }> }
+) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   const parsed = await validateBody(request, projectExpenseSchema);
@@ -25,7 +29,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   return apiSuccess({ ...expense, amount: Number(expense.amount) });
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string; expenseId: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  props: { params: Promise<{ id: string; expenseId: string }> }
+) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   await prisma.partnershipExpense.delete({ where: { id: params.expenseId } });

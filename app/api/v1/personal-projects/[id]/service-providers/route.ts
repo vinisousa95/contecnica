@@ -6,7 +6,8 @@ import { validateBody } from "@/lib/api-validation";
 import { projectProviderSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   if (!(await canAccessPersonalProject(session, params.id))) {
@@ -20,7 +21,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   return apiSuccess(providers.map(p => ({ ...p, agreedAmount: p.agreedAmount ? Number(p.agreedAmount) : null, paidAmount: p.paidAmount ? Number(p.paidAmount) : null })));
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   if (!(await canAccessPersonalProject(session, params.id))) {

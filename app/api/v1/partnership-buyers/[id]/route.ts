@@ -5,7 +5,8 @@ import { validateBody } from "@/lib/api-validation";
 import { partnershipBuyerSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   const buyer = await prisma.partnershipBuyer.findUnique({ where: { id: params.id }, include: { projects: { select: { id: true, name: true, status: true } } } });
@@ -13,7 +14,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   return apiSuccess(buyer);
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   const parsed = await validateBody(request, partnershipBuyerSchema);
@@ -28,7 +30,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   return apiSuccess(buyer);
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
   try {

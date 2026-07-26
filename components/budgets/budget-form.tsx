@@ -572,19 +572,19 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
   const [hasMarkupSnapshot, setHasMarkupSnapshot] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: clients = [] } = useQuery({
+  const { data: clients = [] } = useQuery<unknown, Error, any[]>({
     queryKey: ["clients-simple"],
     queryFn: () => api.clients.list({ limit: "500" }) as Promise<any>,
     select: (data: any) => data?.data ?? (Array.isArray(data) ? data : []),
   });
 
-  const { data: reformItems = [] } = useQuery({
+  const { data: reformItems = [] } = useQuery<unknown, Error, any[]>({
     queryKey: ["reform-items-active"],
     queryFn: () => api.reformItems.list({ activeOnly: "true" }) as Promise<any>,
     select: (data: any) => data?.data ?? (Array.isArray(data) ? data : []),
   });
 
-  const { data: reformPackages = [] } = useQuery({
+  const { data: reformPackages = [] } = useQuery<unknown, Error, any[]>({
     queryKey: ["reform-packages-active"],
     queryFn: () => api.reformPackages.list({ activeOnly: "true" }) as Promise<any>,
     select: (data: any) => data?.data ?? (Array.isArray(data) ? data : []),

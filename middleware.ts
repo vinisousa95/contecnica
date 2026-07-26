@@ -2,12 +2,22 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyToken } from "@/lib/auth";
 import { verifyPortalToken } from "@/lib/portal-auth";
+import { applyRateLimit } from "@/lib/rate-limit";
 
 const ADMIN_PUBLIC = ["/login", "/api/v1/auth/login"];
 const PORTAL_PUBLIC = ["/portal/login", "/api/portal/v1/auth/login"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // ── Rate limiting — todos os endpoints de API ──────────────
+  // Vem antes do bypass de arquivos estáticos abaixo: caminhos como
+  // /api/v1/uploads/photos/x.jpg contêm "." e escapariam da checagem.
+  // Limites em lib/rate-limit.ts (RATE_LIMIT_CONFIG).
+  if (pathname.startsWith("/api/")) {
+    const limited = applyRateLimit(request, pathname);
+    if (limited) return limited;
+  }
 
   // Allow static files
   if (

@@ -1,22 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createToken, setSessionCookie } from "@/lib/auth";
-import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
 
+// Proteção contra força bruta é aplicada centralmente no middleware
+// (5 tentativas / 15 min por IP) — ver lib/rate-limit.ts.
 export async function POST(request: NextRequest) {
-  const { allowed, retryAfter } = rateLimit(
-    `obra-login:${getClientIp(request)}`,
-    10,
-    15 * 60 * 1000
-  );
-  if (!allowed) {
-    return NextResponse.json(
-      { success: false, error: `Muitas tentativas. Tente novamente em ${Math.ceil(retryAfter / 60)} minutos.` },
-      { status: 429 }
-    );
-  }
-
   const { email, password } = await request.json();
 
   if (!email || !password) {

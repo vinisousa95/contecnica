@@ -2,7 +2,6 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/utils";
 import { createPortalToken, setPortalSessionCookie } from "@/lib/portal-auth";
-import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
@@ -11,20 +10,10 @@ const schema = z.object({
   password: z.string().min(1),
 });
 
+// Proteção contra força bruta é aplicada centralmente no middleware
+// (5 tentativas / 15 min por IP) — ver lib/rate-limit.ts.
 export async function POST(request: NextRequest) {
   try {
-    const { allowed, retryAfter } = rateLimit(
-      `portal-login:${getClientIp(request)}`,
-      10,
-      15 * 60 * 1000
-    );
-    if (!allowed) {
-      return apiError(
-        `Muitas tentativas. Tente novamente em ${Math.ceil(retryAfter / 60)} minutos.`,
-        429
-      );
-    }
-
     const body = await request.json();
     const data = schema.parse(body);
 

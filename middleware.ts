@@ -112,16 +112,27 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // MANAGER: sem acesso ao dashboard, financeiro, relatórios, gastos pessoais e configurações
+  // MANAGER: allowlist. Antes era uma blocklist, e por isso qualquer caminho
+  // não listado ficava liberado por omissão — foi assim que /api/v1/personal-*
+  // e /obras-pessoais (dados financeiros pessoais do dono) ficaram acessíveis.
+  // Com allowlist, rota nova nasce negada até ser liberada de propósito.
   if (role === "MANAGER") {
-    const blocked = [
-      "/dashboard", "/financeiro", "/relatorios", "/gastos-pessoais", "/configuracoes",
-      "/api/v1/expenses", "/api/v1/revenues", "/api/v1/reports",
-      "/api/v1/personal-expenses", "/api/v1/company-settings",
-      "/api/v1/contract-templates", "/api/v1/users",
+    const allowed = [
+      // páginas
+      "/obras", "/obras-parcerias", "/clientes", "/orcamentos", "/contratos",
+      "/execucao-de-tarefas", "/prestadores", "/cronograma", "/funcionarios",
+      "/operacional", "/tarefas",
+      // APIs
+      "/api/v1/auth", "/api/v1/projects", "/api/v1/clients", "/api/v1/budgets",
+      "/api/v1/contracts", "/api/v1/tasks", "/api/v1/assignments",
+      "/api/v1/service-providers", "/api/v1/employees", "/api/v1/vehicles",
+      "/api/v1/absences", "/api/v1/reform-items", "/api/v1/reform-packages",
+      "/api/v1/extra-item-templates", "/api/v1/categories", "/api/v1/suppliers",
+      "/api/v1/upload", "/api/v1/uploads", "/api/v1/scan-receipt",
+      "/api/v1/partnership-projects", "/api/v1/partnership-buyers",
+      "/api/obra",
     ];
-    const isBlocked = blocked.some((p) => pathname.startsWith(p));
-    if (isBlocked) {
+    if (!allowed.some((p) => pathname.startsWith(p))) {
       if (pathname.startsWith("/api/")) {
         return NextResponse.json({ success: false, error: "Sem permissão" }, { status: 403 });
       }

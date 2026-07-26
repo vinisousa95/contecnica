@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/session";
 import { apiSuccess, apiError } from "@/lib/utils";
 
 /**

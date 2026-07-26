@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
         passwordHash: true,
         role: true,
         isActive: true,
+        tokenVersion: true,
       },
     });
 
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
       email: user.email,
       name: user.name,
       role: user.role,
+      tokenVersion: user.tokenVersion,
     });
 
     const response = apiSuccess({

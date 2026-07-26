@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { validateBody } from "@/lib/api-validation";
+import { fineSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
 const includeRelations = {
@@ -41,7 +43,9 @@ export async function POST(request: NextRequest) {
   if (!session) return apiError("Não autorizado", 401);
 
   try {
-    const body = await request.json();
+    const parsed = await validateBody(request, fineSchema);
+    if (!parsed.ok) return apiError(parsed.error, parsed.status);
+    const body = parsed.data as any;
     const { vehicleId, employeeId, assignmentId, date, amount, reason, points, status, notes } = body;
 
     if (!vehicleId) return apiError("Veículo é obrigatório");
@@ -64,7 +68,7 @@ export async function POST(request: NextRequest) {
       include: includeRelations,
     });
 
-    return apiSuccess(fine, 201);
+    return apiSuccess(fine);
   } catch {
     return apiError("Erro ao registrar multa", 500);
   }

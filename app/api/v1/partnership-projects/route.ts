@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { validateBody } from "@/lib/api-validation";
+import { subProjectSchema } from "@/lib/validations";
 import { apiSuccess, apiError, getPaginationParams } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
@@ -28,7 +30,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
-  const body = await request.json();
+  const parsed = await validateBody(request, subProjectSchema);
+  if (!parsed.ok) return apiError(parsed.error, parsed.status);
+  const body = parsed.data as any;
   const { name, buyerId, address, description, startDate, expectedEndDate, status, budgetedAmount, notes } = body;
   if (!name?.trim()) return apiError("Nome é obrigatório");
   if (!buyerId) return apiError("Comprador/parceiro é obrigatório");

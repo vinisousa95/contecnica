@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { projectSchema } from "@/lib/validations";
 import { apiSuccess, apiError, getPaginationParams } from "@/lib/utils";
@@ -43,14 +43,25 @@ export async function GET(request: NextRequest) {
     prisma.project.count({ where }),
   ]);
 
-  const enriched = projects.map((p) => ({
-    ...p,
-    totalExpenses: p.expenses.reduce((sum, e) => sum + Number(e.amount), 0),
-    totalRevenues: p.revenues.reduce((sum, r) => sum + Number(r.amount), 0),
-    margin:
-      p.revenues.reduce((sum, r) => sum + Number(r.amount), 0) -
-      p.expenses.reduce((sum, e) => sum + Number(e.amount), 0),
-  }));
+  // EMPLOYEE (funcionário de campo) não deve ver a situação financeira das
+  // obras — antes esta rota devolvia custo, receita e margem para qualquer
+  // sessão, e o middleware libera /api/v1/projects para esse perfil.
+  const canSeeFinancials = session.role !== "EMPLOYEE";
+
+  const enriched = projects.map((p) => {
+    const { expenses, revenues, _count, ...rest } = p;
+    if (!canSeeFinancials) return { ...rest, budget: null };
+
+    const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+    const totalRevenues = revenues.reduce((sum, r) => sum + Number(r.amount), 0);
+    return {
+      ...rest,
+      _count,
+      totalExpenses,
+      totalRevenues,
+      margin: totalRevenues - totalExpenses,
+    };
+  });
 
   return apiSuccess(enriched, {
     pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },

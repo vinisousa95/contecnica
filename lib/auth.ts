@@ -1,6 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { NextRequest } from "next/server";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET
@@ -13,11 +12,20 @@ if (!process.env.JWT_SECRET) {
 const COOKIE_NAME = "contecnica_session";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
+/**
+ * Cookie seguro por padrão: só sai do modo Secure quando explicitamente em
+ * desenvolvimento. Antes era `APP_ENV === "production"`, então esquecer de
+ * definir APP_ENV no servidor fazia o cookie de sessão trafegar em HTTP puro.
+ */
+export const USE_SECURE_COOKIES = process.env.APP_ENV !== "development";
+
 export interface SessionPayload {
   userId: string;
   email: string;
   name: string;
   role: string;
+  /** Versão do token no momento da emissão — ver User.tokenVersion. */
+  tokenVersion?: number;
 }
 
 export async function createToken(payload: SessionPayload): Promise<string> {
@@ -44,30 +52,18 @@ export async function verifyToken(token: string): Promise<SessionPayload | null>
   }
 }
 
-export async function getSession(): Promise<SessionPayload | null> {
-  const cookieStore = cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (!token) return null;
-  return verifyToken(token);
-}
-
-export async function getSessionFromRequest(req: NextRequest): Promise<SessionPayload | null> {
-  // Bearer token (mobile apps)
-  const auth = req.headers.get("Authorization");
-  if (auth?.startsWith("Bearer ")) {
-    return verifyToken(auth.slice(7));
-  }
-  // Cookie (web)
-  const token = req.cookies.get(COOKIE_NAME)?.value;
-  if (!token) return null;
-  return verifyToken(token);
-}
+/**
+ * `getSession` / `getSessionFromRequest` moram em `lib/session.ts`, não aqui.
+ * Este módulo é importado pelo middleware (Edge runtime) e por isso não pode
+ * depender do Prisma — e a validação de sessão precisa do banco para conferir
+ * `tokenVersion` e `isActive`. Use sempre `@/lib/session` nas rotas.
+ */
 
 export function setSessionCookie(token: string) {
   const cookieStore = cookies();
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.APP_ENV === "production",
+    secure: USE_SECURE_COOKIES,
     sameSite: "lax",
     maxAge: COOKIE_MAX_AGE,
     path: "/",

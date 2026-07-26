@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { validateBody } from "@/lib/api-validation";
+import { fineUpdateSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
 const includeRelations = {
@@ -21,7 +23,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   if (!session) return apiError("Não autorizado", 401);
 
   try {
-    const body = await request.json();
+    const parsed = await validateBody(request, fineUpdateSchema);
+    if (!parsed.ok) return apiError(parsed.error, parsed.status);
+    const body = parsed.data as any;
     const { date, amount, reason, points, status, notes, employeeId, assignmentId } = body;
 
     const fine = await prisma.vehicleFine.update({

@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { validateBody } from "@/lib/api-validation";
+import { budgetStatusSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -25,7 +27,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   });
   if (!existing) return apiError("Orçamento não encontrado", 404);
 
-  const body = await request.json();
+  const parsed = await validateBody(request, budgetStatusSchema);
+  if (!parsed.ok) return apiError(parsed.error, parsed.status);
+  const body = parsed.data as any;
   const { status } = body;
   if (!status) return apiError("Status é obrigatório");
 

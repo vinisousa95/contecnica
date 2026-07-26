@@ -61,6 +61,9 @@ const AUTH_PATTERNS: RegExp[] = [
   /\/(signup|register)$/,
   /\/(forgot|reset|change|recover)-password$/,
   /\/password\/(reset|forgot|change)$/,
+  // O PIN financeiro tem 4 dígitos (10.000 combinações): sob o limite genérico
+  // de escrita (100/min) o espaço todo seria varrido em ~100 minutos.
+  /\/verify-finance-pin$/,
 ];
 
 /**

@@ -1,7 +1,20 @@
 import { NextRequest } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth";
+import { z } from "zod";
+import { getSessionFromRequest } from "@/lib/session";
+import { canAccessPersonalProject } from "@/lib/personal-project-guard";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/utils";
+
+const updateSchema = z.object({
+  name: z.string().trim().min(1, "Nome é obrigatório").max(200),
+  address: z.string().max(300).optional().nullable(),
+  description: z.string().max(2000).optional().nullable(),
+  startDate: z.string().optional().nullable(),
+  expectedEndDate: z.string().optional().nullable(),
+  status: z.enum(["PLANNING", "IN_PROGRESS", "PAUSED", "COMPLETED", "CANCELLED"]).default("PLANNING"),
+  budgetedAmount: z.union([z.string(), z.number()]).optional().nullable(),
+  notes: z.string().max(2000).optional().nullable(),
+}).strict();
 
 function serialize(p: any) {
   const totalMaterials = (p.materials ?? []).reduce((s: number, m: any) => s + Number(m.total), 0);
@@ -22,8 +35,11 @@ function serialize(p: any) {
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
-  const project = await prisma.personalProject.findUnique({
-    where: { id: params.id },
+  if (!(await canAccessPersonalProject(session, params.id))) {
+    return apiError("Obra pessoal não encontrada", 404);
+  }
+  const project = await prisma.personalProject.findFirst({
+    where: { id: params.id, createdById: session.userId },
     include: {
       materials: { orderBy: { createdAt: "desc" } },
       projectExpenses: { orderBy: { createdAt: "desc" } },
@@ -37,18 +53,24 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
-  const body = await request.json();
-  const { name, address, description, startDate, expectedEndDate, status, budgetedAmount, notes } = body;
-  if (!name?.trim()) return apiError("Nome é obrigatório");
+  if (!(await canAccessPersonalProject(session, params.id))) {
+    return apiError("Obra pessoal não encontrada", 404);
+  }
+
+  const parsed = updateSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return apiError(parsed.error.errors[0].message);
+  const { name, address, description, startDate, expectedEndDate, status, budgetedAmount, notes } = parsed.data;
+  const amount = budgetedAmount == null || budgetedAmount === "" ? null : Number(budgetedAmount);
+  if (amount !== null && !Number.isFinite(amount)) return apiError("Valor orçado inválido");
   try {
     const project = await prisma.personalProject.update({
       where: { id: params.id },
       data: {
-        name: name.trim(), address: address || null, description: description || null,
+        name, address: address || null, description: description || null,
         startDate: startDate ? new Date(startDate + "T12:00:00.000Z") : null,
         expectedEndDate: expectedEndDate ? new Date(expectedEndDate + "T12:00:00.000Z") : null,
-        status: status ?? "PLANNING",
-        budgetedAmount: budgetedAmount ? parseFloat(budgetedAmount) : null,
+        status,
+        budgetedAmount: amount,
         notes: notes || null,
       },
     });
@@ -62,6 +84,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
+  if (!(await canAccessPersonalProject(session, params.id))) {
+    return apiError("Obra pessoal não encontrada", 404);
+  }
   try {
     await prisma.personalProject.delete({ where: { id: params.id } });
     return apiSuccess({ message: "Excluído com sucesso" });

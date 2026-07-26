@@ -10,12 +10,12 @@ const nextConfig = {
     serverComponentsExternalPackages: ["bcryptjs"],
   },
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "**",
-      },
-    ],
+    // Sem remotePatterns: todas as imagens do sistema são locais (servidas por
+    // /api/v1/uploads). Com `hostname: "**"` qualquer host HTTPS podia ser
+    // buscado via /_next/image, transformando o servidor em proxy aberto de
+    // imagens (consumo de banda e SSRF parcial). Se algum dia precisar de um
+    // host externo, liste-o explicitamente aqui.
+    remotePatterns: [],
   },
   // Rewrite /uploads/* to the authenticated API serve route so all uploaded
   // files (old and new) are served with correct Content-Type by Next.js,

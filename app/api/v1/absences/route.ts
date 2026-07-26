@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { validateBody } from "@/lib/api-validation";
+import { absenceSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
@@ -36,7 +38,9 @@ export async function POST(request: NextRequest) {
   if (!session) return apiError("Não autorizado", 401);
 
   try {
-    const body = await request.json();
+    const parsed = await validateBody(request, absenceSchema);
+    if (!parsed.ok) return apiError(parsed.error, parsed.status);
+    const body = parsed.data as any;
     const { employeeId, date, reason, notes, justified } = body;
 
     if (!employeeId) return apiError("Funcionário é obrigatório");
@@ -56,7 +60,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return apiSuccess(absence, 201);
+    return apiSuccess(absence);
   } catch {
     return apiError("Erro ao registrar falta", 500);
   }

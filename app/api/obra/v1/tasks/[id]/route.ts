@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { validateBody } from "@/lib/api-validation";
+import { obraTaskStatusSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
 async function syncProjectTask(taskId: string, completed: boolean) {
@@ -41,7 +43,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 
-  const { status } = await request.json();
+  const parsed = await validateBody(request, obraTaskStatusSchema);
+  if (!parsed.ok) return apiError(parsed.error, parsed.status);
+  const body = parsed.data as any;
+  const { status } = body;
   if (!["PENDING", "IN_PROGRESS", "COMPLETED"].includes(status)) {
     return apiError("Status inválido");
   }

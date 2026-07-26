@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { createUserSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";

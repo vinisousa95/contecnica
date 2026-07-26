@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { validateBody } from "@/lib/api-validation";
+import { payExpenseSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
@@ -9,7 +11,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   if (session.role !== "ADMIN") return apiError("Acesso restrito a administradores", 403);
 
   try {
-    const body = await request.json().catch(() => ({}));
+    const parsed = await validateBody(request, payExpenseSchema);
+    if (!parsed.ok) return apiError(parsed.error, parsed.status);
+    const body = parsed.data as any;
     const paidDate = body.paidDate ? new Date(body.paidDate) : new Date();
 
     const updated = await prisma.personalExpense.updateMany({

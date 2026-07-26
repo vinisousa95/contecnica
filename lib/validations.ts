@@ -1,10 +1,16 @@
 import { z } from "zod";
 
+/**
+ * Todos os schemas usam `.strict()`: propriedade não prevista no schema faz a
+ * requisição ser rejeitada com 400 apontando o campo, em vez do comportamento
+ * padrão do zod (descartar silenciosamente).
+ */
+
 // ── Auth ──────────────────────────────────────────────────────
 export const loginSchema = z.object({
   email: z.string().email("E-mail inválido"),
   password: z.string().min(8, "Senha deve ter ao menos 8 caracteres"),
-});
+}).strict();
 
 // ── Users ─────────────────────────────────────────────────────
 export const createUserSchema = z.object({
@@ -13,7 +19,7 @@ export const createUserSchema = z.object({
   password: z.string().min(8, "Senha deve ter ao menos 8 caracteres"),
   role: z.enum(["ADMIN", "MANAGER", "EMPLOYEE"]).default("ADMIN"),
   phone: z.string().optional(),
-});
+}).strict();
 
 export const updateUserSchema = createUserSchema
   .omit({ password: true })
@@ -21,7 +27,8 @@ export const updateUserSchema = createUserSchema
     password: z.string().min(8).optional().or(z.literal("")),
     financePin: z.string().min(4).max(10).regex(/^\d+$/, "PIN deve conter apenas números").optional().or(z.literal("")),
     isActive: z.boolean().optional(),
-  });
+  })
+  .strict();
 
 // ── Clients ───────────────────────────────────────────────────
 export const clientSchema = z.object({
@@ -38,7 +45,7 @@ export const clientSchema = z.object({
   state: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
-});
+}).strict();
 
 // ── Projects ──────────────────────────────────────────────────
 export const projectSchema = z.object({
@@ -59,7 +66,7 @@ export const projectSchema = z.object({
   notes: z.string().optional().nullable(),
   progress: z.number().int().min(0).max(100).default(0),
   coverPhoto: z.string().optional().nullable(),
-});
+}).strict();
 
 // ── Expenses ──────────────────────────────────────────────────
 export const expenseSchema = z.object({
@@ -75,7 +82,7 @@ export const expenseSchema = z.object({
   notes: z.string().optional().nullable(),
   visibleInPortal: z.boolean().default(false).optional(),
   attachmentUrl: z.string().optional().nullable(),
-});
+}).strict();
 
 // ── Revenues ──────────────────────────────────────────────────
 export const revenueSchema = z.object({
@@ -89,14 +96,14 @@ export const revenueSchema = z.object({
   status: z.enum(["PENDING", "RECEIVED", "OVERDUE"]).default("PENDING"),
   paymentMethod: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
-});
+}).strict();
 
 // ── Categories ────────────────────────────────────────────────
 export const categorySchema = z.object({
   name: z.string().min(2, "Nome deve ter ao menos 2 caracteres"),
   type: z.enum(["EXPENSE", "INCOME", "BOTH"]),
   color: z.string().optional().nullable(),
-});
+}).strict();
 
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreateUserInput = z.infer<typeof createUserSchema>;
@@ -122,7 +129,7 @@ export const reformItemSchema = z.object({
   priceHigh: z.string().min(1, "Preço padrão alto é obrigatório"),
   isActive: z.boolean().optional().default(true),
   sortOrder: z.number().optional().default(0),
-});
+}).strict();
 
 // ── Budget Extra Item ─────────────────────────────────────────
 export const budgetExtraItemSchema = z.object({
@@ -133,7 +140,7 @@ export const budgetExtraItemSchema = z.object({
   unit: z.enum(["UNIT","SQM","M","ML","DAILY","SERVICE","POINT","HOUR"]).default("UNIT"),
   unitPrice: z.number().min(0, "Valor deve ser maior ou igual a 0"),
   subtotal: z.number(),
-});
+}).strict();
 
 // ── Budget ────────────────────────────────────────────────────
 export const budgetItemSchema = z.object({
@@ -143,7 +150,7 @@ export const budgetItemSchema = z.object({
   quantity: z.number().min(0.001, "Quantidade deve ser maior que 0"),
   unitPrice: z.number().min(0),
   subtotal: z.number(),
-});
+}).strict();
 
 export const budgetSchema = z.object({
   clientId: z.string().min(1, "Cliente é obrigatório"),
@@ -162,7 +169,7 @@ export const budgetSchema = z.object({
   discount: z.number().min(0).max(100).default(0).optional(),
   items: z.array(budgetItemSchema).default([]),
   extraItems: z.array(budgetExtraItemSchema).default([]),
-});
+}).strict();
 
 export type ReformItemInput = z.infer<typeof reformItemSchema>;
 export type BudgetInput = z.infer<typeof budgetSchema>;
@@ -181,7 +188,7 @@ export const reformPackageItemSchema = z.object({
   unitPriceMedium: z.coerce.number().min(0).optional().nullable(),
   unitPriceHigh: z.coerce.number().min(0).optional().nullable(),
   sortOrder: z.number().int().default(0),
-});
+}).strict();
 
 export const reformPackageSchema = z.object({
   name: z.string().min(2, "Nome deve ter ao menos 2 caracteres"),
@@ -194,7 +201,7 @@ export const reformPackageSchema = z.object({
   isActive: z.boolean().default(true),
   sortOrder: z.number().int().default(0),
   items: z.array(reformPackageItemSchema).default([]),
-});
+}).strict();
 
 export type ReformPackageItemInput = z.infer<typeof reformPackageItemSchema>;
 export type ReformPackageInput = z.infer<typeof reformPackageSchema>;
@@ -221,7 +228,7 @@ export const employeeSchema = z.object({
   contractCity: z.string().optional().nullable(),
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
   notes: z.string().optional().nullable(),
-});
+}).strict();
 
 // ── Vehicles ──────────────────────────────────────────────────
 export const vehicleSchema = z.object({
@@ -238,7 +245,7 @@ export const vehicleSchema = z.object({
   lastOilChangeKm: z.number().int().optional().nullable(),
   oilChangeIntervalKm: z.number().int().optional().nullable(),
   oilChangeIntervalDays: z.number().int().optional().nullable(),
-});
+}).strict();
 
 // ── Assignments ───────────────────────────────────────────────
 export const assignmentSchema = z.object({
@@ -250,7 +257,7 @@ export const assignmentSchema = z.object({
   returnTime: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   status: z.enum(["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]).default("SCHEDULED"),
-});
+}).strict();
 
 export type EmployeeInput = z.infer<typeof employeeSchema>;
 export type VehicleInput = z.infer<typeof vehicleSchema>;
@@ -280,7 +287,7 @@ export const serviceProviderSchema = z.object({
   bankInfo: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
-});
+}).strict();
 
 export const workServiceProviderSchema = z.object({
   serviceProviderId: z.string().min(1, "Prestador é obrigatório"),
@@ -292,7 +299,7 @@ export const workServiceProviderSchema = z.object({
   status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELED"]).default("PENDING"),
   notes: z.string().optional().nullable(),
   generateExpense: z.boolean().optional().default(false),
-});
+}).strict();
 
 export type ServiceProviderInput = z.infer<typeof serviceProviderSchema>;
 export type WorkServiceProviderInput = z.infer<typeof workServiceProviderSchema>;
@@ -316,6 +323,130 @@ export const personalExpenseSchema = z.object({
   recurrenceType: z.enum(["NONE","WEEKLY","MONTHLY","YEARLY"]).default("NONE"),
   attachmentUrl: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
-});
+}).strict();
 
 export type PersonalExpenseInput = z.infer<typeof personalExpenseSchema>;
+
+// ── Sub-obras (Obras Pessoais / Obras Parcerias) ───────────────
+// Estes schemas cobrem rotas que antes gravavam o body cru no Prisma.
+
+const SUB_PROJECT_STATUS = ["PLANNING", "IN_PROGRESS", "PAUSED", "COMPLETED", "CANCELLED"] as const;
+const PAYMENT_STATUS = ["PENDING", "PAID", "OVERDUE", "CANCELED"] as const;
+const PROVIDER_STATUS = ["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELED"] as const;
+
+/** Aceita string ou número; "" e null viram null. */
+const numeric = (label: string) =>
+  z.union([z.string(), z.number()]).optional().nullable().superRefine((v, ctx) => {
+    if (v === null || v === undefined || v === "") return;
+    const n = typeof v === "number" ? v : Number(String(v).replace(",", "."));
+    if (!Number.isFinite(n)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: `${label} inválido` });
+  });
+
+export const subProjectSchema = z.object({
+  name: z.string().trim().min(1, "Nome é obrigatório").max(200),
+  buyerId: z.string().optional().nullable(),
+  address: z.string().max(300).optional().nullable(),
+  description: z.string().max(2000).optional().nullable(),
+  startDate: z.string().optional().nullable(),
+  expectedEndDate: z.string().optional().nullable(),
+  status: z.enum(SUB_PROJECT_STATUS).default("PLANNING"),
+  budgetedAmount: numeric("Valor orçado"),
+  notes: z.string().max(2000).optional().nullable(),
+}).strict();
+
+export const projectMaterialSchema = z.object({
+  description: z.string().trim().min(1, "Descrição é obrigatória").max(300),
+  supplier: z.string().max(200).optional().nullable(),
+  quantity: numeric("Quantidade"),
+  unitPrice: numeric("Valor unitário"),
+  date: z.string().optional().nullable(),
+  paymentMethod: z.string().max(50).optional().nullable(),
+  notes: z.string().max(2000).optional().nullable(),
+}).strict();
+
+export const projectExpenseSchema = z.object({
+  description: z.string().trim().min(1, "Descrição é obrigatória").max(300),
+  category: z.string().max(80).optional().nullable(),
+  amount: numeric("Valor"),
+  date: z.string().optional().nullable(),
+  paymentMethod: z.string().max(50).optional().nullable(),
+  status: z.enum(PAYMENT_STATUS).default("PENDING"),
+  notes: z.string().max(2000).optional().nullable(),
+}).strict();
+
+export const projectProviderSchema = z.object({
+  serviceProviderId: z.string().min(1, "Prestador é obrigatório"),
+  serviceDescription: z.string().trim().min(1, "Descrição do serviço é obrigatória").max(500),
+  agreedAmount: numeric("Valor combinado"),
+  paidAmount: numeric("Valor pago"),
+  dueDate: z.string().optional().nullable(),
+  paymentDate: z.string().optional().nullable(),
+  status: z.enum(PROVIDER_STATUS).default("PENDING"),
+  notes: z.string().max(2000).optional().nullable(),
+}).strict();
+
+export const projectProviderUpdateSchema = projectProviderSchema.omit({ serviceProviderId: true });
+
+// ── Faltas / Multas / Fornecedores / Compradores ───────────────
+export const absenceSchema = z.object({
+  employeeId: z.string().min(1, "Funcionário é obrigatório"),
+  date: z.string().min(1, "Data é obrigatória"),
+  reason: z.string().max(300).optional().nullable(),
+  notes: z.string().max(2000).optional().nullable(),
+  justified: z.boolean().default(false),
+}).strict();
+
+export const absenceUpdateSchema = absenceSchema.omit({ employeeId: true });
+
+export const fineSchema = z.object({
+  vehicleId: z.string().optional().nullable(),
+  employeeId: z.string().optional().nullable(),
+  assignmentId: z.string().optional().nullable(),
+  date: z.string().min(1, "Data é obrigatória"),
+  amount: numeric("Valor"),
+  reason: z.string().max(500).optional().nullable(),
+  points: z.coerce.number().int().min(0).max(100).optional().nullable(),
+  status: z.enum(["PENDING", "PAID", "APPEALED", "CANCELED"]).default("PENDING"),
+  notes: z.string().max(2000).optional().nullable(),
+}).strict();
+
+export const fineUpdateSchema = fineSchema;
+
+export const supplierSchema = z.object({
+  name: z.string().trim().min(1, "Nome é obrigatório").max(200),
+  category: z.string().max(80).optional().nullable(),
+  cpfCnpj: z.string().max(30).optional().nullable(),
+  phone: z.string().max(30).optional().nullable(),
+  email: z.string().email("E-mail inválido").optional().nullable().or(z.literal("")),
+  notes: z.string().max(2000).optional().nullable(),
+}).strict();
+
+export const partnershipBuyerSchema = z.object({
+  name: z.string().trim().min(1, "Nome é obrigatório").max(200),
+  cpfCnpj: z.string().max(30).optional().nullable(),
+  phone: z.string().max(30).optional().nullable(),
+  email: z.string().email("E-mail inválido").optional().nullable().or(z.literal("")),
+  address: z.string().max(300).optional().nullable(),
+  city: z.string().max(120).optional().nullable(),
+  state: z.string().max(2).optional().nullable(),
+  notes: z.string().max(2000).optional().nullable(),
+  status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
+}).strict();
+
+// ── Pequenos payloads de transição de estado ──────────────────
+export const budgetStatusSchema = z.object({
+  status: z.enum(["DRAFT", "UNDER_REVIEW", "SENT", "APPROVED", "REJECTED", "CANCELLED"]),
+}).strict();
+
+export const obraTaskStatusSchema = z.object({
+  status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED"]),
+}).strict();
+
+export const obraLoginSchema = z.object({
+  email: z.string().email("E-mail inválido"),
+  password: z.string().min(1, "Senha é obrigatória"),
+}).strict();
+
+export const payExpenseSchema = z.object({
+  paidDate: z.string().optional().nullable(),
+}).strict();

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/session";
 import { writeFile, mkdir } from "fs/promises";
+import { randomUUID } from "crypto";
 import { join } from "path";
 import { apiError } from "@/lib/utils";
 import { UPLOAD_BASE } from "@/lib/upload-config";
@@ -40,7 +41,9 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     const ext = MIME_TO_EXT[file.type] ?? "bin";
-    const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    // randomUUID (CSPRNG) em vez de Math.random: nomes de arquivo não devem
+    // ser previsíveis, já que a URL é o identificador do arquivo.
+    const safeName = `${Date.now()}-${randomUUID()}.${ext}`;
     const subdir = type === "document" ? "documents" : "photos";
 
     const uploadDir = join(UPLOAD_BASE, subdir);

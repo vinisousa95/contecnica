@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { budgetSchema } from "@/lib/validations";
 import { apiSuccess, apiError, getPaginationParams } from "@/lib/utils";

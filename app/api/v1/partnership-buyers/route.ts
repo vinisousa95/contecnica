@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { validateBody } from "@/lib/api-validation";
+import { partnershipBuyerSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
@@ -16,7 +18,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
-  const body = await request.json();
+  const parsed = await validateBody(request, partnershipBuyerSchema);
+  if (!parsed.ok) return apiError(parsed.error, parsed.status);
+  const body = parsed.data as any;
   const { name, cpfCnpj, phone, email, address, city, state, notes } = body;
   if (!name?.trim()) return apiError("Nome é obrigatório");
   const buyer = await prisma.partnershipBuyer.create({

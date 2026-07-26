@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { apiSuccess, apiError } from "@/lib/utils";

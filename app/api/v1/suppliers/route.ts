@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSessionFromRequest } from "@/lib/auth";
+import { validateBody } from "@/lib/api-validation";
+import { supplierSchema } from "@/lib/validations";
+import { getSessionFromRequest } from "@/lib/session";
 
 export async function GET(request: NextRequest) {
   const session = await getSessionFromRequest(request);
@@ -32,7 +34,9 @@ export async function POST(request: NextRequest) {
   const session = await getSessionFromRequest(request);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await request.json();
+  const parsed = await validateBody(request, supplierSchema);
+  if (!parsed.ok) return apiError(parsed.error, parsed.status);
+  const body = parsed.data as any;
   const { name, category, cpfCnpj, phone, email, notes } = body;
 
   if (!name?.trim()) {

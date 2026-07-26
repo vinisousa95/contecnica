@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { validateBody } from "@/lib/api-validation";
+import { projectMaterialSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
@@ -16,7 +18,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
-  const body = await request.json();
+  const parsed = await validateBody(request, projectMaterialSchema);
+  if (!parsed.ok) return apiError(parsed.error, parsed.status);
+  const body = parsed.data as any;
   const { description, supplier, quantity, unitPrice, date, paymentMethod, notes } = body;
   if (!description?.trim()) return apiError("Descrição é obrigatória");
   const qty = parseFloat(quantity) || 0;

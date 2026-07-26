@@ -3,6 +3,7 @@ import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { assignmentSchema } from "@/lib/validations";
 import { apiSuccess, apiError, getPaginationParams } from "@/lib/utils";
+import { notifyAssignment } from "@/lib/whatsapp/notify-assignment";
 
 export async function GET(request: NextRequest) {
   const session = await getSessionFromRequest(request);
@@ -116,6 +117,11 @@ export async function POST(request: NextRequest) {
       (assignment as any).expenseId = expense.id;
       (assignment as any).expense = { id: expense.id, status: "PENDING", paymentDate: null, amount: dailyRate };
     }
+
+    // Avisa o funcionário no WhatsApp. `await` de propósito: assim o resultado
+    // já está gravado no log quando a resposta volta, e em serverless a função
+    // não é encerrada no meio do envio. notifyAssignment nunca lança.
+    await notifyAssignment(assignment.id, "ASSIGNMENT_CREATED");
 
     return apiSuccess(assignment);
   } catch (error) {

@@ -532,6 +532,10 @@ model Employee {
   cpf           String?
   rg            String?
   phone         String?
+  // Receber avisos de deslocamento por WhatsApp. Padrão ligado: é comunicado
+  // operacional sobre o próprio trabalho, não divulgação. Desligue por
+  // funcionário quando ele não quiser (ou não tiver WhatsApp).
+  whatsappEnabled Boolean @default(true) @map("whatsapp_enabled")
   role          String?
   birthDate     DateTime?      @map("birth_date")
   street        String?
@@ -1170,4 +1174,22 @@ model PersonalProjectProvider {
   updatedAt          DateTime        @updatedAt @map("updated_at")
 
   @@map("personal_project_providers")
+}
+
+/// Registro de mensagens de WhatsApp enviadas — auditoria e diagnóstico.
+/// Sem isso não há como saber se um funcionário foi avisado nem por que falhou.
+model WhatsappLog {
+  id           String   @id @default(cuid())
+  kind         String                            // ASSIGNMENT_CREATED, ASSIGNMENT_UPDATED, ASSIGNMENT_CANCELLED
+  status       String                            // SENT, FAILED, SKIPPED
+  to           String?                           // número normalizado usado no envio
+  employeeId   String?  @map("employee_id")
+  assignmentId String?  @map("assignment_id")
+  messageId    String?  @map("message_id")       // id devolvido pela Evolution
+  error        String?                           // motivo, quando status != SENT
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([assignmentId])
+  @@index([employeeId, createdAt])
+  @@map("whatsapp_logs")
 }

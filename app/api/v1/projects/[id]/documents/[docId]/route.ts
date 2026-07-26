@@ -7,7 +7,7 @@ import { z } from "zod";
 const schema = z.object({
   name: z.string().min(2).optional(),
   visible: z.boolean().optional(),
-});
+}).strict();
 
 export async function PUT(
   request: NextRequest,

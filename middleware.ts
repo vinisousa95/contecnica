@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { verifyToken } from "@/lib/auth";
 import { verifyPortalToken } from "@/lib/portal-auth";
 import { applyRateLimit } from "@/lib/rate-limit";
+import { maxBodyBytesForPath } from "@/lib/api-validation";
 
 const ADMIN_PUBLIC = ["/login", "/api/v1/auth/login"];
 const PORTAL_PUBLIC = ["/portal/login", "/api/portal/v1/auth/login"];
@@ -17,6 +18,18 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/api/")) {
     const limited = applyRateLimit(request, pathname);
     if (limited) return limited;
+
+    // Teto de tamanho de payload para toda rota de API. `validateBody` faz a
+    // checagem precisa por rota; aqui barramos cedo, o que também cobre as
+    // rotas que validam com safeParse direto e não passam por ele.
+    const declared = Number(request.headers.get("content-length") ?? "");
+    const max = maxBodyBytesForPath(pathname);
+    if (Number.isFinite(declared) && declared > max) {
+      return NextResponse.json(
+        { success: false, error: `Payload muito grande (máx ${Math.floor(max / 1024)} KB).` },
+        { status: 413 }
+      );
+    }
   }
 
   // Allow static files

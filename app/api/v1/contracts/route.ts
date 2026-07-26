@@ -10,14 +10,14 @@ const serviceItemSchema = z.object({
   unit: z.string(),
   unitPrice: z.number(),
   subtotal: z.number(),
-});
+}).strict();
 
 const installmentSchema = z.object({
   installment: z.number(),
   dueDate: z.string(),
   amount: z.number(),
   description: z.string().optional(),
-});
+}).strict();
 
 const schema = z.object({
   templateId: z.string().optional().nullable(),
@@ -29,7 +29,7 @@ const schema = z.object({
   paymentSchedule: z.array(installmentSchema).default([]),
   variables: z.record(z.string()).default({}),
   totalAmount: z.number().default(0),
-});
+}).strict();
 
 async function generateNumber(projectId?: string | null): Promise<string> {
   const year = new Date().getFullYear();

@@ -9,7 +9,7 @@ const schema = z.object({
   description: z.string().optional().nullable(),
   requestedBy: z.string().optional().nullable(),
   amount: z.string().min(1, "Valor é obrigatório"),
-});
+}).strict();
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);

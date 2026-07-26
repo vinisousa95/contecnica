@@ -21,6 +21,29 @@ export const MAX_BODY_BYTES = 512 * 1024; // 512 KB
 /** Orçamentos e ambientes enviam arrays grandes de itens. */
 export const MAX_BODY_BYTES_LARGE = 2 * 1024 * 1024; // 2 MB
 
+/**
+ * Teto por caminho, aplicado no middleware para TODA rota de API — inclusive as
+ * que validam com `schema.safeParse` direto e não passam por `validateBody`.
+ * Ordem importa: o primeiro prefixo que casar vence.
+ */
+const PATH_LIMITS: Array<[RegExp, number]> = [
+  // multipart binário
+  [/^\/api\/v1\/upload$/, 12 * 1024 * 1024],
+  [/^\/api\/portal\/v1\/contracts\/[^/]+\/sign$/, 22 * 1024 * 1024],
+  // imagem em base64
+  [/^\/api\/v1\/scan-receipt$/, 10 * 1024 * 1024],
+  // payloads com arrays grandes de itens
+  [/^\/api\/v1\/(budgets|reform-packages|contracts|contract-templates)/, MAX_BODY_BYTES_LARGE],
+];
+
+/** Limite de corpo para um caminho de API. */
+export function maxBodyBytesForPath(pathname: string): number {
+  for (const [re, limit] of PATH_LIMITS) {
+    if (re.test(pathname)) return limit;
+  }
+  return MAX_BODY_BYTES;
+}
+
 export type ValidationFailure = { ok: false; error: string; status: number };
 export type ValidationSuccess<T> = { ok: true; data: T };
 export type ValidationResult<T> = ValidationSuccess<T> | ValidationFailure;

@@ -13,7 +13,7 @@ const schema = z.object({
   markAccepted: z.boolean().optional(),
   markRejected: z.boolean().optional(),
   markPending: z.boolean().optional(),
-});
+}).strict();
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string; serviceId: string } }) {
   const session = await getSessionFromRequest(request);

@@ -12,7 +12,7 @@ const schema = z.object({
   isCompleted: z.boolean().optional(),
   showInPortal: z.boolean().optional(),
   order: z.number().int().optional(),
-});
+}).strict();
 
 async function recalcProgress(projectId: string) {
   const tasks = await prisma.projectTask.findMany({

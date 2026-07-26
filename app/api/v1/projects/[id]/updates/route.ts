@@ -7,7 +7,7 @@ import { z } from "zod";
 const schema = z.object({
   title: z.string().min(2),
   description: z.string().optional(),
-});
+}).strict();
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);

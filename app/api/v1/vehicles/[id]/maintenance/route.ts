@@ -12,7 +12,7 @@ const maintenanceSchema = z.object({
   cost: z.number().optional().nullable(),
   workshop: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
-});
+}).strict();
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);

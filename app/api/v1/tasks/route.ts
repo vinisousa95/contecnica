@@ -12,7 +12,7 @@ const createSchema = z.object({
   assigneeId: z.string().optional().nullable(),
   parentId: z.string().optional().nullable(),
   dueDate: z.string().optional().nullable(),
-});
+}).strict();
 
 export async function GET(request: NextRequest) {
   const session = await getSessionFromRequest(request);

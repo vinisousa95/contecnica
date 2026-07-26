@@ -11,7 +11,7 @@ const updateSchema = z.object({
   agreedAmount: z.string().optional().nullable(),
   status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELED"]).optional(),
   notes: z.string().optional().nullable(),
-});
+}).strict();
 
 export async function PATCH(
   request: NextRequest,

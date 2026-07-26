@@ -9,7 +9,7 @@ const schema = z.object({
   fileUrl: z.string().min(1),
   type: z.enum(["CONTRACT", "BUDGET", "INVOICE", "REPORT", "OTHER"]).default("OTHER"),
   visible: z.boolean().default(true),
-});
+}).strict();
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);

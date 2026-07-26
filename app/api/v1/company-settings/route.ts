@@ -17,7 +17,7 @@ const companySettingsSchema = z.object({
   city: z.string().optional().nullable(),
   state: z.string().optional().nullable(),
   zipCode: z.string().optional().nullable(),
-});
+}).strict();
 
 export async function GET(request: NextRequest) {
   const session = await getSessionFromRequest(request);

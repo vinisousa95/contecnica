@@ -20,7 +20,7 @@ const MAX_BASE64_CHARS = 8 * 1024 * 1024;
 const requestSchema = z.object({
   imageBase64: z.string().min(1, "Imagem obrigatória"),
   mediaType: z.enum(ALLOWED_MEDIA_TYPES).default("image/jpeg"),
-});
+}).strict();
 
 /**
  * Formato de saída garantido pela API (structured outputs) — o modelo é obrigado

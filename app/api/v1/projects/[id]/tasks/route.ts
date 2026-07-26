@@ -3,6 +3,13 @@ import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/utils";
 import { z } from "zod";
+import { validateBody } from "@/lib/api-validation";
+
+// Importar tarefas a partir de um orçamento: payload próprio, validado antes
+// de qualquer consulta (este caminho retorna cedo e não passa pelo `schema`).
+const importSchema = z.object({
+  importBudgetId: z.string().min(1, "Orçamento é obrigatório"),
+}).strict();
 
 const schema = z.object({
   name: z.string().min(1),
@@ -11,7 +18,7 @@ const schema = z.object({
   endDate: z.string().optional(),
   showInPortal: z.boolean().default(true),
   order: z.number().int().default(0),
-});
+}).strict();
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
@@ -28,12 +35,17 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
 
-  const body = await request.json();
+  const raw = await validateBody(request, z.record(z.unknown()));
+  if (!raw.ok) return apiError(raw.error, raw.status);
+  const body = raw.data as Record<string, unknown>;
 
   // Import from budget: body.importBudgetId
-  if (body.importBudgetId) {
+  if (body.importBudgetId !== undefined) {
+    const imp = importSchema.safeParse(body);
+    if (!imp.success) return apiError(imp.error.errors[0].message);
+
     const budget = await prisma.budget.findFirst({
-      where: { id: body.importBudgetId },
+      where: { id: imp.data.importBudgetId },
       include: {
         items: { include: { reformItem: true, reformPackage: true } as any },
         extraItems: true,
@@ -44,7 +56,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // Link budget to project
     await prisma.project.update({
       where: { id: params.id },
-      data: { linkedBudgetId: body.importBudgetId },
+      data: { linkedBudgetId: imp.data.importBudgetId },
     });
 
     // Delete existing tasks first to avoid duplicates

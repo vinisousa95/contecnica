@@ -8,7 +8,7 @@ import { z } from "zod";
 const schema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
-});
+}).strict();
 
 // Proteção contra força bruta é aplicada centralmente no middleware
 // (5 tentativas / 15 min por IP) — ver lib/rate-limit.ts.

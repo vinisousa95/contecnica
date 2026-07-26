@@ -9,13 +9,13 @@ const createSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(6),
-});
+}).strict();
 
 const updateSchema = z.object({
   name: z.string().min(2).optional(),
   password: z.string().min(6).optional(),
   isActive: z.boolean().optional(),
-});
+}).strict();
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);

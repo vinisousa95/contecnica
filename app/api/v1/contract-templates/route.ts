@@ -8,7 +8,7 @@ const schema = z.object({
   name: z.string().min(2, "Nome obrigatório"),
   body: z.string().min(10, "Conteúdo obrigatório"),
   isActive: z.boolean().default(true),
-});
+}).strict();
 
 export async function GET(request: NextRequest) {
   const session = await getSessionFromRequest(request);

@@ -11,7 +11,7 @@ const updateSchema = z.object({
   status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED"]).optional(),
   assigneeId: z.string().optional().nullable(),
   dueDate: z.string().optional().nullable(),
-});
+}).strict();
 
 async function syncProjectTask(taskId: string, completed: boolean) {
   const task = await prisma.task.findUnique({ where: { id: taskId } });

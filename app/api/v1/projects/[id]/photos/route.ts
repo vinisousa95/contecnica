@@ -9,7 +9,7 @@ const schema = z.object({
   description: z.string().optional(),
   visible: z.boolean().default(true),
   taskId: z.string().optional().nullable(),
-});
+}).strict();
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);

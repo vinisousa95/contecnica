@@ -153,17 +153,36 @@ export function rateLimit(key: string, limit: number, windowMs: number): RateLim
 }
 
 /**
- * IP do cliente. O nginx em produção envia X-Forwarded-For; pegamos o primeiro
- * endereço da lista (o cliente original).
+ * IP do cliente, para uso como chave de rate limit.
+ *
+ * ATENÇÃO — `X-Forwarded-For` é controlado pelo cliente. Pegar o PRIMEIRO
+ * endereço da lista (como era feito antes) permite burlar o limite: basta
+ * enviar um XFF diferente a cada tentativa e cada uma vira um "IP" novo,
+ * anulando a proteção contra força bruta no login.
+ *
+ * Ordem correta atrás de um proxy reverso:
+ *   1. `X-Real-IP` — o nginx preenche com `$remote_addr`, o peer real da conexão;
+ *   2. ÚLTIMO endereço do XFF — com `$proxy_add_x_forwarded_for` o nginx
+ *      ANEXA o IP real ao que o cliente mandou, então o real é o último;
+ *      qualquer coisa antes disso é entrada do cliente e não é confiável.
+ *
+ * Isso pressupõe que o app só recebe tráfego através do nginx. Se a porta do
+ * Next estiver aberta na internet, o cliente fala direto com o app e forja
+ * os dois headers — por isso o Next deve escutar apenas em 127.0.0.1.
  */
 export function getClientIp(req: NextRequest): string {
+  const realIp = req.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+
   const xff = req.headers.get("x-forwarded-for");
   if (xff) {
-    const first = xff.split(",")[0].trim();
-    if (first) return first;
+    const parts = xff.split(",").map((p) => p.trim()).filter(Boolean);
+    const last = parts[parts.length - 1];
+    if (last) return last;
   }
+
   // req.ip existe no Next 14 e foi removido no Next 15 — acesso tolerante a versão.
-  return req.headers.get("x-real-ip") ?? (req as any).ip ?? "unknown";
+  return (req as any).ip ?? "unknown";
 }
 
 /** Mensagem de erro amigável em português. */

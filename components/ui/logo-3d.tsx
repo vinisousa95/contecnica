@@ -14,11 +14,11 @@ import { Building2 } from "lucide-react";
 export function Logo3D({ className = "" }: { className?: string }) {
   return (
     <div className={`logo-3d-stage ${className}`}>
-      <div className="logo-3d-plate relative rounded-2xl bg-white px-7 py-5 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.65)] ring-1 ring-white/25">
+      <div className="logo-3d-plate relative rounded-2xl bg-white px-5 py-3 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.65)] ring-1 ring-white/25">
         <img
           src="/logo.png"
           alt="Contécnica"
-          className="relative h-24 w-auto object-contain"
+          className="relative h-28 w-auto object-contain"
           onError={(e) => {
             const t = e.currentTarget;
             t.style.display = "none";

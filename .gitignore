@@ -44,3 +44,7 @@ prisma/migrations/
 # Arquivos enviados ficam fora do repositório (mantém estrutura de pastas)
 public/uploads/**
 !public/uploads/**/.gitkeep
+
+# Logo: vive no servidor (enviado por scp), não no repositório.
+# logo.original.png é o backup que scripts/trim-logo.mjs cria.
+public/logo.original.png

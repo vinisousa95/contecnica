@@ -45,12 +45,15 @@ export default function PortalLoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1F2937] via-[#111827] to-[#0a0f16] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="flex flex-col items-center mb-8">
-          <Logo3D className="mb-5" />
-          <p className="text-gray-400 text-sm">Portal do Cliente</p>
-        </div>
-
         <div className="bg-white rounded-2xl shadow-2xl p-8">
+          {/* Logo dentro do card: o branco do card é o contraste do logo */}
+          <Logo3D className="mb-3" />
+          <p className="mb-6 text-center text-xs uppercase tracking-wide text-gray-400">
+            Portal do Cliente
+          </p>
+
+          <div className="mb-6 border-t border-gray-100" />
+
           <h2 className="text-lg font-semibold text-gray-900 mb-1">Bem-vindo ao portal</h2>
           <p className="text-sm text-gray-500 mb-6">Acompanhe o andamento da sua obra</p>
 

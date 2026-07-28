@@ -110,11 +110,14 @@ export default async function ImprimirContratoPage(props: { params: Promise<{ id
             background: #f0f0f0;
           }
           tbody tr td { border: 1px solid #000; padding: 6px 10px; }
-          tbody tr:nth-child(even) td { background: #fafafa; }
-          tfoot tr td {
+          tbody tr:nth-child(even):not(.total-row) td { background: #fafafa; }
+          tbody tr.total-row td {
             border: 1px solid #000; padding: 7px 10px;
             font-weight: bold; font-size: 11pt;
+            background: #f0f0f0;
           }
+          /* Não deixa o total ser separado dos itens numa quebra de página */
+          tbody tr.total-row { break-inside: avoid; page-break-inside: avoid; }
           .text-right { text-align: right; }
           .text-center { text-align: center; }
 
@@ -217,13 +220,14 @@ export default async function ImprimirContratoPage(props: { params: Promise<{ id
                     <td className="text-right">{fmt(Number(item.subtotal))}</td>
                   </tr>
                 ))}
-              </tbody>
-              <tfoot>
-                <tr>
+                {/* Total como última linha do tbody, não em <tfoot>: o navegador
+                    repete o tfoot em TODA página impressa, e o total aparecia no
+                    pé de cada folha. Aqui ele sai uma única vez, no fim. */}
+                <tr className="total-row">
                   <td colSpan={5} className="text-right">VALOR TOTAL DOS SERVIÇOS</td>
                   <td className="text-right">{fmt(totalAmount)}</td>
                 </tr>
-              </tfoot>
+              </tbody>
             </table>
           </div>
         )}

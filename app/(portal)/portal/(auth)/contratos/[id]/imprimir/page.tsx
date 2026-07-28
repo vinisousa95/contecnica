@@ -69,7 +69,8 @@ export default async function PortalImprimirContrato(props: { params: Promise<{ 
     thead tr th { border: 1px solid #000; padding: 6px 10px; text-align: left; font-size: 10pt; font-weight: bold; background: #f0f0f0; }
     tbody tr td { border: 1px solid #000; padding: 6px 10px; }
     tbody tr:nth-child(even) td { background: #fafafa; }
-    tfoot tr td { border: 1px solid #000; padding: 7px 10px; font-weight: bold; }
+    tbody tr.total-row td { border: 1px solid #000; padding: 7px 10px; font-weight: bold; background: #f0f0f0; }
+    tbody tr.total-row { break-inside: avoid; page-break-inside: avoid; }
     .tr { text-align: right; } .tc { text-align: center; }
     .sig-section { margin-top: 48px; }
     .sig-date { text-align: right; margin-bottom: 40px; }
@@ -148,13 +149,13 @@ export default async function PortalImprimirContrato(props: { params: Promise<{ 
                     <td className="tr">{fmt(Number(item.subtotal))}</td>
                   </tr>
                 ))}
-              </tbody>
-              <tfoot>
-                <tr>
+                {/* Ver comentário na versão admin: <tfoot> repetiria o total em
+                    cada página impressa. */}
+                <tr className="total-row">
                   <td colSpan={5} className="tr">VALOR TOTAL DOS SERVIÇOS</td>
                   <td className="tr">{fmt(totalAmount)}</td>
                 </tr>
-              </tfoot>
+              </tbody>
             </table>
           </>
         )}

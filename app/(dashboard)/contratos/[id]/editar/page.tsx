@@ -157,8 +157,11 @@ export default function EditarContratoPage() {
   function handleSubmit() {
     const allVars = buildVars();
     const finalBody = replaceVars(templateBody, allVars);
+    // amountStr é só de interface — ver comentário na tela de novo contrato.
+    const paymentSchedule = installments.map(({ amountStr, ...rest }) => rest);
+
     updateMutation.mutateAsync({
-      title, body: finalBody, serviceItems, paymentSchedule: installments, variables: vars, totalAmount,
+      title, body: finalBody, serviceItems, paymentSchedule, variables: vars, totalAmount,
     }).catch(() => {});
   }
 

@@ -323,6 +323,10 @@ export default function NovoContratoPage() {
     const allVars = buildVars();
     const finalBody = replaceVars(templateBody, allVars);
 
+    // amountStr é estado de interface (o texto formatado enquanto se digita) e
+    // não faz parte do contrato: a API valida o payload e rejeita campo extra.
+    const paymentSchedule = installments.map(({ amountStr, ...rest }) => rest);
+
     createMutation.mutateAsync({
       templateId: templateId || null,
       clientId,
@@ -330,7 +334,7 @@ export default function NovoContratoPage() {
       title,
       body: finalBody,
       serviceItems,
-      paymentSchedule: installments,
+      paymentSchedule,
       variables: vars,
       totalAmount,
     }).catch(() => {});

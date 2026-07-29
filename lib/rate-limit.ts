@@ -76,6 +76,12 @@ const AUTH_EXEMPT: RegExp[] = [/\/auth\/me$/, /\/auth\/logout$/];
 /** Endpoints que consomem APIs pagas de terceiros → regra `ai`. */
 const AI_PATTERNS: RegExp[] = [/\/scan-receipt$/];
 
+/**
+ * Webhooks de gateway. Limite alto: o provedor reenvia notificações e pode
+ * disparar rajadas legítimas; bloquear faria perder confirmação de pagamento.
+ */
+const WEBHOOK_PATTERNS: RegExp[] = [/^\/api\/webhooks\//];
+
 /** Decide qual regra se aplica a uma requisição. */
 export function resolveRule(pathname: string, method: string): RateLimitRule {
   const isExempt = AUTH_EXEMPT.some((re) => re.test(pathname));
@@ -84,6 +90,9 @@ export function resolveRule(pathname: string, method: string): RateLimitRule {
   }
   if (AI_PATTERNS.some((re) => re.test(pathname))) {
     return RATE_LIMIT_CONFIG.ai;
+  }
+  if (WEBHOOK_PATTERNS.some((re) => re.test(pathname))) {
+    return RATE_LIMIT_CONFIG.webhook;
   }
   const isRead = method === "GET" || method === "HEAD";
   return isRead ? RATE_LIMIT_CONFIG.read : RATE_LIMIT_CONFIG.mutation;

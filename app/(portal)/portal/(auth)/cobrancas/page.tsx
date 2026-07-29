@@ -9,6 +9,17 @@ import {
   X, CreditCard, QrCode, Copy, Check, Clock, FileText, ExternalLink, Wrench,
 } from "lucide-react";
 
+/** Cria a cobrança no gateway e devolve a URL do checkout. */
+async function startCheckout(): Promise<string> {
+  const res = await fetch("/api/portal/v1/billing/checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error ?? "Não foi possível iniciar o pagamento.");
+  return json.data.checkoutUrl;
+}
+
 async function fetchBilling() {
   const res = await fetch("/api/portal/v1/billing", { headers: { "Content-Type": "application/json" } });
   const json = await res.json();
@@ -117,6 +128,20 @@ function ItemRow({ item, onPay }: { item: any; onPay: () => void }) {
 export default function CobrancasPage() {
   const { data, isLoading, isError, error } = useQuery({ queryKey: ["portal-billing"], queryFn: fetchBilling });
   const [selected, setSelected] = useState<any>(null);
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+
+  const handlePayAll = async () => {
+    setPaying(true);
+    setPayError(null);
+    try {
+      // Redireciona para o Mercado Pago. O valor é calculado no servidor.
+      window.location.href = await startCheckout();
+    } catch (e: any) {
+      setPayError(e?.message ?? "Não foi possível iniciar o pagamento.");
+      setPaying(false);
+    }
+  };
 
   if (isLoading) return <LoadingPage message="Carregando cobranças..." />;
   if (isError) return (
@@ -141,10 +166,29 @@ export default function CobrancasPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">Cobranças</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Valores pendentes de pagamento para sua obra</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Cobranças</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Valores pendentes de pagamento para sua obra</p>
+        </div>
+
+        {data.paymentEnabled && (
+          <button
+            onClick={handlePayAll}
+            disabled={paying}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#EA580C] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#C2410C] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <CreditCard className="h-4 w-4" />
+            {paying ? "Abrindo pagamento..." : `Pagar ${formatCurrency(totalGeral)}`}
+          </button>
+        )}
       </div>
+
+      {payError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">
+          {payError}
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

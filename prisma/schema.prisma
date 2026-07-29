@@ -70,6 +70,7 @@ model Client {
   budgets     Budget[]
   portalUsers ClientUser[]
   contracts   Contract[]
+  payments    Payment[]
 
   @@map("clients")
 }
@@ -176,6 +177,10 @@ model Expense {
   attachmentUrl   String?       @map("attachment_url")
   notes           String?
   visibleInPortal Boolean       @default(false) @map("visible_in_portal")
+  // Reembolso pelo CLIENTE. Distinto de `status`: PAID ali significa que a
+  // Contécnica pagou o fornecedor, não que o cliente reembolsou.
+  clientPaid      Boolean       @default(false) @map("client_paid")
+  clientPaidAt    DateTime?     @map("client_paid_at")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
@@ -1192,4 +1197,55 @@ model WhatsappLog {
   @@index([assignmentId])
   @@index([employeeId, createdAt])
   @@map("whatsapp_logs")
+}
+
+/// Cobrança gerada para o cliente no Mercado Pago.
+/// `items` guarda o que estava sendo cobrado no momento da criação, para que a
+/// confirmação marque exatamente aqueles itens — e não o que estiver pendente
+/// quando a notificação chegar.
+model Payment {
+  id             String        @id @default(cuid())
+  clientId       String        @map("client_id")
+  client         Client        @relation(fields: [clientId], references: [id])
+  amount         Decimal       @db.Decimal(12, 2)
+  status         PaymentStatus @default(PENDING)
+  /// [{ "type": "material" | "extra_service", "id": "...", "amount": 0 }]
+  items          Json
+  provider       String        @default("mercadopago")
+  preferenceId   String?       @map("preference_id")
+  /// URL do checkout, para o cliente retomar um pagamento pendente.
+  checkoutUrl    String?       @map("checkout_url")
+  providerPaymentId String?    @unique @map("provider_payment_id")
+  paymentMethod  String?       @map("payment_method")
+  paidAt         DateTime?     @map("paid_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  @@index([clientId, status])
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  REFUNDED
+}
+
+/// Registro de toda notificação recebida do gateway — auditoria, idempotência e
+/// diagnóstico da validação de assinatura.
+model PaymentWebhookLog {
+  id           String   @id @default(cuid())
+  provider     String   @default("mercadopago")
+  topic        String?
+  resourceId   String?  @map("resource_id")
+  signatureOk  Boolean  @default(false) @map("signature_ok")
+  handled      Boolean  @default(false)
+  note         String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([resourceId])
+  @@index([createdAt])
+  @@map("payment_webhook_logs")
 }

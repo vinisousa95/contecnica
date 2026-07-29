@@ -6,6 +6,10 @@ import { applyRateLimit } from "@/lib/rate-limit";
 import { maxBodyBytesForPath } from "@/lib/api-validation";
 
 const ADMIN_PUBLIC = ["/login", "/api/v1/auth/login"];
+// Webhooks de gateway: quem chama é o provedor, que não tem sessão nossa.
+// A autenticidade é verificada dentro da rota (assinatura + consulta à API do
+// provedor), não por sessão. Ver app/api/webhooks/mercadopago/route.ts.
+const WEBHOOK_PUBLIC = ["/api/webhooks/"];
 const PORTAL_PUBLIC = ["/portal/login", "/api/portal/v1/auth/login"];
 
 export async function middleware(request: NextRequest) {
@@ -30,6 +34,11 @@ export async function middleware(request: NextRequest) {
         { status: 413 }
       );
     }
+  }
+
+  // Webhooks de provedores externos: sem sessão, autenticados na própria rota.
+  if (WEBHOOK_PUBLIC.some((p) => pathname.startsWith(p))) {
+    return NextResponse.next();
   }
 
   // Allow static files

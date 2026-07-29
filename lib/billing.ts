@@ -1,0 +1,104 @@
+import { prisma } from "@/lib/prisma";
+
+/**
+ * Itens pendentes de pagamento de um cliente.
+ *
+ * Fonte única: a tela de Cobranças e a criação da cobrança no gateway usam esta
+ * mesma função. Se cada uma calculasse por conta, o valor exibido poderia
+ * divergir do valor cobrado.
+ *
+ * O valor NUNCA vem do cliente — é sempre recalculado aqui a partir do banco.
+ */
+
+export type PendingType = "material" | "extra_service";
+
+export interface PendingItem {
+  id: string;
+  type: PendingType;
+  description: string;
+  category: string;
+  projectId: string | null;
+  projectName: string | null;
+  amount: number;
+  dueDate: Date;
+  attachmentUrl: string | null;
+  isOverdue: boolean;
+}
+
+export async function getPendingForClient(clientId: string): Promise<{
+  pending: PendingItem[];
+  totalPending: number;
+}> {
+  const projects = await prisma.project.findMany({
+    where: { clientId },
+    select: { id: true, name: true },
+  });
+
+  const projectIds = projects.map((p) => p.id);
+  const projectMap = Object.fromEntries(projects.map((p) => [p.id, p.name]));
+
+  if (projectIds.length === 0) return { pending: [], totalPending: 0 };
+
+  // Materiais a reembolsar. `status` do Expense é o pagamento ao FORNECEDOR;
+  // quem diz se o cliente já reembolsou é `clientPaid`.
+  const expenses = await prisma.expense.findMany({
+    where: {
+      projectId: { in: projectIds },
+      category: { name: { contains: "material", mode: "insensitive" } },
+      clientPaid: false,
+    },
+    include: { category: { select: { name: true } } },
+    orderBy: { dueDate: "asc" },
+  });
+
+  // Serviços extras aprovados pelo cliente e ainda não pagos.
+  const extraServices = await prisma.extraService.findMany({
+    where: { projectId: { in: projectIds }, status: "ACCEPTED", paidAt: null },
+    orderBy: { acceptedAt: "asc" },
+  });
+
+  const now = new Date();
+
+  const pending: PendingItem[] = [
+    ...expenses.map((e) => ({
+      id: e.id,
+      type: "material" as const,
+      description: e.description,
+      category: e.category?.name ?? "Material",
+      projectId: e.projectId,
+      projectName: e.projectId ? projectMap[e.projectId] ?? null : null,
+      amount: Number(e.amount),
+      dueDate: e.dueDate,
+      attachmentUrl: e.attachmentUrl ?? null,
+      isOverdue: new Date(e.dueDate) < now,
+    })),
+    ...extraServices.map((s) => ({
+      id: s.id,
+      type: "extra_service" as const,
+      description: s.name,
+      category: "Serviço Extra",
+      projectId: s.projectId,
+      projectName: projectMap[s.projectId] ?? null,
+      amount: Number(s.amount),
+      dueDate: s.acceptedAt ?? s.createdAt,
+      attachmentUrl: null,
+      isOverdue: false,
+    })),
+  ].sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+
+  // Arredonda em centavos: o gateway rejeita valores com mais casas.
+  const totalPending = Math.round(pending.reduce((s, i) => s + i.amount, 0) * 100) / 100;
+
+  return { pending, totalPending };
+}
+
+/** Formato guardado em Payment.items — o que estava sendo cobrado. */
+export interface PaymentItemSnapshot {
+  type: PendingType;
+  id: string;
+  amount: number;
+}
+
+export function toSnapshot(pending: PendingItem[]): PaymentItemSnapshot[] {
+  return pending.map((p) => ({ type: p.type, id: p.id, amount: p.amount }));
+}

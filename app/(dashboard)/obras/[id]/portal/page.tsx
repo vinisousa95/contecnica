@@ -21,15 +21,40 @@ async function apiFetch(url: string, options?: RequestInit) {
   return json.data;
 }
 
+/** Limite aceito pela rota /api/v1/upload. */
+const MAX_UPLOAD_MB = 10;
+
 async function uploadFile(file: File, type: "photo" | "document"): Promise<string> {
+  // Barra aqui antes de subir o arquivo: evita esperar o envio inteiro para
+  // receber um erro, e dá uma mensagem que diz o tamanho do arquivo.
+  const sizeMb = file.size / (1024 * 1024);
+  if (sizeMb > MAX_UPLOAD_MB) {
+    throw new Error(
+      `Arquivo muito grande: ${sizeMb.toFixed(1)} MB (máximo ${MAX_UPLOAD_MB} MB). Comprima o arquivo e tente de novo.`
+    );
+  }
+
   const fd = new FormData();
   fd.append("file", file);
   fd.append("type", type);
   const res = await fetch("/api/v1/upload", { method: "POST", body: fd });
+
+  // 413 costuma vir do nginx (client_max_body_size), que responde em HTML — por
+  // isso o tratamento vem antes de tentar interpretar o corpo como JSON.
+  if (res.status === 413) {
+    throw new Error(
+      `Arquivo recusado por ser muito grande (${sizeMb.toFixed(1)} MB). Se ele está abaixo de ${MAX_UPLOAD_MB} MB, o limite do servidor web precisa ser ajustado.`
+    );
+  }
+
   const text = await res.text();
   if (!text) throw new Error(`Servidor retornou resposta vazia (status ${res.status})`);
   let json: any;
-  try { json = JSON.parse(text); } catch { throw new Error(`Resposta inválida do servidor (status ${res.status})`); }
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new Error(`Resposta inválida do servidor (status ${res.status})`);
+  }
   if (!res.ok) throw new Error(json.error ?? "Erro no upload");
   return json.data.url;
 }

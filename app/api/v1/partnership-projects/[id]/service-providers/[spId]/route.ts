@@ -15,10 +15,12 @@ export async function PATCH(
   const parsed = await validateBody(request, projectProviderUpdateSchema);
   if (!parsed.ok) return apiError(parsed.error, parsed.status);
   const body = parsed.data as any;
-  const { serviceDescription, agreedAmount, paidAmount, dueDate, paymentDate, status, notes } = body;
+  const { serviceProviderId, serviceDescription, agreedAmount, paidAmount, dueDate, paymentDate, status, notes } = body;
   const provider = await prisma.partnershipProvider.update({
     where: { id: params.spId },
     data: {
+      // O formulário permite trocar o prestador na edição.
+      ...(serviceProviderId && { serviceProviderId }),
       ...(serviceDescription && { serviceDescription: serviceDescription.trim() }),
       agreedAmount: agreedAmount !== undefined ? (agreedAmount ? parseFloat(agreedAmount) : null) : undefined,
       paidAmount: paidAmount !== undefined ? (paidAmount ? parseFloat(paidAmount) : null) : undefined,

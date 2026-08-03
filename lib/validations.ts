@@ -385,7 +385,12 @@ export const projectProviderSchema = z.object({
   notes: z.string().max(2000).optional().nullable(),
 }).strict();
 
-export const projectProviderUpdateSchema = projectProviderSchema.omit({ serviceProviderId: true });
+/**
+ * Na atualização o prestador PODE ser trocado — o dropdown "Prestador" continua
+ * editável no formulário, que envia o campo. Omiti-lo aqui fazia a edição ser
+ * rejeitada com "Campo não permitido: serviceProviderId".
+ */
+export const projectProviderUpdateSchema = projectProviderSchema.partial({ serviceProviderId: true });
 
 // ── Faltas / Multas / Fornecedores / Compradores ───────────────
 export const absenceSchema = z.object({

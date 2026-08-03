@@ -9,8 +9,28 @@ export async function GET(request: NextRequest) {
   if (!session) return apiError("Não autorizado", 401);
 
   const now = new Date();
-  const monthStart = startOfMonth(now);
-  const monthEnd = endOfMonth(now);
+
+  // Mês exibido: ?month=YYYY-MM. Sem o parâmetro (ou com valor inválido), o mês
+  // corrente. A validação precisa checar o INTERVALO, não só o formato: `new
+  // Date(2026, 12, 1)` rola para janeiro de 2027 em silêncio, e um ano absurdo
+  // gera uma data que o banco recusa e derruba a rota.
+  const monthParam = new URL(request.url).searchParams.get("month");
+  const m = monthParam?.match(/^(\d{4})-(\d{2})$/);
+  let validReference = now;
+
+  if (m) {
+    const year = Number(m[1]);
+    const month = Number(m[2]);
+    if (year >= 2000 && year <= 2100 && month >= 1 && month <= 12) {
+      validReference = new Date(year, month - 1, 1, 12);
+    }
+  }
+
+  const monthStart = startOfMonth(validReference);
+  const monthEnd = endOfMonth(validReference);
+
+  // Alertas seguem ancorados em HOJE, não no mês escolhido: "próximos 7 dias"
+  // só faz sentido a partir de agora, mesmo olhando um mês passado.
   const alertDate = addDays(now, 7);
 
   const [
@@ -280,5 +300,35 @@ export async function GET(request: NextRequest) {
     })),
   };
 
-  return apiSuccess(data);
+  // Meses oferecidos no seletor: do primeiro lançamento registrado até o mês
+  // corrente. Evita listar meses vazios de antes de a empresa ter movimento.
+  const [firstExpense, firstRevenue] = await Promise.all([
+    prisma.expense.findFirst({ orderBy: { dueDate: "asc" }, select: { dueDate: true } }),
+    prisma.revenue.findFirst({ orderBy: { dueDate: "asc" }, select: { dueDate: true } }),
+  ]);
+
+  const candidates = [firstExpense?.dueDate, firstRevenue?.dueDate].filter(Boolean) as Date[];
+  // Sem lançamento nenhum, oferece só o mês corrente.
+  const earliest = candidates.length
+    ? new Date(Math.min(...candidates.map((d) => d.getTime())))
+    : now;
+
+  const availableMonths: string[] = [];
+  const cursor = startOfMonth(earliest);
+  const last = startOfMonth(now);
+  // Se o mês escolhido for além do corrente (ou anterior ao primeiro), ainda
+  // aparece na lista, para o seletor nunca ficar sem a opção selecionada.
+  const selected = `${monthStart.getFullYear()}-${String(monthStart.getMonth() + 1).padStart(2, "0")}`;
+
+  for (let d = cursor; d <= last; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) {
+    availableMonths.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  if (!availableMonths.includes(selected)) availableMonths.push(selected);
+
+  return apiSuccess({
+    ...data,
+    // Mais recente primeiro: é o que o usuário costuma querer.
+    availableMonths: availableMonths.sort().reverse(),
+    selectedMonth: selected,
+  });
 }

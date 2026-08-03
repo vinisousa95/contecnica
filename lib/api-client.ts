@@ -75,7 +75,9 @@ export const api = {
 
   // Dashboard
   dashboard: {
-    summary: () => request("/dashboard"),
+    /** `month` no formato YYYY-MM; sem ele, a API usa o mês corrente. */
+    summary: (month?: string) =>
+      request(`/dashboard${month ? `?month=${encodeURIComponent(month)}` : ""}`),
   },
 
   // Clients

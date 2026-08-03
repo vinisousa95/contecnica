@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { formatCurrency, formatDate, PROJECT_STATUS_COLORS, PROJECT_STATUS_LABELS } from "@/lib/utils";
@@ -37,6 +38,18 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Link from "next/link";
 
+/** "2026-08" → "agosto de 2026" */
+function monthLabel(ym?: string): string {
+  if (!ym) return "";
+  const [y, m] = ym.split("-").map(Number);
+  return format(new Date(y, m - 1, 1), "MMMM 'de' yyyy", { locale: ptBR });
+}
+
+/** Só a primeira letra. O CSS `capitalize` maiuscularia o "de" também. */
+function ucFirst(v: string): string {
+  return v.charAt(0).toUpperCase() + v.slice(1);
+}
+
 const CHART_COLORS = ["#EA580C", "#6B7280", "#10B981", "#EF4444", "#8B5CF6", "#06B6D4"];
 
 function AlertItem({
@@ -70,16 +83,26 @@ function AlertItem({
 }
 
 export default function DashboardPage() {
+  // Vazio = mês corrente (a API decide), para o primeiro carregamento não
+  // depender do relógio do navegador.
+  const [month, setMonth] = useState<string>("");
+
   const { data, isLoading } = useQuery({
-    queryKey: ["dashboard"],
-    queryFn: () => api.dashboard.summary() as Promise<any>,
+    queryKey: ["dashboard", month],
+    queryFn: () => api.dashboard.summary(month || undefined) as Promise<any>,
     refetchInterval: 60_000,
+    // Mantém os números anteriores na tela ao trocar de mês, em vez de piscar
+    // a tela de carregamento inteira.
+    placeholderData: (prev: any) => prev,
   });
 
-  if (isLoading) return <LoadingPage message="Carregando dashboard..." />;
+  if (isLoading && !data) return <LoadingPage message="Carregando dashboard..." />;
   if (!data) return null;
 
-  const { projects, financial, alerts, recentMovements, activeProjects, budgets, recentBudgets } = data as any;
+  const {
+    projects, financial, alerts, recentMovements, activeProjects, budgets, recentBudgets,
+    availableMonths = [], selectedMonth,
+  } = data as any;
 
   const cashflowData = [
     {
@@ -96,7 +119,21 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title="Dashboard"
-        description={`Visão geral — ${format(new Date(), "MMMM 'de' yyyy", { locale: ptBR })}`}
+        description={`Visão geral — ${monthLabel(selectedMonth)}`}
+        actions={
+          <select
+            value={selectedMonth}
+            onChange={(e) => setMonth(e.target.value)}
+            aria-label="Mês do dashboard"
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+          >
+            {availableMonths.map((m: string) => (
+              <option key={m} value={m}>
+                {ucFirst(monthLabel(m))}
+              </option>
+            ))}
+          </select>
+        }
       />
 
       {/* KPI Cards */}

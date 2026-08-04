@@ -13,6 +13,8 @@ import { toast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import { pickSchemaFields } from "@/lib/form-utils";
+import { projectSchema } from "@/lib/validations";
 
 export default function EditarObraPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
@@ -40,8 +42,11 @@ export default function EditarObraPage(props: { params: Promise<{ id: string }> 
   if (isLoading) return <LoadingPage />;
   if (!project) return null;
 
+  // pickSchemaFields em vez de `...project`: a resposta da API traz id,
+  // createdAt, client, expenses, financialSummary… e o schema é estrito, então
+  // enviar tudo isso fazia a gravação ser recusada.
   const defaultValues: Partial<ProjectInput> = {
-    ...project,
+    ...pickSchemaFields(projectSchema, project),
     clientId: project.client?.id ?? project.clientId,
     startDate: project.startDate ? format(new Date(project.startDate), "yyyy-MM-dd") : undefined,
     expectedEndDate: project.expectedEndDate

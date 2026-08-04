@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { pickSchemaFields } from "@/lib/form-utils";
+import { revenueSchema } from "@/lib/validations";
 
 export default function EditarReceitaPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
@@ -42,8 +44,9 @@ export default function EditarReceitaPage(props: { params: Promise<{ id: string 
   if (isLoading) return <LoadingPage />;
   if (!revenue) return null;
 
+  // Ver comentário na edição de obra.
   const defaultValues: Partial<RevenueInput> = {
-    ...revenue,
+    ...pickSchemaFields(revenueSchema, revenue),
     projectId: revenue.project?.id ?? "",
     clientId: revenue.client?.id ?? "",
     categoryId: revenue.category?.id ?? "",

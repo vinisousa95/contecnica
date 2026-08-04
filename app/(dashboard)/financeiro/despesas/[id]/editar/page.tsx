@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { pickSchemaFields } from "@/lib/form-utils";
+import { expenseSchema } from "@/lib/validations";
 
 export default function EditarDespesaPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
@@ -42,8 +44,10 @@ export default function EditarDespesaPage(props: { params: Promise<{ id: string 
   if (isLoading) return <LoadingPage />;
   if (!expense) return null;
 
+  // Ver comentário na edição de obra: filtra pelo schema em vez de espalhar a
+  // resposta inteira da API.
   const defaultValues: Partial<ExpenseInput> = {
-    ...expense,
+    ...pickSchemaFields(expenseSchema, expense),
     projectId: expense.project?.id ?? "",
     categoryId: expense.category?.id ?? "",
     amount: expense.amount != null ? Number(expense.amount).toFixed(2) : "",

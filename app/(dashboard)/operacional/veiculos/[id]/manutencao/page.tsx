@@ -17,6 +17,8 @@ import { ArrowLeft, Plus, Wrench, Droplets, Pencil, Trash2, X, Check, Store } fr
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { parseCurrencyInput } from "@/lib/masks";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { pickSchemaFields } from "@/lib/form-utils";
+import { vehicleSchema } from "@/lib/validations";
 
 const MAINTENANCE_TYPES = [
   "Troca de Óleo",
@@ -131,7 +133,10 @@ export default function ManutencaoVeiculoPage(props: { params: Promise<{ id: str
   });
 
   const oilMutation = useMutation({
-    mutationFn: (data: any) => api.vehicles.update(params.id, { ...vehicle, ...data }),
+    // Filtra pelo schema: `{ ...vehicle }` levava id/createdAt/relações e o
+    // schema estrito recusava a atualização.
+    mutationFn: (data: any) =>
+      api.vehicles.update(params.id, { ...pickSchemaFields(vehicleSchema, vehicle), ...data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vehicle", params.id] });
       toast({ title: "Configurações salvas!", variant: "success" });

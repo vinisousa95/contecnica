@@ -1,12 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
+/**
+ * Respostas no envelope { success, data } — é o que `request()` em
+ * lib/api-client.ts exige (`if (!res.ok || !json.success) throw`). Estas rotas
+ * devolviam o objeto cru, então a tela de Fornecedores lançava
+ * "Erro desconhecido" mesmo quando o registro era criado com sucesso.
+ */
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateBody } from "@/lib/api-validation";
 import { supplierSchema } from "@/lib/validations";
 import { getSessionFromRequest } from "@/lib/session";
+import { apiSuccess, apiError } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   const session = await getSessionFromRequest(request);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session) return apiError("Não autorizado", 401);
 
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search") ?? "";
@@ -27,20 +34,20 @@ export async function GET(request: NextRequest) {
     orderBy: { name: "asc" },
   });
 
-  return NextResponse.json(suppliers);
+  return apiSuccess(suppliers);
 }
 
 export async function POST(request: NextRequest) {
   const session = await getSessionFromRequest(request);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session) return apiError("Não autorizado", 401);
 
   const parsed = await validateBody(request, supplierSchema);
-  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: parsed.status });
+  if (!parsed.ok) return apiError(parsed.error, parsed.status);
   const body = parsed.data as any;
   const { name, category, cpfCnpj, phone, email, notes } = body;
 
   if (!name?.trim()) {
-    return NextResponse.json({ error: "Nome é obrigatório" }, { status: 400 });
+    return apiError("Nome é obrigatório");
   }
 
   const supplier = await prisma.supplier.create({
@@ -54,5 +61,5 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  return NextResponse.json(supplier, { status: 201 });
+  return apiSuccess(supplier);
 }

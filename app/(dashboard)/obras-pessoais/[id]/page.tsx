@@ -339,6 +339,13 @@ function PrestadoresTab({ projectId }: { projectId: string }) {
 function DespesasTab({ projectId }: { projectId: string }) {
   const qc = useQueryClient();
   const emptyForm = { description: "", category: "outros", amount: "", date: "", paymentMethod: "", status: "PENDING" };
+
+  // Funcionários ativos, para a categoria "Mão de Obra" oferecer a lista em vez
+  // de exigir digitar o nome. Só ativos: escalar quem saiu não faz sentido.
+  const { data: employees = [] } = useQuery({
+    queryKey: ["employees-active"],
+    queryFn: async () => (await api.employees.list({ status: "ACTIVE", limit: "200" })).data ?? [],
+  });
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
@@ -391,8 +398,34 @@ function DespesasTab({ projectId }: { projectId: string }) {
       {showForm && (
         <Card><CardContent className="pt-4">
           <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {form.category === "mao_de_obra" && (
+              <div className="sm:col-span-3">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Funcionário</label>
+                <select
+                  value={(employees as any[]).find((emp: any) => emp.name === form.description)?.id ?? ""}
+                  onChange={(e) => {
+                    const emp = (employees as any[]).find((x: any) => x.id === e.target.value);
+                    // Preenche a descrição — o campo segue editável para
+                    // acrescentar contexto ("Diária 03/08", por exemplo).
+                    setForm((prev) => ({ ...prev, description: emp ? emp.name : "" }));
+                  }}
+                  className={inputCls}
+                >
+                  <option value="">Selecionar funcionário...</option>
+                  {(employees as any[]).map((emp: any) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name}{emp.role ? ` — ${emp.role}` : ""}
+                    </option>
+                  ))}
+                </select>
+                {(employees as any[]).length === 0 && (
+                  <p className="mt-1 text-xs text-gray-400">Nenhum funcionário ativo cadastrado.</p>
+                )}
+              </div>
+            )}
+
             <div className="sm:col-span-3"><label className="block text-xs font-medium text-gray-600 mb-1">Descrição *</label>
-              <input required value={form.description} onChange={f("description")} placeholder="Ex: Aluguel de andaime" className={inputCls} /></div>
+              <input required value={form.description} onChange={f("description")} placeholder={form.category === "mao_de_obra" ? "Nome do funcionário ou detalhe do pagamento" : "Ex: Aluguel de andaime"} className={inputCls} /></div>
             <div><label className="block text-xs font-medium text-gray-600 mb-1">Categoria</label>
               <select value={form.category} onChange={f("category")} className={inputCls}>
                 {EXPENSE_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}

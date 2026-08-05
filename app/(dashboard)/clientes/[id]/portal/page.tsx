@@ -31,14 +31,20 @@ const resetSchema = z.object({
   password: z.string().min(6, "Mínimo 6 caracteres"),
 });
 
+const emailSchema = z.object({
+  email: z.string().email("E-mail inválido"),
+});
+
 type CreateForm = z.infer<typeof createSchema>;
 type ResetForm = z.infer<typeof resetSchema>;
+type EmailForm = z.infer<typeof emailSchema>;
 
 export default function ClientPortalPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
   const qc = useQueryClient();
   const [showPassword, setShowPassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showChangeEmail, setShowChangeEmail] = useState(false);
 
   const { data: portalUser, isLoading } = useQuery({
     queryKey: ["client-portal", params.id],
@@ -51,30 +57,18 @@ export default function ClientPortalPage(props: { params: Promise<{ id: string }
   });
 
   const {
-    register: registerCreate,
-    handleSubmit: handleCreate,
-    formState: { errors: createErrors, isSubmitting: creatingAccess },
-  } = useForm<CreateForm>({
-    resolver: zodResolver(createSchema),
-    defaultValues: { name: client?.name ?? "", email: client?.email ?? "" },
-  });
-
-  const {
     register: registerReset,
     handleSubmit: handleReset,
     reset: resetForm,
     formState: { errors: resetErrors, isSubmitting: resettingPwd },
   } = useForm<ResetForm>({ resolver: zodResolver(resetSchema) });
 
-  const onCreate = async (data: CreateForm) => {
-    try {
-      await apiFetch(`/api/v1/clients/${params.id}/portal`, { method: "POST", body: JSON.stringify(data) });
-      toast({ title: "Acesso criado com sucesso" });
-      qc.invalidateQueries({ queryKey: ["client-portal", params.id] });
-    } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "error" });
-    }
-  };
+  const {
+    register: registerEmail,
+    handleSubmit: handleEmail,
+    setValue: setEmailValue,
+    formState: { errors: emailErrors, isSubmitting: savingEmail },
+  } = useForm<EmailForm>({ resolver: zodResolver(emailSchema) });
 
   const onToggleActive = async () => {
     try {
@@ -103,6 +97,20 @@ export default function ClientPortalPage(props: { params: Promise<{ id: string }
     }
   };
 
+  const onChangeEmail = async (data: EmailForm) => {
+    try {
+      await apiFetch(`/api/v1/clients/${params.id}/portal`, {
+        method: "PUT",
+        body: JSON.stringify({ email: data.email }),
+      });
+      toast({ title: "E-mail de acesso alterado", description: `O cliente passa a entrar com ${data.email}.` });
+      qc.invalidateQueries({ queryKey: ["client-portal", params.id] });
+      setShowChangeEmail(false);
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    }
+  };
+
   const onDelete = async () => {
     if (!confirm("Remover acesso ao portal? O cliente não conseguirá mais entrar.")) return;
     try {
@@ -115,6 +123,11 @@ export default function ClientPortalPage(props: { params: Promise<{ id: string }
   };
 
   if (isLoading) return <LoadingPage message="Carregando acesso do portal..." />;
+
+  // Divergência entre a credencial de login e o e-mail do cadastro. Vale avisar:
+  // é o que faz alguém alterar o cliente e achar que o portal mudou junto.
+  const emailDivergente =
+    !!portalUser && !!client?.email && portalUser.email.toLowerCase() !== client.email.toLowerCase();
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -158,32 +171,16 @@ export default function ClientPortalPage(props: { params: Promise<{ id: string }
         </div>
       </div>
 
-      {/* No portal user — create form */}
-      {!portalUser && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Criar Acesso ao Portal</h3>
-          <form onSubmit={handleCreate(onCreate)} className="space-y-4">
-            <Input label="Nome do usuário *" placeholder="Nome completo" error={createErrors.name?.message} {...registerCreate("name")} />
-            <Input label="E-mail *" type="email" placeholder="cliente@email.com" error={createErrors.email?.message} {...registerCreate("email")} />
-            <div className="relative">
-              <Input
-                label="Senha *"
-                type={showPassword ? "text" : "password"}
-                placeholder="Mínimo 6 caracteres"
-                error={createErrors.password?.message}
-                rightIcon={
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="hover:text-gray-600">
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                }
-                {...registerCreate("password")}
-              />
-            </div>
-            <Button type="submit" loading={creatingAccess} className="w-full">
-              <Shield className="h-4 w-4 mr-1" /> Criar acesso
-            </Button>
-          </form>
-        </div>
+      {/* Criação do acesso. Só monta quando os dados do cliente chegaram: o
+          react-hook-form aplica os defaultValues uma única vez, na montagem,
+          então montar antes deixava nome e e-mail em branco para sempre. */}
+      {!portalUser && client && (
+        <CreateAccessForm
+          clientId={params.id}
+          clientName={client.name ?? ""}
+          clientEmail={client.email ?? ""}
+          onCreated={() => qc.invalidateQueries({ queryKey: ["client-portal", params.id] })}
+        />
       )}
 
       {/* Has portal user — management */}
@@ -204,6 +201,66 @@ export default function ClientPortalPage(props: { params: Promise<{ id: string }
             >
               {portalUser.isActive ? <><UserX className="h-4 w-4 mr-1" /> Desativar</> : <><UserCheck className="h-4 w-4 mr-1" /> Ativar</>}
             </Button>
+          </div>
+
+          {/* E-mail de acesso — a credencial de login, distinta do e-mail do
+              cadastro do cliente. Antes não havia como trocar por tela nenhuma. */}
+          <div className="py-3 border-b border-gray-100">
+            <div className="flex items-center justify-between mb-3">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-900">E-mail de acesso</p>
+                <p className="text-xs text-gray-400 truncate">
+                  O cliente entra no portal com <span className="font-medium text-gray-600">{portalUser.email}</span>
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-shrink-0"
+                onClick={() => {
+                  // Já vem preenchido com o e-mail do cadastro: é quase sempre
+                  // para onde a pessoa quer mudar.
+                  if (!showChangeEmail) setEmailValue("email", client?.email ?? portalUser.email);
+                  setShowChangeEmail(!showChangeEmail);
+                }}
+              >
+                {showChangeEmail ? "Cancelar" : "Alterar e-mail"}
+              </Button>
+            </div>
+
+            {emailDivergente && !showChangeEmail && (
+              <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5 text-xs text-amber-800">
+                <p className="font-medium">O login do portal é diferente do e-mail do cadastro.</p>
+                <p className="mt-0.5">
+                  Cadastro: <span className="font-mono">{client?.email}</span> · Login:{" "}
+                  <span className="font-mono">{portalUser.email}</span>
+                </p>
+                <p className="mt-1">
+                  Alterar o e-mail do cliente não muda o login — são dados separados. Use
+                  &quot;Alterar e-mail&quot; se quiser igualar.
+                </p>
+              </div>
+            )}
+
+            {showChangeEmail && (
+              <form onSubmit={handleEmail(onChangeEmail)} className="flex gap-2 mt-3">
+                <div className="flex-1">
+                  <Input
+                    type="email"
+                    placeholder="novo@email.com"
+                    error={emailErrors.email?.message}
+                    {...registerEmail("email")}
+                  />
+                </div>
+                <Button type="submit" loading={savingEmail} size="sm">Salvar</Button>
+              </form>
+            )}
+            {showChangeEmail && (
+              <p className="text-xs text-gray-400 mt-2">
+                A senha não muda. Avise o cliente do novo e-mail — é com ele que ele passa a
+                entrar.
+              </p>
+            )}
           </div>
 
           {/* Reset password */}
@@ -253,6 +310,65 @@ export default function ClientPortalPage(props: { params: Promise<{ id: string }
         </p>
         <p className="text-xs text-gray-400 mt-1">Compartilhe este link com o cliente junto com o e-mail e senha.</p>
       </div>
+    </div>
+  );
+}
+
+function CreateAccessForm({
+  clientId,
+  clientName,
+  clientEmail,
+  onCreated,
+}: {
+  clientId: string;
+  clientName: string;
+  clientEmail: string;
+  onCreated: () => void;
+}) {
+  const [showPassword, setShowPassword] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<CreateForm>({
+    resolver: zodResolver(createSchema),
+    defaultValues: { name: clientName, email: clientEmail },
+  });
+
+  const onSubmit = async (data: CreateForm) => {
+    try {
+      await apiFetch(`/api/v1/clients/${clientId}/portal`, { method: "POST", body: JSON.stringify(data) });
+      toast({ title: "Acesso criado com sucesso" });
+      onCreated();
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+      <h3 className="font-semibold text-gray-900 mb-4">Criar Acesso ao Portal</h3>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <Input label="Nome do usuário *" placeholder="Nome completo" error={errors.name?.message} {...register("name")} />
+        <Input label="E-mail *" type="email" placeholder="cliente@email.com" error={errors.email?.message} {...register("email")} />
+        <div className="relative">
+          <Input
+            label="Senha *"
+            type={showPassword ? "text" : "password"}
+            placeholder="Mínimo 6 caracteres"
+            error={errors.password?.message}
+            rightIcon={
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="hover:text-gray-600">
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            }
+            {...register("password")}
+          />
+        </div>
+        <Button type="submit" loading={isSubmitting} className="w-full">
+          <Shield className="h-4 w-4 mr-1" /> Criar acesso
+        </Button>
+      </form>
     </div>
   );
 }

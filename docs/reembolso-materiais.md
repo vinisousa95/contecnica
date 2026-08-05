@@ -6,7 +6,7 @@ serviços extras. O envio é **decisão explícita**, feita na obra.
 ## Como usar
 
 Abra a obra (**Obras → a obra**) e desça até **Reembolso de Materiais**. A seção
-lista todas as despesas lançadas naquela obra, com a situação de cada uma:
+lista as despesas lançadas naquela obra, com a situação de cada uma:
 
 | Situação | O que significa |
 |---|---|
@@ -25,6 +25,20 @@ Marque as despesas e use os botões que aparecem:
 
 Despesa já reembolsada não pode ser alterada por aqui — desfazer um reembolso pago
 é correção manual no banco, não operação de rotina.
+
+## Diárias não aparecem
+
+Mão de obra é custo da Contécnica, não do cliente, então as diárias de funcionário
+ficam fora da lista — e a API recusa enviá-las mesmo por requisição direta.
+
+O filtro usa o vínculo com o **apontamento** (`WorkAssignment`), que é como a
+diária nasce no módulo operacional, e não o nome da categoria. Numa obra com
+vários funcionários isso é uma diária por dia por pessoa: sem o filtro, a lista
+viraria só diária.
+
+Se uma diária tiver sido enviada para cobrança antes deste filtro existir, ela
+continua aparecendo — para poder ser retirada. Esconder algo que está sendo
+cobrado seria pior.
 
 ## A nota fiscal
 

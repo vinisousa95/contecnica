@@ -146,11 +146,13 @@ export function ReimbursementsSection({ projectId }: { projectId: string }) {
               </span>
             </CardTitle>
             <p className="text-xs text-gray-400 mt-1">
-              Todas as despesas da obra. Só o que for enviado aqui aparece em Cobranças no
-              portal do cliente.
+              Despesas da obra, sem as diárias de funcionário. Só o que for enviado aqui
+              aparece em Cobranças no portal do cliente.
             </p>
           </div>
-          <div className="flex gap-4 text-right">
+          {/* ml-auto: quando o cabeçalho quebra em tela estreita, os totais
+              continuam alinhados à direita em vez de voltarem para a esquerda. */}
+          <div className="flex gap-4 text-right ml-auto">
             <div>
               <p className="text-[11px] uppercase tracking-wide text-gray-400 font-medium">A cobrar</p>
               <p className="text-sm font-bold text-amber-600">{formatCurrency(totalPendente)}</p>

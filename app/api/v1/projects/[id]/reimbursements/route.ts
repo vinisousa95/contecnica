@@ -15,7 +15,17 @@ import { z } from "zod";
  *
  * Uma despesa já reembolsada (`clientPaid`) não é alterada por aqui — desfazer
  * um reembolso pago é operação de correção, não de rotina.
+ *
+ * DIÁRIAS FICAM DE FORA. Mão de obra é custo da Contécnica, não do cliente. A
+ * exclusão usa o vínculo com o apontamento (`workAssignment`), que é como a
+ * diária nasce em app/api/v1/assignments/route.ts — e não o nome da categoria,
+ * que é justamente o critério frágil que esta tela veio substituir. Uma obra com
+ * vários funcionários gera uma diária por dia por pessoa; sem esse filtro, a
+ * lista viraria só diária.
  */
+
+/** Despesa que pode ser cobrada do cliente: qualquer uma que não seja diária. */
+const NAO_E_DIARIA = { workAssignment: { is: null } } as const;
 
 const patchSchema = z
   .object({
@@ -36,7 +46,13 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
   if (!session) return apiError("Não autorizado", 401);
 
   const expenses = await prisma.expense.findMany({
-    where: { projectId: params.id },
+    where: {
+      projectId: params.id,
+      // `billedToClient: true` continua aparecendo mesmo se for diária: se alguma
+      // foi enviada antes deste filtro existir, ela precisa ficar visível para
+      // poder ser retirada — esconder algo que está sendo cobrado seria pior.
+      OR: [NAO_E_DIARIA, { billedToClient: true }],
+    },
     include: { category: { select: { id: true, name: true } } },
     orderBy: [{ dueDate: "desc" }],
   });
@@ -72,12 +88,24 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
 
   // Restringe à obra da URL: sem isto, um id de despesa de outra obra passaria.
   const target = await prisma.expense.findMany({
-    where: { id: { in: expenseIds }, projectId: params.id, clientPaid: false },
+    where: {
+      id: { in: expenseIds },
+      projectId: params.id,
+      clientPaid: false,
+      // Diária nunca pode ser ENVIADA para cobrança, nem por requisição forjada.
+      // Retirar e mexer na nota seguem permitidos, para corrigir dado antigo.
+      ...(billedToClient === true ? NAO_E_DIARIA : {}),
+    },
     select: { id: true, attachmentUrl: true },
   });
 
   if (target.length === 0) {
-    return apiError("Nenhuma despesa elegível — verifique se já foi reembolsada", 400);
+    return apiError(
+      billedToClient === true
+        ? "Nenhuma despesa elegível — diárias não podem ser cobradas do cliente"
+        : "Nenhuma despesa elegível — verifique se já foi reembolsada",
+      400
+    );
   }
 
   const data: Record<string, unknown> = {};

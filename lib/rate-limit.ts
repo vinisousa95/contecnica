@@ -26,7 +26,15 @@ export interface RateLimitRule {
 
 const MINUTE = 60 * 1000;
 
-export const RATE_LIMIT_CONFIG: Record<string, RateLimitRule> = {
+/**
+ * `satisfies` em vez de anotar `Record<string, RateLimitRule>`: com a anotação,
+ * o TypeScript aceita qualquer chave na leitura e devolve `RateLimitRule` mesmo
+ * para uma que não existe. Foi assim que `RATE_LIMIT_CONFIG.webhook` — sem regra
+ * definida — passou pelo build e derrubou com 500 toda requisição a
+ * /api/webhooks/ (o Mercado Pago nunca conseguia notificar). Com `satisfies` o
+ * objeto conserva as chaves literais e uma chave inexistente é erro de compilação.
+ */
+export const RATE_LIMIT_CONFIG = {
   /**
    * Endpoints que verificam credenciais (login, signup, reset de senha).
    * Limite rígido contra força bruta: 5 tentativas por IP a cada 15 minutos.
@@ -44,11 +52,19 @@ export const RATE_LIMIT_CONFIG: Record<string, RateLimitRule> = {
   ai: { name: "ai", limit: 20, windowMs: 10 * MINUTE },
 
   /**
+   * Webhooks de gateway de pagamento. Limite alto: o provedor reenvia
+   * notificações e pode disparar rajadas legítimas — bloquear faria perder a
+   * confirmação de um pagamento. A autenticidade é verificada na própria rota
+   * (assinatura + consulta à API do provedor), não aqui.
+   */
+  webhook: { name: "webhook", limit: 600, windowMs: MINUTE },
+
+  /**
    * Leituras (GET/HEAD). Limite generoso porque o dashboard dispara muitas
    * queries em paralelo e vários usuários podem compartilhar o mesmo IP público.
    */
   read: { name: "read", limit: 300, windowMs: MINUTE },
-};
+} satisfies Record<string, RateLimitRule>;
 
 /**
  * Endpoints que validam credenciais → regra `auth`.

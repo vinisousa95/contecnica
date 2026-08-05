@@ -19,6 +19,20 @@ import type { PaymentItemSnapshot } from "@/lib/billing";
 
 const ok = () => NextResponse.json({ received: true });
 
+/**
+ * Sinal de vida. O Mercado Pago só usa POST; isto existe porque abrir a URL no
+ * navegador é a primeira coisa que se faz ao configurar o webhook, e sem um GET
+ * o Next devolve 405 com corpo vazio — indistinguível de "não subiu".
+ * Não revela configuração: para isso existe /api/v1/payments/status (ADMIN).
+ */
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    endpoint: "mercadopago",
+    message: "Webhook ativo. As notificações do Mercado Pago chegam via POST.",
+  });
+}
+
 export async function POST(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 

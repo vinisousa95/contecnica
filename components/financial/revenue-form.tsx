@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { revenueSchema, type RevenueInput } from "@/lib/validations";
+import { pickSchemaFields } from "@/lib/form-utils";
 import { api } from "@/lib/api-client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -72,7 +73,10 @@ export function RevenueForm({
     defaultValues: {
       status: "PENDING",
       projectId: defaultProjectId ?? "",
-      ...defaultValues,
+      // Filtra pelo schema: telas de edição passam a resposta da API inteira
+      // (id, createdAt, relações) e o schema é estrito — sem isto a gravação
+      // é recusada com "Unrecognized key(s)". Ver lib/form-utils.ts.
+      ...pickSchemaFields(revenueSchema, defaultValues as any),
     },
   });
 

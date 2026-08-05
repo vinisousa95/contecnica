@@ -53,6 +53,8 @@ export default function EditarClientePage(props: { params: Promise<{ id: string 
           </Button>
         }
       />
+      {/* Passar a resposta inteira da API é seguro: o ClientForm filtra pelo
+          schema. Ver components/clients/client-form.tsx. */}
       <ClientForm
         defaultValues={client}
         onSubmit={(data) => mutation.mutateAsync(data).then(() => {})}

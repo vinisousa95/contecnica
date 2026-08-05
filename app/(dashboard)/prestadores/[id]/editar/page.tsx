@@ -47,6 +47,8 @@ export default function EditarPrestadorPage() {
           </Button>
         }
       />
+      {/* Passar a resposta inteira da API é seguro: o formulário filtra pelo
+          schema. Ver components/service-providers/provider-form.tsx. */}
       <ServiceProviderForm
         defaultValues={provider as any}
         onSubmit={(data) => mutation.mutate(data)}

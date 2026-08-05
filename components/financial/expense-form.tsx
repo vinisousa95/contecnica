@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { expenseSchema, type ExpenseInput } from "@/lib/validations";
+import { pickSchemaFields } from "@/lib/form-utils";
 import { api } from "@/lib/api-client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -127,7 +128,10 @@ export function ExpenseForm({
     defaultValues: {
       status: "PENDING",
       projectId: defaultProjectId ?? "",
-      ...defaultValues,
+      // Filtra pelo schema: telas de edição passam a resposta da API inteira
+      // (id, createdAt, relações) e o schema é estrito — sem isto a gravação
+      // é recusada com "Unrecognized key(s)". Ver lib/form-utils.ts.
+      ...pickSchemaFields(expenseSchema, defaultValues as any),
     },
   });
 

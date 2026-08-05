@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { budgetSchema, type BudgetInput } from "@/lib/validations";
+import { pickSchemaFields } from "@/lib/form-utils";
 import { api } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -609,7 +610,10 @@ export function BudgetForm({ defaultValues, onSubmit, isLoading, submitLabel = "
       state: "",
       items: [],
       extraItems: [],
-      ...defaultValues,
+      // Filtra pelo schema: telas de edição passam a resposta da API inteira
+      // (id, createdAt, relações) e o schema é estrito — sem isto a gravação
+      // é recusada com "Unrecognized key(s)". Ver lib/form-utils.ts.
+      ...pickSchemaFields(budgetSchema, defaultValues as any),
     },
   });
 

@@ -3,6 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { serviceProviderSchema, type ServiceProviderInput } from "@/lib/validations";
+import { pickSchemaFields } from "@/lib/form-utils";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
@@ -48,7 +49,10 @@ export function ServiceProviderForm({ defaultValues, onSubmit, loading }: Servic
       type: "INDIVIDUAL",
       specialty: "OTHER",
       status: "ACTIVE",
-      ...defaultValues,
+      // Filtra pelo schema: telas de edição passam a resposta da API inteira
+      // (id, createdAt, relações) e o schema é estrito — sem isto a gravação
+      // é recusada com "Unrecognized key(s)". Ver lib/form-utils.ts.
+      ...pickSchemaFields(serviceProviderSchema, defaultValues as any),
     },
   });
 

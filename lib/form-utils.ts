@@ -13,6 +13,15 @@ import { z } from "zod";
  * Filtrar pelo schema em vez de manter uma lista de campos à mão: quando o
  * schema muda, isto acompanha sozinho.
  *
+ * ONDE ISTO É APLICADO: dentro dos componentes de formulário
+ * (`ClientForm`, `ProjectForm`, `ExpenseForm`, `RevenueForm`, `BudgetForm`,
+ * `ServiceProviderForm`, `PersonalExpenseForm`), no `defaultValues` do
+ * `useForm`. É de propósito: o formulário é quem conhece o schema, então
+ * nenhuma tela consegue reintroduzir o problema passando o objeto cru. Foram
+ * cinco telas quebrando pelo mesmo motivo antes de a proteção subir para cá.
+ *
+ * As telas podem passar a resposta da API inteira sem cuidado nenhum.
+ *
  * @example
  *   const defaultValues = pickSchemaFields(projectSchema, project);
  */

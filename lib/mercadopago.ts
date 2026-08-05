@@ -26,6 +26,25 @@ export function isMercadoPagoEnabled(): boolean {
   return mpConfig().configured;
 }
 
+/**
+ * Erro da API do Mercado Pago, carregando o status HTTP.
+ *
+ * O status importa no webhook: 4xx é definitivo (o pagamento não existe, o id é
+ * inválido) e reenviar não muda nada; 5xx e falha de rede são transitórios e vale
+ * pedir reenvio. Sem o status, todo erro parecia igual.
+ */
+export class MercadoPagoApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = "MercadoPagoApiError";
+  }
+
+  /** Erro que nenhum reenvio vai resolver. */
+  get isPermanent(): boolean {
+    return this.status >= 400 && this.status < 500;
+  }
+}
+
 async function mpFetch(path: string, init: RequestInit = {}) {
   const { accessToken } = mpConfig();
   if (!accessToken) throw new Error("MERCADOPAGO_ACCESS_TOKEN não configurado");
@@ -45,7 +64,10 @@ async function mpFetch(path: string, init: RequestInit = {}) {
     const body = await res.json().catch(() => null);
     if (!res.ok) {
       const detail = body?.message ?? body?.error ?? `HTTP ${res.status}`;
-      throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+      throw new MercadoPagoApiError(
+        typeof detail === "string" ? detail : JSON.stringify(detail),
+        res.status
+      );
     }
     return body;
   } finally {

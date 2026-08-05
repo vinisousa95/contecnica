@@ -78,15 +78,22 @@ curl -s https://sistema.contecnica.net/api/v1/payments/status \
 No painel do Mercado Pago existe um botão de **simular notificação**. Use-o e
 confira o diagnóstico: `signatureOk` precisa vir `true`.
 
-> ⚠️ **Confira isto antes de depender do fluxo.** Não conseguimos confirmar em
-> fonte oficial o template exato usado pelo Mercado Pago para gerar a assinatura
-> (os SDKs deles não expõem helper de validação e a documentação não publica a
-> string). Se `signatureOk` vier `false` com o motivo "assinatura não confere",
-> me mande a saída do diagnóstico: o template está num só lugar
-> (`lib/mercadopago.ts`, função `verifyWebhookSignature`) e o ajuste é de uma
-> linha. A segurança do fluxo não depende disso — a baixa só acontece após a
-> consulta à API do MP — mas com a validação falhando as notificações são
-> rejeitadas e a baixa não acontece de forma automática.
+A simulação manda um id de pagamento inventado (`123456`), então a nota do log vai
+ser `Erro: Payment not found` — isso é esperado e não indica problema. O que
+interessa é `signatureOk: true`, que prova que a validação de assinatura está
+correta. Confirmado em produção em agosto de 2026, com a assinatura secreta do
+modo produção.
+
+O template do manifest usado na validação está em `lib/mercadopago.ts`, função
+`verifyWebhookSignature`. Se um dia o Mercado Pago mudar o formato, é o único
+lugar a ajustar — e o sintoma será `signatureOk: false` com o motivo "assinatura
+não confere". A segurança do fluxo não depende dessa validação (a baixa só ocorre
+após a consulta à API do MP), mas com ela falhando as notificações são rejeitadas
+e a baixa automática não acontece.
+
+Ao configurar o webhook no painel, marque o evento **Pagamentos (legacy)**. Apesar
+do nome, é o formato que esta rota entende (`type: "payment"` com `data.id`). O
+evento novo "Order (Mercado Pago)" manda outro payload e seria ignorado.
 
 Depois faça um teste real de valor baixo (R$ 1,00 via PIX é o mais rápido) e veja
 o item sair da lista de pendentes.

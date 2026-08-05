@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getPayment, verifyWebhookSignature, isMercadoPagoEnabled } from "@/lib/mercadopago";
+import { getPayment, verifyWebhookSignature, isMercadoPagoEnabled, MercadoPagoApiError } from "@/lib/mercadopago";
 import type { PaymentItemSnapshot } from "@/lib/billing";
 
 /**
@@ -167,7 +167,13 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     console.error("[mercadopago] erro ao processar notificação:", err?.message);
     await log({ signatureOk: true, handled: false, note: `Erro: ${err?.message}` });
-    // 500 faz o MP reenviar — o que é desejável num erro transitório.
+
+    // 4xx da API do MP é definitivo: o pagamento não existe ou o id é inválido, e
+    // reenviar dará o mesmo resultado — respondemos 200 para o MP não insistir.
+    // É também o caso do "Simular notificação" do painel, que manda um id fake.
+    if (err instanceof MercadoPagoApiError && err.isPermanent) return ok();
+
+    // 5xx e falha de rede são transitórios: 500 faz o MP reenviar mais tarde.
     return NextResponse.json({ error: "erro interno" }, { status: 500 });
   }
 }

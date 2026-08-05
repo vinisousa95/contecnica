@@ -29,6 +29,25 @@ export function formatDate(date: Date | string | null | undefined): string {
   return `${day}/${month}/${year}`;
 }
 
+/**
+ * Valor para `<input type="date">` (formato `yyyy-MM-dd`).
+ *
+ * Recorta a data do ISO em UTC, sem converter para o fuso local — é o mesmo
+ * critério de `formatDate`, então tela de listagem e formulário sempre mostram
+ * o mesmo dia.
+ *
+ * NÃO use `format(new Date(x), "yyyy-MM-dd")` do date-fns aqui: as datas são
+ * gravadas à meia-noite UTC e `format` converte para o fuso local, o que no
+ * horário de Brasília (UTC-3) devolve o DIA ANTERIOR. O formulário abria com um
+ * dia a menos e, ao salvar, gravava esse dia — a data andava para trás a cada
+ * edição.
+ */
+export function toDateInputValue(date: Date | string | null | undefined): string | undefined {
+  if (!date) return undefined;
+  const iso = typeof date === "string" ? date : (date as Date).toISOString();
+  return iso.slice(0, 10);
+}
+
 export function formatDateTime(date: Date | string | null | undefined): string {
   if (!date) return "—";
   return format(new Date(date), "dd/MM/yyyy HH:mm", { locale: ptBR });

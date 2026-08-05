@@ -19,6 +19,12 @@ import { toast } from "@/hooks/use-toast";
 interface ProjectFormProps {
   defaultValues?: Partial<ProjectInput>;
   defaultClientId?: string;
+  /**
+   * Cliente já vinculado à obra, na edição. A lista do select traz só os ATIVOS
+   * e no máximo 100; se o cliente da obra não estiver nela, este dado garante que
+   * ele apareça com o nome certo em vez de o campo ficar vazio.
+   */
+  currentClient?: { id: string; name: string } | null;
   onSubmit: (data: ProjectInput) => Promise<void>;
   isLoading?: boolean;
   submitLabel?: string;
@@ -35,6 +41,7 @@ const STATUS_OPTIONS = [
 export function ProjectForm({
   defaultValues,
   defaultClientId,
+  currentClient,
   onSubmit,
   isLoading,
   submitLabel = "Salvar",
@@ -95,6 +102,12 @@ export function ProjectForm({
     label: c.name,
   }));
 
+  // Garante o cliente já vinculado na lista, mesmo que ele esteja inativo ou
+  // fora dos 100 carregados — senão o campo apareceria vazio na edição.
+  if (currentClient && !clientOptions.some((o: any) => o.value === currentClient.id)) {
+    clientOptions.unshift({ value: currentClient.id, label: currentClient.name });
+  }
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       {/* Basic Info */}
@@ -115,6 +128,10 @@ export function ProjectForm({
               {...register("name")}
             />
           </div>
+          {/* Controlado de propósito: as opções vêm de uma query e num select
+              não controlado o navegador descarta o valor enquanto a lista está
+              vazia, caindo depois no primeiro cliente da lista. Ver o comentário
+              em components/ui/select.tsx. */}
           <Select
             label="Cliente"
             required
@@ -122,6 +139,7 @@ export function ProjectForm({
             options={clientOptions}
             error={errors.clientId?.message}
             {...register("clientId")}
+            value={watch("clientId") ?? ""}
           />
           <Select
             label="Status"

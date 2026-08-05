@@ -159,17 +159,22 @@ export function ExpenseForm({
             />
           </div>
 
+          {/* Controlados: as opções vêm de query. Ver o comentário em
+              components/ui/select.tsx — sem `value` o navegador troca a seleção
+              sozinho para a primeira opção quando a lista chega. */}
           <Select
             label="Obra vinculada"
             options={projectOptions}
             error={errors.projectId?.message}
             {...register("projectId")}
+            value={watch("projectId") ?? ""}
           />
           <Select
             label="Categoria"
             options={categoryOptions}
             error={errors.categoryId?.message}
             {...register("categoryId")}
+            value={watch("categoryId") ?? ""}
           />
 
           <div>

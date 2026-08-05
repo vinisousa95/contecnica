@@ -12,8 +12,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
 import { pickSchemaFields } from "@/lib/form-utils";
+import { toDateInputValue } from "@/lib/utils";
 import { projectSchema } from "@/lib/validations";
 
 export default function EditarObraPage(props: { params: Promise<{ id: string }> }) {
@@ -48,10 +48,10 @@ export default function EditarObraPage(props: { params: Promise<{ id: string }> 
   const defaultValues: Partial<ProjectInput> = {
     ...pickSchemaFields(projectSchema, project),
     clientId: project.client?.id ?? project.clientId,
-    startDate: project.startDate ? format(new Date(project.startDate), "yyyy-MM-dd") : undefined,
-    expectedEndDate: project.expectedEndDate
-      ? format(new Date(project.expectedEndDate), "yyyy-MM-dd")
-      : undefined,
+    // toDateInputValue e não date-fns `format`: as datas vêm à meia-noite UTC e
+    // `format` converte para o fuso local, devolvendo o dia anterior no Brasil.
+    startDate: toDateInputValue(project.startDate),
+    expectedEndDate: toDateInputValue(project.expectedEndDate),
     budget: project.budget ? String(project.budget) : undefined,
     progress: project.progress ?? 0,
   };
@@ -72,6 +72,7 @@ export default function EditarObraPage(props: { params: Promise<{ id: string }> 
       />
       <ProjectForm
         defaultValues={defaultValues}
+        currentClient={project.client ? { id: project.client.id, name: project.client.name } : null}
         onSubmit={(data) => mutation.mutateAsync(data).then(() => {})}
         isLoading={mutation.isPending}
         submitLabel="Salvar Alterações"

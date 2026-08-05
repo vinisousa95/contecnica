@@ -16,9 +16,27 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
   placeholder?: string;
 }
 
+/**
+ * IMPORTANTE — quando as `options` chegam de uma query (clientes, obras,
+ * categorias), passe `value` e deixe o select CONTROLADO.
+ *
+ * Motivo: num select não controlado o navegador só guarda o que existe entre as
+ * `<option>`. Na primeira renderização as opções ainda estão vazias, então o
+ * valor gravado não tem opção correspondente e é descartado; quando as opções
+ * chegam, o navegador seleciona a PRIMEIRA da lista. O formulário passa a exibir
+ * — e a salvar — um registro que o usuário nunca escolheu. Foi exatamente isso
+ * que reatribuía a obra para o primeiro cliente em ordem alfabética.
+ */
 const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   ({ className, label, error, helperText, options, placeholder, id, ...props }, ref) => {
     const inputId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
+
+    // Rede de segurança: se o valor atual não está entre as opções (lista ainda
+    // carregando, registro inativo, ou além do limite da página), guardamos o
+    // valor numa opção própria. Sem ela o select cairia para outra opção e
+    // salvar trocaria o vínculo sem o usuário perceber.
+    const value = typeof props.value === "string" ? props.value : undefined;
+    const valueMissing = !!value && !options.some((o) => o.value === value);
 
     return (
       <div className="w-full">
@@ -39,7 +57,10 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C] focus-visible:border-transparent",
               "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-50",
               error && "border-red-500 focus-visible:ring-red-500",
-              !props.value && "text-gray-400",
+              // Cinza só quando o select é controlado e está vazio (mostrando o
+              // placeholder). Antes a condição era `!props.value`, o que pintava
+              // de cinza todo select não controlado, mesmo com opção escolhida.
+              value === "" && "text-gray-400",
               className
             )}
             ref={ref}
@@ -50,6 +71,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
                 {placeholder}
               </option>
             )}
+            {valueMissing && <option value={value}>—</option>}
             {options.map((option) => (
               <option
                 key={option.value}

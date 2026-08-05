@@ -15,8 +15,9 @@ import { prisma } from "@/lib/prisma";
  *
  * Regras:
  *   - sessão admin: acessa tudo;
- *   - sessão do portal: acessa, e em `contracts/` só o contrato do próprio
- *     cliente (o ID do contrato está no nome do arquivo);
+ *   - sessão do portal: em `contracts/` só o contrato do próprio cliente (o ID
+ *     do contrato está no nome do arquivo); em `documents/` só nota fiscal de
+ *     despesa de uma obra sua E liberada na aba de reembolso;
  *   - sem sessão: 404 (não 401, para não confirmar a existência do arquivo).
  */
 
@@ -57,7 +58,57 @@ async function isAuthorized(request: NextRequest, filePath: string, fileName: st
     return !!contract;
   }
 
-  return true;
+  // Documentos: só o que o portal realmente mostra para ESTE cliente —
+  // documento da obra marcado como visível, ou nota fiscal de despesa liberada
+  // na aba de reembolso.
+  //
+  // Antes qualquer sessão de portal baixava qualquer documento sabendo a URL,
+  // inclusive de obras de outros clientes. O nome do arquivo tem parte
+  // aleatória, mas isso é obscuridade, não controle de acesso.
+  if (filePath.startsWith("documents/")) {
+    const [doc, expense] = await Promise.all([
+      prisma.projectDocument.findFirst({
+        where: {
+          fileUrl: { endsWith: filePath },
+          visible: true,
+          project: { clientId: portal.clientId },
+        },
+        select: { id: true },
+      }),
+      prisma.expense.findFirst({
+        where: {
+          attachmentUrl: { endsWith: filePath },
+          receiptShared: true,
+          project: { clientId: portal.clientId },
+        },
+        select: { id: true },
+      }),
+    ]);
+    return !!doc || !!expense;
+  }
+
+  // Fotos: as visíveis das obras do cliente, mais a foto de capa da obra.
+  if (filePath.startsWith("photos/")) {
+    const [photo, cover] = await Promise.all([
+      prisma.projectPhoto.findFirst({
+        where: {
+          imageUrl: { endsWith: filePath },
+          visible: true,
+          project: { clientId: portal.clientId },
+        },
+        select: { id: true },
+      }),
+      prisma.project.findFirst({
+        where: { coverPhoto: { endsWith: filePath }, clientId: portal.clientId },
+        select: { id: true },
+      }),
+    ]);
+    return !!photo || !!cover;
+  }
+
+  // Tipo de arquivo não previsto: nega. Antes o caso padrão liberava, e cada
+  // pasta nova nascia acessível a qualquer cliente por omissão.
+  return false;
 }
 
 export async function GET(request: NextRequest, props: { params: Promise<{ path: string[] }> }) {

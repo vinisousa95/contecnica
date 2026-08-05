@@ -176,7 +176,24 @@ model Expense {
   paymentMethod   String?       @map("payment_method")
   attachmentUrl   String?       @map("attachment_url")
   notes           String?
+  /// LEGADO — nunca foi lido por nenhuma tela. Quem controla o que o cliente vê
+  /// são `billedToClient` e `receiptShared`. Mantido só para não exigir uma
+  /// migração destrutiva; pode ser removido numa próxima.
   visibleInPortal Boolean       @default(false) @map("visible_in_portal")
+
+  /// Material enviado para cobrança do cliente (aba Reembolso de Materiais na
+  /// obra). É o que faz o item aparecer em Cobranças no portal.
+  ///
+  /// Antes disso, o critério era "categoria com 'material' no nome": todo
+  /// material entrava na cobrança sozinho, e material de categoria com outro
+  /// nome nunca entrava. Agora é decisão explícita de quem lança.
+  billedToClient   Boolean      @default(false) @map("billed_to_client")
+  billedToClientAt DateTime?    @map("billed_to_client_at")
+
+  /// Nota fiscal liberada para o cliente. Sem isto o anexo não é exposto no
+  /// portal nem pode ser baixado por uma sessão de cliente.
+  receiptShared    Boolean      @default(false) @map("receipt_shared")
+
   // Reembolso pelo CLIENTE. Distinto de `status`: PAID ali significa que a
   // Contécnica pagou o fornecedor, não que o cliente reembolsou.
   clientPaid      Boolean       @default(false) @map("client_paid")

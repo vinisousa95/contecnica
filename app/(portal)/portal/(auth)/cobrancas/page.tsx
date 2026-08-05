@@ -27,7 +27,28 @@ async function fetchBilling() {
   return json.data;
 }
 
-function PaymentModal({ item, onClose }: { item: any; onClose: () => void }) {
+/**
+ * Detalhe de um item pendente.
+ *
+ * Não paga item a item: o Checkout Pro cobra o total pendente de uma vez, e é o
+ * botão do topo que inicia isso. Este modal existe para o cliente conferir de
+ * onde vem o valor — e ver a nota fiscal, quando a Contécnica libera.
+ */
+function PaymentModal({
+  item,
+  onClose,
+  paymentEnabled,
+  totalGeral,
+  onPayAll,
+  paying,
+}: {
+  item: any;
+  onClose: () => void;
+  paymentEnabled: boolean;
+  totalGeral: number;
+  onPayAll: () => void;
+  paying: boolean;
+}) {
   const [copied, setCopied] = useState(false);
 
   const copyAmount = () => {
@@ -43,7 +64,7 @@ function PaymentModal({ item, onClose }: { item: any; onClose: () => void }) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Realizar Pagamento</h2>
+            <h2 className="text-lg font-bold text-gray-900">Detalhe da cobrança</h2>
             <p className="text-sm text-gray-500 mt-0.5">{item.description}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="h-5 w-5" /></button>
@@ -65,38 +86,55 @@ function PaymentModal({ item, onClose }: { item: any; onClose: () => void }) {
         </div>
 
         <div className="p-6 space-y-4">
-          <div className="flex items-center gap-2 text-amber-600 bg-amber-50 rounded-xl px-4 py-3">
-            <Clock className="h-4 w-4 flex-shrink-0" />
-            <p className="text-sm font-medium">Gateway de pagamento em configuração</p>
-          </div>
-          <p className="text-sm text-gray-600 text-center">
-            Em breve você poderá pagar diretamente por aqui via PIX, boleto ou cartão.
-          </p>
-          <div className="border border-dashed border-gray-200 rounded-xl p-4 text-center space-y-3">
-            <QrCode className="h-10 w-10 text-gray-300 mx-auto" />
-            <p className="text-xs text-gray-400">QR Code / PIX será disponibilizado aqui</p>
-          </div>
-          <div className="bg-blue-50 rounded-xl px-4 py-3 space-y-2">
-            <p className="text-xs font-semibold text-blue-800 uppercase tracking-wide">Enquanto isso</p>
-            <p className="text-sm text-blue-700">Entre em contato com a Contécnica para combinar o pagamento:</p>
-            <button onClick={copyAmount}
-              className="flex items-center gap-2 text-sm text-blue-700 font-semibold hover:text-blue-900 transition-colors">
-              {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-              {copied ? "Copiado!" : `Copiar valor: ${formatCurrency(item.amount)}`}
-            </button>
-          </div>
-          <button onClick={onClose}
-            className="w-full bg-[#EA580C] text-white font-semibold py-3 rounded-xl hover:bg-[#C2410C] transition-colors flex items-center justify-center gap-2">
-            <CreditCard className="h-4 w-4" />
-            Entendido
-          </button>
+          {paymentEnabled ? (
+            <>
+              <p className="text-sm text-gray-600">
+                O pagamento é feito de uma vez, com o total pendente — PIX, boleto, cartão ou
+                saldo Mercado Pago. Este item entra nesse total.
+              </p>
+              <button
+                onClick={onPayAll}
+                disabled={paying}
+                className="w-full bg-[#EA580C] text-white font-semibold py-3 rounded-xl hover:bg-[#C2410C] transition-colors flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <CreditCard className="h-4 w-4" />
+                {paying ? "Abrindo pagamento..." : `Pagar total: ${formatCurrency(totalGeral)}`}
+              </button>
+              <button
+                onClick={onClose}
+                className="w-full text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                Fechar
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 text-amber-600 bg-amber-50 rounded-xl px-4 py-3">
+                <Clock className="h-4 w-4 flex-shrink-0" />
+                <p className="text-sm font-medium">Pagamento online indisponível no momento</p>
+              </div>
+              <div className="bg-blue-50 rounded-xl px-4 py-3 space-y-2">
+                <p className="text-xs font-semibold text-blue-800 uppercase tracking-wide">Como pagar</p>
+                <p className="text-sm text-blue-700">Entre em contato com a Contécnica para combinar o pagamento:</p>
+                <button onClick={copyAmount}
+                  className="flex items-center gap-2 text-sm text-blue-700 font-semibold hover:text-blue-900 transition-colors">
+                  {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                  {copied ? "Copiado!" : `Copiar valor: ${formatCurrency(item.amount)}`}
+                </button>
+              </div>
+              <button onClick={onClose}
+                className="w-full bg-[#EA580C] text-white font-semibold py-3 rounded-xl hover:bg-[#C2410C] transition-colors flex items-center justify-center gap-2">
+                Entendido
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function ItemRow({ item, onPay }: { item: any; onPay: () => void }) {
+function ItemRow({ item, onDetails }: { item: any; onDetails: () => void }) {
   return (
     <div className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50/50 transition-colors">
       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.isOverdue ? "bg-red-500" : "bg-amber-400"}`} />
@@ -116,10 +154,9 @@ function ItemRow({ item, onPay }: { item: any; onPay: () => void }) {
         )}
       </div>
       <p className="text-sm font-bold text-gray-900 flex-shrink-0">{formatCurrency(item.amount)}</p>
-      <button onClick={onPay}
-        className="flex-shrink-0 bg-[#EA580C] text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-[#C2410C] transition-colors flex items-center gap-1.5">
-        <CreditCard className="h-3.5 w-3.5" />
-        Pagar
+      <button onClick={onDetails}
+        className="flex-shrink-0 border border-gray-200 text-gray-600 text-xs font-semibold px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5">
+        Detalhes
       </button>
     </div>
   );
@@ -230,7 +267,7 @@ export default function CobrancasPage() {
         ) : (
           <div className="divide-y divide-gray-50">
             {materials.map((e: any) => (
-              <ItemRow key={e.id} item={e} onPay={() => setSelected(e)} />
+              <ItemRow key={e.id} item={e} onDetails={() => setSelected(e)} />
             ))}
           </div>
         )}
@@ -251,13 +288,22 @@ export default function CobrancasPage() {
         ) : (
           <div className="divide-y divide-gray-50">
             {extraServices.map((e: any) => (
-              <ItemRow key={e.id} item={e} onPay={() => setSelected(e)} />
+              <ItemRow key={e.id} item={e} onDetails={() => setSelected(e)} />
             ))}
           </div>
         )}
       </div>
 
-      {selected && <PaymentModal item={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <PaymentModal
+          item={selected}
+          onClose={() => setSelected(null)}
+          paymentEnabled={!!data.paymentEnabled}
+          totalGeral={totalGeral}
+          onPayAll={handlePayAll}
+          paying={paying}
+        />
+      )}
     </div>
   );
 }

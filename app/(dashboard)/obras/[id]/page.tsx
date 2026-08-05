@@ -26,6 +26,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatCurrencyInput } from "@/lib/masks";
 import { toast } from "@/hooks/use-toast";
+import { ReimbursementsSection } from "@/components/projects/reimbursements-section";
 import {
   ArrowLeft, Pencil, MapPin, Calendar, DollarSign,
   ArrowDownCircle, ArrowUpCircle, Plus, CheckCircle2,
@@ -1236,6 +1237,9 @@ export default function ObraDetailPage(props: { params: Promise<{ id: string }> 
 
       {/* Serviços Extras */}
       <ExtraServicesSection projectId={params.id} />
+
+      {/* Reembolso de Materiais — o que o cliente vê em Cobranças */}
+      <ReimbursementsSection projectId={params.id} />
 
       {/* Prestadores */}
       <PrestadoresSection projectId={params.id} />

@@ -39,12 +39,20 @@ export async function getPendingForClient(clientId: string): Promise<{
 
   if (projectIds.length === 0) return { pending: [], totalPending: 0 };
 
-  // Materiais a reembolsar. `status` do Expense é o pagamento ao FORNECEDOR;
-  // quem diz se o cliente já reembolsou é `clientPaid`.
+  // Materiais a reembolsar: só os enviados de propósito na aba "Reembolso de
+  // Materiais" da obra.
+  //
+  // O critério anterior era `category.name contains "material"`, o que errava
+  // nos dois sentidos: cobrava do cliente todo material lançado, sem ninguém
+  // decidir, e deixava de cobrar material cuja categoria tinha outro nome
+  // ("Insumos", "Compras"). Agora o envio é explícito.
+  //
+  // `status` do Expense é o pagamento ao FORNECEDOR; quem diz se o cliente já
+  // reembolsou é `clientPaid`.
   const expenses = await prisma.expense.findMany({
     where: {
       projectId: { in: projectIds },
-      category: { name: { contains: "material", mode: "insensitive" } },
+      billedToClient: true,
       clientPaid: false,
     },
     include: { category: { select: { name: true } } },
@@ -69,7 +77,10 @@ export async function getPendingForClient(clientId: string): Promise<{
       projectName: e.projectId ? projectMap[e.projectId] ?? null : null,
       amount: Number(e.amount),
       dueDate: e.dueDate,
-      attachmentUrl: e.attachmentUrl ?? null,
+      // A nota só vai para o portal quando liberada. O acesso ao arquivo é
+      // barrado do mesmo jeito na rota que serve uploads — omitir a URL aqui
+      // esconde o link, não protege o arquivo.
+      attachmentUrl: e.receiptShared ? e.attachmentUrl ?? null : null,
       isOverdue: new Date(e.dueDate) < now,
     })),
     ...extraServices.map((s) => ({

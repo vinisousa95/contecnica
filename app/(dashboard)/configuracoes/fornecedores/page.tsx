@@ -13,6 +13,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { LoadingPage } from "@/components/ui/loading";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Search, Pencil, Trash2, X, Check, Building2, Phone, Mail } from "lucide-react";
+import { maskCpfCnpj, maskPhone } from "@/lib/masks";
 
 const CATEGORY_OPTIONS = [
   { value: "", label: "Sem categoria" },
@@ -24,6 +25,80 @@ const CATEGORY_OPTIONS = [
 ];
 
 const EMPTY_FORM = { name: "", category: "", cpfCnpj: "", phone: "", email: "", notes: "" };
+
+type SupplierForm = typeof EMPTY_FORM;
+
+/**
+ * Definido AQUI, no módulo — e não dentro de FornecedoresPage.
+ *
+ * Antes era `const FormFields = () => (...)` dentro do componente da página.
+ * Isso cria uma função nova a cada renderização, então para o React era um tipo
+ * de componente diferente a cada tecla: ele desmontava os inputs e montava
+ * outros no lugar. O campo perdia o foco depois do primeiro caractere e não dava
+ * para digitar um nome inteiro — só a primeira letra entrava.
+ */
+function SupplierFormFields({
+  form,
+  setField,
+}: {
+  form: SupplierForm;
+  setField: (field: keyof SupplierForm, value: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <Input
+        label="Nome *"
+        placeholder="Nome do fornecedor ou credor"
+        maxLength={200}
+        value={form.name}
+        onChange={(e) => setField("name", e.target.value)}
+      />
+      <Select
+        label="Categoria"
+        value={form.category}
+        onChange={(e) => setField("category", e.target.value)}
+        options={CATEGORY_OPTIONS}
+      />
+      {/* Máscaras: os placeholders já prometiam o formato, mas o valor era
+          gravado como o usuário digitasse. */}
+      <Input
+        label="CPF / CNPJ"
+        placeholder="000.000.000-00"
+        inputMode="numeric"
+        maxLength={18}
+        value={form.cpfCnpj}
+        onChange={(e) => setField("cpfCnpj", maskCpfCnpj(e.target.value))}
+      />
+      <Input
+        label="Telefone"
+        placeholder="(00) 00000-0000"
+        inputMode="numeric"
+        maxLength={15}
+        value={form.phone}
+        onChange={(e) => setField("phone", maskPhone(e.target.value))}
+      />
+      <div className="sm:col-span-2">
+        <Input
+          label="E-mail"
+          type="email"
+          placeholder="email@exemplo.com"
+          value={form.email}
+          onChange={(e) => setField("email", e.target.value)}
+        />
+      </div>
+      <div className="sm:col-span-2">
+        <Textarea
+          label="Observações"
+          placeholder="Informações adicionais..."
+          rows={2}
+          maxLength={2000}
+          value={form.notes}
+          onChange={(e) => setField("notes", e.target.value)}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function FornecedoresPage() {
   const qc = useQueryClient();
@@ -108,23 +183,8 @@ export default function FornecedoresPage() {
     });
   }
 
-  const f = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-    setForm(prev => ({ ...prev, [field]: e.target.value }));
-
-  const FormFields = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <Input label="Nome *" placeholder="Nome do fornecedor ou credor" value={form.name} onChange={f("name")} />
-      <Select label="Categoria" value={form.category} onChange={f("category")} options={CATEGORY_OPTIONS} />
-      <Input label="CPF / CNPJ" placeholder="000.000.000-00" value={form.cpfCnpj} onChange={f("cpfCnpj")} />
-      <Input label="Telefone" placeholder="(00) 00000-0000" value={form.phone} onChange={f("phone")} />
-      <div className="sm:col-span-2">
-        <Input label="E-mail" type="email" placeholder="email@exemplo.com" value={form.email} onChange={f("email")} />
-      </div>
-      <div className="sm:col-span-2">
-        <Textarea label="Observações" placeholder="Informações adicionais..." value={form.notes} onChange={f("notes") as any} rows={2} />
-      </div>
-    </div>
-  );
+  const setField = (field: keyof SupplierForm, value: string) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
 
   return (
     <div className="space-y-5">
@@ -147,7 +207,7 @@ export default function FornecedoresPage() {
               <Button variant="ghost" size="icon-sm" onClick={() => setShowNew(false)}><X className="h-4 w-4" /></Button>
             </div>
             <form onSubmit={handleSaveNew} className="space-y-4">
-              <FormFields />
+              <SupplierFormFields form={form} setField={setField} />
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" size="sm" onClick={() => setShowNew(false)}>Cancelar</Button>
                 <Button type="submit" size="sm" loading={createMutation.isPending}>Criar</Button>
@@ -195,7 +255,7 @@ export default function FornecedoresPage() {
                         <Button variant="ghost" size="icon-sm" onClick={() => setEditingId(null)}><X className="h-4 w-4" /></Button>
                       </div>
                       <form onSubmit={handleSaveEdit} className="space-y-4">
-                        <FormFields />
+                        <SupplierFormFields form={form} setField={setField} />
                         <div className="flex justify-end gap-2">
                           <Button type="button" variant="outline" size="sm" onClick={() => setEditingId(null)}>Cancelar</Button>
                           <Button type="submit" size="sm" loading={updateMutation.isPending}>

@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getPortalSessionFromRequest } from "@/lib/portal-auth";
+import { blockedByOnboarding } from "@/lib/portal-guard";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/utils";
 
@@ -7,6 +8,10 @@ export async function POST(request: NextRequest, props: { params: Promise<{ serv
   const params = await props.params;
   const session = await getPortalSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
+
+  // Ato de vontade: exige o primeiro acesso concluído. Ver lib/portal-guard.ts.
+  const bloqueio = await blockedByOnboarding(session.clientUserId);
+  if (bloqueio) return apiError(bloqueio, 403);
 
   try {
     const service = await prisma.extraService.findUnique({

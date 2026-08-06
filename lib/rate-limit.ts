@@ -52,6 +52,20 @@ export const RATE_LIMIT_CONFIG = {
   ai: { name: "ai", limit: 20, windowMs: 10 * MINUTE },
 
   /**
+   * Troca de senha por quem JÁ está autenticado.
+   *
+   * Balde próprio, separado do login, porque compartilhar a cota travava o
+   * primeiro acesso: o cliente erra a senha genérica duas vezes no login, erra a
+   * confirmação outras duas ao trocar, e fica 15 minutos de fora — justamente na
+   * hora em que ele mais precisa conseguir entrar.
+   *
+   * Limite mais folgado se justifica: quem chega aqui já tem sessão válida, então
+   * adivinhar a senha atual quase não agrega poder a um atacante. O limite existe
+   * para o caso de navegador esquecido aberto, não contra força bruta de login.
+   */
+  passwordChange: { name: "passwordChange", limit: 10, windowMs: 15 * MINUTE },
+
+  /**
    * Webhooks de gateway de pagamento. Limite alto: o provedor reenvia
    * notificações e pode disparar rajadas legítimas — bloquear faria perder a
    * confirmação de um pagamento. A autenticidade é verificada na própria rota
@@ -98,8 +112,19 @@ const AI_PATTERNS: RegExp[] = [/\/scan-receipt$/];
  */
 const WEBHOOK_PATTERNS: RegExp[] = [/^\/api\/webhooks\//];
 
+/**
+ * Troca de senha feita por quem já está logado. Vem ANTES de AUTH_PATTERNS na
+ * ordem de decisão, senão cairia no balde do login por causa do sufixo
+ * "-password".
+ */
+const PASSWORD_CHANGE_PATTERNS: RegExp[] = [/^\/api\/portal\/v1\/auth\/change-password$/];
+
 /** Decide qual regra se aplica a uma requisição. */
 export function resolveRule(pathname: string, method: string): RateLimitRule {
+  if (PASSWORD_CHANGE_PATTERNS.some((re) => re.test(pathname))) {
+    return RATE_LIMIT_CONFIG.passwordChange;
+  }
+
   const isExempt = AUTH_EXEMPT.some((re) => re.test(pathname));
   if (!isExempt && AUTH_PATTERNS.some((re) => re.test(pathname))) {
     return RATE_LIMIT_CONFIG.auth;

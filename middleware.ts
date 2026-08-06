@@ -10,7 +10,9 @@ const ADMIN_PUBLIC = ["/login", "/api/v1/auth/login"];
 // A autenticidade é verificada dentro da rota (assinatura + consulta à API do
 // provedor), não por sessão. Ver app/api/webhooks/mercadopago/route.ts.
 const WEBHOOK_PUBLIC = ["/api/webhooks/"];
-const PORTAL_PUBLIC = ["/portal/login", "/api/portal/v1/auth/login"];
+// A política de privacidade é pública de propósito: o cliente precisa poder ler
+// antes de aceitar, e o texto tem de ficar acessível sem login.
+const PORTAL_PUBLIC = ["/portal/login", "/portal/privacidade", "/api/portal/v1/auth/login"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

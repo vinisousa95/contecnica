@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getPortalSessionFromRequest } from "@/lib/portal-auth";
+import { blockedByOnboarding } from "@/lib/portal-guard";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/utils";
 import { getPendingForClient, toSnapshot } from "@/lib/billing";
@@ -15,6 +16,10 @@ import { createPreference, isMercadoPagoEnabled } from "@/lib/mercadopago";
 export async function POST(request: NextRequest) {
   const session = await getPortalSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
+
+  // Ato de vontade: exige o primeiro acesso concluído. Ver lib/portal-guard.ts.
+  const bloqueio = await blockedByOnboarding(session.clientUserId);
+  if (bloqueio) return apiError(bloqueio, 403);
 
   if (!isMercadoPagoEnabled()) {
     return apiError("Pagamento online não está configurado. Fale com a Contécnica.", 503);

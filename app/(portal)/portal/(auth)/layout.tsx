@@ -1,6 +1,7 @@
 import { getPortalSession } from "@/lib/portal-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { portalOnboarding } from "@/lib/privacy";
 import { PortalSidebar } from "@/components/portal/portal-sidebar";
 import { PortalProvider } from "@/components/portal/portal-provider";
 
@@ -14,6 +15,12 @@ export default async function PortalLayout({ children }: { children: React.React
   });
 
   if (!clientUser || !clientUser.isActive) redirect("/portal/login");
+
+  // Trava do primeiro acesso: aceite da política e troca da senha genérica.
+  // Aqui, e não no middleware, porque a decisão depende do banco e o middleware
+  // roda no Edge (sem Prisma). Este layout é o único caminho para toda página
+  // autenticada do portal, então barrar aqui cobre a navegação inteira.
+  if (portalOnboarding(clientUser).pending) redirect("/portal/primeiro-acesso");
 
   const user = {
     name: clientUser.name,

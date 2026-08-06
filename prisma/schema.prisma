@@ -445,6 +445,17 @@ model ClientUser {
   passwordHash String    @map("password_hash")
   isActive     Boolean   @default(true) @map("is_active")
   lastLoginAt  DateTime? @map("last_login_at")
+
+  /// Senha definida pela Contécnica (criação do acesso ou redefinição): o cliente
+  /// é obrigado a trocar antes de usar o portal. Assim a senha genérica passada
+  /// por WhatsApp/telefone não continua valendo depois do primeiro acesso.
+  mustChangePassword Boolean @default(false) @map("must_change_password")
+
+  /// Aceite da política de privacidade (LGPD). A versão fica registrada para
+  /// poder exigir novo aceite quando o texto mudar — sem isso não há como provar
+  /// a QUE o cliente consentiu.
+  privacyAcceptedAt DateTime? @map("privacy_accepted_at")
+  privacyVersion    String?   @map("privacy_version")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 

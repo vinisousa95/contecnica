@@ -111,6 +111,19 @@ export default function ClientPortalPage(props: { params: Promise<{ id: string }
     }
   };
 
+  const onSkipPasswordChange = async () => {
+    try {
+      await apiFetch(`/api/v1/clients/${params.id}/portal`, {
+        method: "PUT",
+        body: JSON.stringify({ mustChangePassword: false }),
+      });
+      toast({ title: "Troca obrigatória dispensada" });
+      qc.invalidateQueries({ queryKey: ["client-portal", params.id] });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    }
+  };
+
   const onDelete = async () => {
     if (!confirm("Remover acesso ao portal? O cliente não conseguirá mais entrar.")) return;
     try {
@@ -263,6 +276,58 @@ export default function ClientPortalPage(props: { params: Promise<{ id: string }
             )}
           </div>
 
+          {/* Primeiro acesso: troca de senha obrigatória e aceite da LGPD.
+              Os dois são resolvidos pelo próprio cliente ao entrar no portal —
+              aqui a Contécnica só acompanha, e pode dispensar a troca se o
+              cliente não conseguir concluir. */}
+          <div className="py-3 border-b border-gray-100 space-y-2.5">
+            <p className="text-sm font-medium text-gray-900">Primeiro acesso</p>
+
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-gray-500">
+                {portalUser.mustChangePassword
+                  ? "Vai trocar a senha no próximo acesso"
+                  : "Senha já definida pelo cliente"}
+              </p>
+              {portalUser.mustChangePassword ? (
+                <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 flex-shrink-0">
+                  Troca pendente
+                </span>
+              ) : (
+                <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 flex-shrink-0">
+                  Concluído
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-gray-500">
+                {portalUser.privacyAcceptedAt
+                  ? `Política de privacidade aceita em ${formatDate(portalUser.privacyAcceptedAt)}`
+                  : "Política de privacidade ainda não aceita"}
+              </p>
+              {portalUser.privacyAcceptedAt ? (
+                <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 flex-shrink-0">
+                  Aceita
+                </span>
+              ) : (
+                <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 flex-shrink-0">
+                  Pendente
+                </span>
+              )}
+            </div>
+
+            {portalUser.mustChangePassword && (
+              <button
+                type="button"
+                onClick={onSkipPasswordChange}
+                className="text-xs text-gray-400 hover:text-gray-600 underline transition-colors"
+              >
+                Dispensar a troca obrigatória
+              </button>
+            )}
+          </div>
+
           {/* Reset password */}
           <div className="py-3 border-b border-gray-100">
             <div className="flex items-center justify-between mb-3">
@@ -280,6 +345,7 @@ export default function ClientPortalPage(props: { params: Promise<{ id: string }
                   <Input
                     type="password"
                     placeholder="Nova senha (mínimo 6 caracteres)"
+                    helperText="Provisória: o cliente troca no próximo acesso."
                     error={resetErrors.password?.message}
                     {...registerReset("password")}
                   />
@@ -356,6 +422,7 @@ function CreateAccessForm({
             label="Senha *"
             type={showPassword ? "text" : "password"}
             placeholder="Mínimo 6 caracteres"
+            helperText="Senha provisória: o cliente é obrigado a trocá-la no primeiro acesso."
             error={errors.password?.message}
             rightIcon={
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="hover:text-gray-600">

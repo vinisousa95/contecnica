@@ -27,6 +27,9 @@ const updateSchema = z.object({
   email: z.string().email("E-mail inválido").optional(),
   password: z.string().min(6).optional(),
   isActive: z.boolean().optional(),
+  /// Dispensar a troca obrigatória. Existe para o caso de o cliente não conseguir
+  /// concluir (idoso, sem prática) e alguém da Contécnica resolver por ele.
+  mustChangePassword: z.boolean().optional(),
 }).strict();
 
 export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
@@ -36,7 +39,10 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
 
   const portalUser = await prisma.clientUser.findFirst({
     where: { clientId: params.id },
-    select: { id: true, name: true, email: true, isActive: true, lastLoginAt: true, createdAt: true },
+    select: {
+      id: true, name: true, email: true, isActive: true, lastLoginAt: true, createdAt: true,
+      mustChangePassword: true, privacyAcceptedAt: true, privacyVersion: true,
+    },
   });
 
   return apiSuccess(portalUser);
@@ -69,6 +75,9 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
       email: data.email,
       passwordHash,
       isActive: true,
+      // Senha definida por nós é sempre provisória: o cliente troca no primeiro
+      // acesso. Assim a senha passada por WhatsApp/telefone deixa de valer.
+      mustChangePassword: true,
     },
     select: { id: true, name: true, email: true, isActive: true, createdAt: true },
   });
@@ -91,7 +100,12 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
   const updateData: any = {};
   if (data.name) updateData.name = data.name;
   if (data.isActive !== undefined) updateData.isActive = data.isActive;
-  if (data.password) updateData.passwordHash = await bcrypt.hash(data.password, 12);
+  if (data.mustChangePassword !== undefined) updateData.mustChangePassword = data.mustChangePassword;
+  if (data.password) {
+    updateData.passwordHash = await bcrypt.hash(data.password, 12);
+    // Mesma razão da criação: senha que passou pelas nossas mãos é provisória.
+    updateData.mustChangePassword = true;
+  }
 
   if (data.email && data.email !== portalUser.email) {
     // O e-mail é único entre todos os logins de portal — inclusive de outros
@@ -104,7 +118,10 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
   const updated = await prisma.clientUser.update({
     where: { id: portalUser.id },
     data: updateData,
-    select: { id: true, name: true, email: true, isActive: true, createdAt: true },
+    select: {
+      id: true, name: true, email: true, isActive: true, createdAt: true,
+      mustChangePassword: true, privacyAcceptedAt: true,
+    },
   });
 
   return apiSuccess(updated);

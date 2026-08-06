@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, use, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { api } from "@/lib/api-client";
@@ -31,6 +31,7 @@ import {
   ArrowLeft, Pencil, MapPin, Calendar, DollarSign,
   ArrowDownCircle, ArrowUpCircle, Plus, CheckCircle2,
   Circle, Eye, EyeOff, Trash2, Link2, ListChecks, RefreshCw, Wrench, Users, Car, HardHat, FileText,
+  ImagePlus, Loader2, X,
 } from "lucide-react";
 
 async function apiFetch(url: string, options?: RequestInit) {
@@ -465,6 +466,9 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
   const [saving, setSaving] = useState(false);
   const [itemSearch, setItemSearch] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [formPhotoUrl, setFormPhotoUrl] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const { data: services = [], isLoading } = useQuery({
     queryKey: ["project-extra-services", projectId],
@@ -489,6 +493,23 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
     setShowSuggestions(false);
   };
 
+  const handlePhoto = async (file: File) => {
+    setUploadingPhoto(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("type", "photo");
+      const res = await fetch("/api/v1/upload", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Erro no upload");
+      setFormPhotoUrl(json.data.url);
+    } catch (err: any) {
+      toast({ title: "Erro ao enviar foto", description: err.message, variant: "error" });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formAmount.trim()) return;
@@ -501,6 +522,7 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
           description: formDescription.trim() || null,
           requestedBy: formRequestedBy.trim() || null,
           amount: formAmount.trim(),
+          photoUrl: formPhotoUrl,
         }),
       });
       toast({ title: "Serviço extra adicionado" });
@@ -510,6 +532,7 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
       setFormRequestedBy("");
       setFormAmount("");
       setItemSearch("");
+      setFormPhotoUrl(null);
       setShowForm(false);
     } catch (e: any) {
       toast({ title: "Erro", description: e.message, variant: "error" });
@@ -678,11 +701,46 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
                 className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
               />
             </div>
+            {/* Foto do que será executado — o cliente vê no portal antes de
+                aprovar. Opcional. */}
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Foto</label>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhoto(f); }}
+              />
+              {formPhotoUrl ? (
+                <div className="relative w-[86px] h-[34px] rounded-lg overflow-hidden border border-gray-200">
+                  <img src={formPhotoUrl} alt="Foto do serviço" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setFormPhotoUrl(null)}
+                    title="Remover foto"
+                    className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full p-0.5 hover:bg-black/80"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={uploadingPhoto}
+                  className="flex items-center gap-1.5 text-sm text-gray-500 border border-dashed border-gray-300 rounded-lg px-3 py-1.5 hover:border-orange-400 hover:text-orange-600 transition-colors disabled:opacity-50 whitespace-nowrap"
+                >
+                  {uploadingPhoto ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
+                  {uploadingPhoto ? "Enviando…" : "Adicionar"}
+                </button>
+              )}
+            </div>
             <div className="flex gap-2">
-              <Button type="submit" size="sm" disabled={saving}>
+              <Button type="submit" size="sm" disabled={saving || uploadingPhoto}>
                 {saving ? "Salvando…" : "Salvar"}
               </Button>
-              <Button type="button" size="sm" variant="outline" onClick={() => { setShowForm(false); setItemSearch(""); }}>
+              <Button type="button" size="sm" variant="outline" onClick={() => { setShowForm(false); setItemSearch(""); setFormPhotoUrl(null); }}>
                 Cancelar
               </Button>
             </div>
@@ -710,14 +768,27 @@ function ExtraServicesSection({ projectId }: { projectId: string }) {
             </div>
             {services.map((s: any) => (
               <div key={s.id} className="grid grid-cols-[2fr_1fr_1fr_auto_auto] gap-3 items-center px-5 py-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{s.name}</p>
-                  {s.description && (
-                    <p className="text-xs text-gray-400 truncate">{s.description}</p>
+                <div className="min-w-0 flex items-center gap-2.5">
+                  {s.photoUrl && (
+                    <a
+                      href={s.photoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Abrir foto"
+                      className="flex-shrink-0 w-11 h-11 rounded-lg overflow-hidden border border-gray-200 hover:border-orange-400 transition-colors"
+                    >
+                      <img src={s.photoUrl} alt="" className="w-full h-full object-cover" />
+                    </a>
                   )}
-                  {s.requestedBy && (
-                    <p className="text-xs text-gray-400 truncate">Solicitante: {s.requestedBy}</p>
-                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-800 truncate">{s.name}</p>
+                    {s.description && (
+                      <p className="text-xs text-gray-400 truncate">{s.description}</p>
+                    )}
+                    {s.requestedBy && (
+                      <p className="text-xs text-gray-400 truncate">Solicitante: {s.requestedBy}</p>
+                    )}
+                  </div>
                 </div>
                 <span className="text-sm font-semibold text-gray-700">
                   {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(s.amount)}

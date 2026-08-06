@@ -9,6 +9,14 @@ const schema = z.object({
   description: z.string().optional().nullable(),
   requestedBy: z.string().optional().nullable(),
   amount: z.string().min(1, "Valor é obrigatório"),
+  // Foto do que será executado. Caminho devolvido por /api/v1/upload — não
+  // aceitamos URL externa, para não virar vetor de conteúdo de terceiros no
+  // portal do cliente.
+  photoUrl: z
+    .string()
+    .regex(/^\/api\/v1\/uploads\/photos\/[A-Za-z0-9._-]+$/, "Foto inválida")
+    .optional()
+    .nullable(),
 }).strict();
 
 export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
@@ -40,6 +48,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
       description: parsed.data.description,
       requestedBy: parsed.data.requestedBy ?? null,
       amount: parsed.data.amount,
+      photoUrl: parsed.data.photoUrl ?? null,
     },
   });
 

@@ -87,9 +87,10 @@ async function isAuthorized(request: NextRequest, filePath: string, fileName: st
     return !!doc || !!expense;
   }
 
-  // Fotos: as visíveis das obras do cliente, mais a foto de capa da obra.
+  // Fotos: as visíveis das obras do cliente, a foto de capa, e a foto do
+  // serviço extra (que o cliente precisa ver para decidir se aprova).
   if (filePath.startsWith("photos/")) {
-    const [photo, cover] = await Promise.all([
+    const [photo, cover, extra] = await Promise.all([
       prisma.projectPhoto.findFirst({
         where: {
           imageUrl: { endsWith: filePath },
@@ -102,8 +103,12 @@ async function isAuthorized(request: NextRequest, filePath: string, fileName: st
         where: { coverPhoto: { endsWith: filePath }, clientId: portal.clientId },
         select: { id: true },
       }),
+      prisma.extraService.findFirst({
+        where: { photoUrl: { endsWith: filePath }, project: { clientId: portal.clientId } },
+        select: { id: true },
+      }),
     ]);
-    return !!photo || !!cover;
+    return !!photo || !!cover || !!extra;
   }
 
   // Tipo de arquivo não previsto: nega. Antes o caso padrão liberava, e cada

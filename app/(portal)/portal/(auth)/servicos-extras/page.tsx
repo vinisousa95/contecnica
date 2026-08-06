@@ -81,6 +81,19 @@ export default function ServicosExtrasPage() {
           {pending.map((s: any) => (
             <div key={s.id} className="bg-white rounded-xl border-2 border-amber-300 shadow-sm p-5">
               <div className="flex items-start justify-between gap-4 flex-wrap">
+                {/* Foto do que será executado, quando a Contécnica anexa. É o que
+                    dá ao cliente contexto para aceitar ou recusar. */}
+                {s.photoUrl && (
+                  <a
+                    href={s.photoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Ampliar foto"
+                    className="block w-full sm:w-32 h-32 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0 hover:border-amber-400 transition-colors"
+                  >
+                    <img src={s.photoUrl} alt={`Foto: ${s.name}`} className="w-full h-full object-cover" />
+                  </a>
+                )}
                 <div className="min-w-0 flex-1">
                   <h3 className="text-base font-bold text-gray-900">{s.name}</h3>
                   {s.description && (
@@ -127,9 +140,17 @@ export default function ServicosExtrasPage() {
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
             {accepted.map((s: any) => (
               <div key={s.id} className="flex items-center justify-between gap-4 px-5 py-4 flex-wrap">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-gray-900">{s.name}</p>
-                  {s.description && <p className="text-xs text-gray-400 mt-0.5">{s.description}</p>}
+                <div className="min-w-0 flex-1 flex items-center gap-3">
+                  {s.photoUrl && (
+                    <a href={s.photoUrl} target="_blank" rel="noopener noreferrer" title="Ampliar foto"
+                      className="flex-shrink-0 w-11 h-11 rounded-lg overflow-hidden border border-gray-200">
+                      <img src={s.photoUrl} alt="" className="w-full h-full object-cover" />
+                    </a>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900">{s.name}</p>
+                    {s.description && <p className="text-xs text-gray-400 mt-0.5">{s.description}</p>}
+                  </div>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <span className="text-sm font-bold text-gray-800">{formatCurrency(s.amount)}</span>

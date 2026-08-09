@@ -166,9 +166,9 @@ export default function ClienteDetailPage(props: { params: Promise<{ id: string 
                       </div>
                       <div className="text-right flex-shrink-0 ml-4">
                         <p className="text-sm font-semibold text-gray-700">
-                          {formatCurrency(project.totalRevenues)}
+                          {formatCurrency(project.receivedRevenues)}
                         </p>
-                        <p className="text-xs text-gray-400">em receitas</p>
+                        <p className="text-xs text-gray-400">recebido</p>
                       </div>
                     </div>
                   ))}

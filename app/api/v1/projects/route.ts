@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { projectFinancials } from "@/lib/project-financials";
 import { projectSchema } from "@/lib/validations";
 import { apiSuccess, apiError, getPaginationParams } from "@/lib/utils";
 
@@ -36,8 +37,8 @@ export async function GET(request: NextRequest) {
       include: {
         client: { select: { id: true, name: true } },
         _count: { select: { expenses: true, revenues: true } },
-        expenses: { select: { amount: true } },
-        revenues: { select: { amount: true } },
+        expenses: { select: { amount: true, status: true } },
+        revenues: { select: { amount: true, status: true } },
       },
     }),
     prisma.project.count({ where }),
@@ -52,14 +53,10 @@ export async function GET(request: NextRequest) {
     const { expenses, revenues, _count, ...rest } = p;
     if (!canSeeFinancials) return { ...rest, budget: null };
 
-    const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
-    const totalRevenues = revenues.reduce((sum, r) => sum + Number(r.amount), 0);
     return {
       ...rest,
       _count,
-      totalExpenses,
-      totalRevenues,
-      margin: totalRevenues - totalExpenses,
+      ...projectFinancials(expenses, revenues),
     };
   });
 

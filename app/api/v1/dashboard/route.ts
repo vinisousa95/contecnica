@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { projectFinancials } from "@/lib/project-financials";
 import { apiSuccess, apiError } from "@/lib/utils";
 import { startOfMonth, endOfMonth, addDays } from "date-fns";
 
@@ -123,9 +124,18 @@ export async function GET(request: NextRequest) {
       _sum: { amount: true },
     }),
 
-    // Recent expenses
+    // Últimas movimentações: só o que o dinheiro de fato movimentou.
+    //
+    // Antes vinham as 5 mais recentes por createdAt, sem filtro de status: uma
+    // receita agendada para o mês seguinte aparecia como "+R$ X" ao lado das
+    // recebidas, como se tivesse entrado. O que está por vir tem lugar próprio
+    // (upcomingExpenses / upcomingRevenues e os vencidos).
+    //
+    // A ordem é pela data do pagamento/recebimento, não pela do lançamento —
+    // lançar hoje uma despesa paga no mês passado não a torna a mais recente.
     prisma.expense.findMany({
-      orderBy: { createdAt: "desc" },
+      where: { status: "PAID" },
+      orderBy: [{ paymentDate: "desc" }, { createdAt: "desc" }],
       take: 5,
       include: {
         project: { select: { name: true } },
@@ -133,9 +143,9 @@ export async function GET(request: NextRequest) {
       },
     }),
 
-    // Recent revenues
     prisma.revenue.findMany({
-      orderBy: { createdAt: "desc" },
+      where: { status: "RECEIVED" },
+      orderBy: [{ receivedDate: "desc" }, { createdAt: "desc" }],
       take: 5,
       include: {
         project: { select: { name: true } },
@@ -187,17 +197,13 @@ export async function GET(request: NextRequest) {
 
   // Calculate project financials
   const projectsData = projectsWithFinancials.map((p) => {
-    const totalExpenses = p.expenses.reduce((sum, e) => sum + Number(e.amount), 0);
-    const totalRevenues = p.revenues.reduce((sum, r) => sum + Number(r.amount), 0);
     return {
       id: p.id,
       name: p.name,
       clientName: p.client.name,
       status: p.status,
       budget: p.budget ? Number(p.budget) : null,
-      totalExpenses,
-      totalRevenues,
-      margin: totalRevenues - totalExpenses,
+      ...projectFinancials(p.expenses, p.revenues),
     };
   });
 
@@ -259,7 +265,7 @@ export async function GET(request: NextRequest) {
         description: e.description,
         amount: Number(e.amount),
         status: e.status,
-        date: e.createdAt,
+        date: e.paymentDate ?? e.createdAt,
         projectName: e.project?.name,
         categoryName: e.category?.name,
       })),
@@ -269,7 +275,7 @@ export async function GET(request: NextRequest) {
         description: r.description,
         amount: Number(r.amount),
         status: r.status,
-        date: r.createdAt,
+        date: r.receivedDate ?? r.createdAt,
         projectName: r.project?.name,
         clientName: r.client?.name,
       })),

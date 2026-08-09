@@ -197,23 +197,30 @@ function ProjectCard({ project, onDelete }: { project: any; onDelete: () => void
               {formatCurrency(project.totalExpenses)}
             </p>
           </div>
+          {/* Recebido, não total lançado: receita agendada não é dinheiro em
+              caixa. O que falta receber aparece embaixo. */}
           <div>
-            <p className="text-xs text-gray-400">Receitas</p>
+            <p className="text-xs text-gray-400">Recebido</p>
             <p className="text-sm font-semibold text-green-600">
-              {formatCurrency(project.totalRevenues)}
+              {formatCurrency(project.receivedRevenues)}
             </p>
+            {project.pendingRevenues > 0 && (
+              <p className="text-[11px] text-gray-400">
+                + {formatCurrency(project.pendingRevenues)} a receber
+              </p>
+            )}
           </div>
           <div>
             <p className="text-xs text-gray-400">Margem</p>
             <p className={`text-sm font-semibold flex items-center gap-1 ${
-              project.margin >= 0 ? "text-green-600" : "text-red-600"
+              project.realizedMargin >= 0 ? "text-green-600" : "text-red-600"
             }`}>
-              {project.margin >= 0 ? (
+              {project.realizedMargin >= 0 ? (
                 <TrendingUp className="h-3.5 w-3.5" />
               ) : (
                 <TrendingDown className="h-3.5 w-3.5" />
               )}
-              {formatCurrency(project.margin)}
+              {formatCurrency(project.realizedMargin)}
             </p>
           </div>
         </div>

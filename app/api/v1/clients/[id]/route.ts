@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { projectFinancials } from "@/lib/project-financials";
 import { clientSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
@@ -16,8 +17,8 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
         orderBy: { createdAt: "desc" },
         include: {
           _count: { select: { expenses: true, revenues: true } },
-          expenses: { select: { amount: true } },
-          revenues: { select: { amount: true } },
+          expenses: { select: { amount: true, status: true } },
+          revenues: { select: { amount: true, status: true } },
         },
       },
     },
@@ -30,8 +31,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
     ...client,
     projects: client.projects.map((p) => ({
       ...p,
-      totalExpenses: p.expenses.reduce((sum, e) => sum + Number(e.amount), 0),
-      totalRevenues: p.revenues.reduce((sum, r) => sum + Number(r.amount), 0),
+      ...projectFinancials(p.expenses, p.revenues),
     })),
   };
 

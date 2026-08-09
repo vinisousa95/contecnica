@@ -347,9 +347,9 @@ export default function DashboardPage() {
                         {formatCurrency(project.totalExpenses)}
                       </td>
                       <td className={`px-5 py-3 text-right font-semibold ${
-                        project.margin >= 0 ? "text-green-600" : "text-red-600"
+                        project.realizedMargin >= 0 ? "text-green-600" : "text-red-600"
                       }`}>
-                        {formatCurrency(project.margin)}
+                        {formatCurrency(project.realizedMargin)}
                       </td>
                       <td className="px-5 py-3">
                         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${PROJECT_STATUS_COLORS[project.status]}`}>

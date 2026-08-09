@@ -1269,8 +1269,26 @@ export default function ObraDetailPage(props: { params: Promise<{ id: string }> 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <FinCard label="Orçamento" value={fs.budget ? formatCurrency(fs.budget) : "—"} sub={fs.budget && fs.budgetUsed ? `${fs.budgetUsed.toFixed(0)}% usado` : undefined} color="blue" />
         <FinCard label="Custo total" value={formatCurrency(fs.totalExpenses)} sub={`${formatCurrency(fs.paidExpenses)} pago`} color="amber" />
-        <FinCard label="Receita total" value={formatCurrency(fs.totalRevenues)} sub={`${formatCurrency(fs.receivedRevenues)} recebido`} color="green" />
-        <FinCard label="Margem" value={formatCurrency(fs.margin)} positive={fs.margin >= 0} color={fs.margin >= 0 ? "green" : "red"} />
+        {/* Recebido e margem realizada em destaque, previsto como contexto.
+            Antes o destaque era o total lançado, então uma parcela agendada para
+            o mês seguinte já aparecia somada como se estivesse na conta. */}
+        <FinCard
+          label="Recebido"
+          value={formatCurrency(fs.receivedRevenues)}
+          sub={
+            fs.pendingRevenues > 0
+              ? `+ ${formatCurrency(fs.pendingRevenues)} a receber`
+              : `de ${formatCurrency(fs.totalRevenues)} previsto`
+          }
+          color="green"
+        />
+        <FinCard
+          label="Margem realizada"
+          value={formatCurrency(fs.realizedMargin)}
+          sub={`${formatCurrency(fs.projectedMargin)} prevista`}
+          positive={fs.realizedMargin >= 0}
+          color={fs.realizedMargin >= 0 ? "green" : "red"}
+        />
       </div>
 
       {/* Budget bar */}

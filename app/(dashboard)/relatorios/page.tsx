@@ -43,18 +43,23 @@ export default function RelatoriosPage() {
   const projects = Array.isArray(data) ? data : [];
 
   // Aggregates
+  // Realizado e previsto separados. Somar receita lançada com recebida daria um
+  // relatório que mostra resultado de dinheiro que não entrou.
   const totalRevenues = projects.reduce((s: number, p: any) => s + p.totalRevenues, 0);
+  const totalReceived = projects.reduce((s: number, p: any) => s + p.receivedRevenues, 0);
   const totalExpenses = projects.reduce((s: number, p: any) => s + p.totalExpenses, 0);
-  const totalMargin = projects.reduce((s: number, p: any) => s + p.margin, 0);
-  const avgMarginPercent = projects.length
-    ? Math.round(projects.reduce((s: number, p: any) => s + (p.marginPercent ?? 0), 0) / projects.length)
+  const totalPaid = projects.reduce((s: number, p: any) => s + p.paidExpenses, 0);
+  const realizedMargin = totalReceived - totalPaid;
+  const projectedMargin = totalRevenues - totalExpenses;
+  const realizedMarginPercent = totalReceived > 0
+    ? Math.round((realizedMargin / totalReceived) * 100)
     : 0;
 
   const chartData = projects.slice(0, 10).map((p: any) => ({
     name: p.name.length > 20 ? p.name.slice(0, 20) + "…" : p.name,
-    receitas: p.totalRevenues,
-    custos: p.totalExpenses,
-    margem: p.margin,
+    receitas: p.receivedRevenues,
+    custos: p.paidExpenses,
+    margem: p.realizedMargin,
   }));
 
   return (
@@ -95,26 +100,28 @@ export default function RelatoriosPage() {
               iconColor="text-blue-600"
             />
             <StatCard
-              title="Total Receitas"
-              value={formatCurrency(totalRevenues)}
+              title="Recebido"
+              value={formatCurrency(totalReceived)}
+              subtitle={`de ${formatCurrency(totalRevenues)} lançado`}
               icon={TrendingUp}
               iconBg="bg-green-50"
               iconColor="text-green-600"
             />
             <StatCard
-              title="Total Custos"
-              value={formatCurrency(totalExpenses)}
+              title="Pago"
+              value={formatCurrency(totalPaid)}
+              subtitle={`de ${formatCurrency(totalExpenses)} lançado`}
               icon={TrendingDown}
               iconBg="bg-amber-50"
               iconColor="text-amber-600"
             />
             <StatCard
-              title="Margem Total"
-              value={formatCurrency(totalMargin)}
-              subtitle={`Média: ${avgMarginPercent}%`}
+              title="Margem realizada"
+              value={formatCurrency(realizedMargin)}
+              subtitle={`${realizedMarginPercent}% · prevista ${formatCurrency(projectedMargin)}`}
               icon={DollarSign}
-              iconBg={totalMargin >= 0 ? "bg-green-50" : "bg-red-50"}
-              iconColor={totalMargin >= 0 ? "text-green-600" : "text-red-600"}
+              iconBg={realizedMargin >= 0 ? "bg-green-50" : "bg-red-50"}
+              iconColor={realizedMargin >= 0 ? "text-green-600" : "text-red-600"}
             />
           </div>
 
@@ -172,8 +179,8 @@ export default function RelatoriosPage() {
                         <TableHead>Cliente</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Orçamento</TableHead>
-                        <TableHead className="text-right">Receitas</TableHead>
-                        <TableHead className="text-right">Custos</TableHead>
+                        <TableHead className="text-right">Recebido</TableHead>
+                        <TableHead className="text-right">Pago</TableHead>
                         <TableHead className="text-right">Margem</TableHead>
                         <TableHead className="text-right">Margem %</TableHead>
                         <TableHead>Início</TableHead>
@@ -196,18 +203,28 @@ export default function RelatoriosPage() {
                             {p.budget ? formatCurrency(p.budget) : "—"}
                           </TableCell>
                           <TableCell className="text-right text-sm text-green-700 font-medium">
-                            {formatCurrency(p.totalRevenues)}
+                            {formatCurrency(p.receivedRevenues)}
+                            {p.pendingRevenues > 0 && (
+                              <span className="block text-[11px] font-normal text-gray-400">
+                                + {formatCurrency(p.pendingRevenues)} a receber
+                              </span>
+                            )}
                           </TableCell>
                           <TableCell className="text-right text-sm text-amber-700 font-medium">
-                            {formatCurrency(p.totalExpenses)}
+                            {formatCurrency(p.paidExpenses)}
+                            {p.pendingExpenses > 0 && (
+                              <span className="block text-[11px] font-normal text-gray-400">
+                                + {formatCurrency(p.pendingExpenses)} a pagar
+                              </span>
+                            )}
                           </TableCell>
-                          <TableCell className={`text-right text-sm font-semibold ${p.margin >= 0 ? "text-green-700" : "text-red-700"}`}>
-                            {formatCurrency(p.margin)}
+                          <TableCell className={`text-right text-sm font-semibold ${p.realizedMargin >= 0 ? "text-green-700" : "text-red-700"}`}>
+                            {formatCurrency(p.realizedMargin)}
                           </TableCell>
                           <TableCell className={`text-right text-sm font-medium ${
-                            p.marginPercent >= 20 ? "text-green-700" : p.marginPercent >= 0 ? "text-amber-700" : "text-red-700"
+                            p.realizedMarginPercent >= 20 ? "text-green-700" : p.realizedMarginPercent >= 0 ? "text-amber-700" : "text-red-700"
                           }`}>
-                            {p.marginPercent ?? 0}%
+                            {p.realizedMarginPercent ?? 0}%
                           </TableCell>
                           <TableCell className="text-sm text-gray-400">
                             {formatDate(p.startDate)}

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { projectFinancials, marginPercent } from "@/lib/project-financials";
 import { apiSuccess, apiError } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
@@ -26,14 +27,7 @@ export async function GET(request: NextRequest) {
   });
 
   const enriched = projects.map((p) => {
-    const totalExpenses = p.expenses.reduce((sum, e) => sum + Number(e.amount), 0);
-    const paidExpenses = p.expenses
-      .filter((e) => e.status === "PAID")
-      .reduce((sum, e) => sum + Number(e.amount), 0);
-    const totalRevenues = p.revenues.reduce((sum, r) => sum + Number(r.amount), 0);
-    const receivedRevenues = p.revenues
-      .filter((r) => r.status === "RECEIVED")
-      .reduce((sum, r) => sum + Number(r.amount), 0);
+    const fin = projectFinancials(p.expenses, p.revenues);
     const budget = p.budget ? Number(p.budget) : null;
 
     return {
@@ -45,14 +39,13 @@ export async function GET(request: NextRequest) {
       expectedEndDate: p.expectedEndDate,
       actualEndDate: p.actualEndDate,
       budget,
-      totalExpenses,
-      paidExpenses,
-      totalRevenues,
-      receivedRevenues,
-      margin: totalRevenues - totalExpenses,
-      budgetVariance: budget ? budget - totalExpenses : null,
-      budgetUsedPercent: budget ? Math.round((totalExpenses / budget) * 100) : null,
-      marginPercent: totalRevenues > 0 ? Math.round(((totalRevenues - totalExpenses) / totalRevenues) * 100) : 0,
+      ...fin,
+      budgetVariance: budget ? budget - fin.totalExpenses : null,
+      budgetUsedPercent: budget ? Math.round((fin.totalExpenses / budget) * 100) : null,
+      // Percentual sobre o RECEBIDO: mostrar margem percentual de dinheiro que
+      // ainda não entrou é o mesmo erro que a margem tinha.
+      realizedMarginPercent: marginPercent(fin.realizedMargin, fin.receivedRevenues),
+      projectedMarginPercent: marginPercent(fin.projectedMargin, fin.totalRevenues),
     };
   });
 

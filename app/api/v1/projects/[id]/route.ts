@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getSessionFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { projectFinancials } from "@/lib/project-financials";
 import { projectSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
 
@@ -26,14 +27,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
 
   if (!project) return apiError("Obra não encontrada", 404);
 
-  const totalExpenses = project.expenses.reduce((sum, e) => sum + Number(e.amount), 0);
-  const totalRevenues = project.revenues.reduce((sum, r) => sum + Number(r.amount), 0);
-  const paidExpenses = project.expenses
-    .filter((e) => e.status === "PAID")
-    .reduce((sum, e) => sum + Number(e.amount), 0);
-  const receivedRevenues = project.revenues
-    .filter((r) => r.status === "RECEIVED")
-    .reduce((sum, r) => sum + Number(r.amount), 0);
+  const fin = projectFinancials(project.expenses, project.revenues);
 
   return apiSuccess({
     ...project,
@@ -41,15 +35,9 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
     revenues: project.revenues.map((r) => ({ ...r, amount: Number(r.amount) })),
     financialSummary: {
       budget: project.budget ? Number(project.budget) : null,
-      totalExpenses,
-      paidExpenses,
-      pendingExpenses: totalExpenses - paidExpenses,
-      totalRevenues,
-      receivedRevenues,
-      pendingRevenues: totalRevenues - receivedRevenues,
-      margin: totalRevenues - totalExpenses,
-      budgetUsed: project.budget ? (totalExpenses / Number(project.budget)) * 100 : null,
-      budgetVariance: project.budget ? Number(project.budget) - totalExpenses : null,
+      ...fin,
+      budgetUsed: project.budget ? (fin.totalExpenses / Number(project.budget)) * 100 : null,
+      budgetVariance: project.budget ? Number(project.budget) - fin.totalExpenses : null,
     },
   });
 }

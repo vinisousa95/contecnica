@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { createToken, setSessionCookie } from "@/lib/auth";
 import { loginSchema } from "@/lib/validations";
 import { apiSuccess, apiError } from "@/lib/utils";
+import { dummyPasswordCompare } from "@/lib/auth-timing";
 
 // Proteção contra força bruta (5 tentativas / 15 min por IP) é aplicada
 // centralmente no middleware — ver lib/rate-limit.ts.
@@ -32,6 +33,8 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user || !user.isActive) {
+      // Iguala o tempo com o caminho de senha errada — ver lib/auth-timing.ts.
+      await dummyPasswordCompare();
       return apiError("Credenciais inválidas", 401);
     }
 

@@ -53,10 +53,14 @@ export async function POST(request: NextRequest) {
     const url = `/api/v1/uploads/${subdir}/${safeName}`;
     return NextResponse.json({ success: true, data: { url } }, { status: 200 });
   } catch (err: any) {
-    console.error("[upload] base:", UPLOAD_BASE, "| err:", err?.message);
-    const detail = err?.code === "EACCES"
-      ? "Sem permissão no servidor para salvar o arquivo. Configure UPLOAD_DIR no ambiente PM2."
-      : err?.message ?? "Erro desconhecido";
-    return NextResponse.json({ success: false, error: detail }, { status: 500 });
+    // Detalhe fica no log do servidor. Devolver err.message ao navegador expunha
+    // caminho de diretório e detalhes de infraestrutura (era a única rota que
+    // ainda fazia isso). O caso EACCES está documentado em docs/ — quem opera o
+    // servidor encontra a causa no log do PM2.
+    console.error("[upload] base:", UPLOAD_BASE, "| code:", err?.code, "| err:", err?.message);
+    return NextResponse.json(
+      { success: false, error: "Não foi possível salvar o arquivo. Tente novamente." },
+      { status: 500 }
+    );
   }
 }

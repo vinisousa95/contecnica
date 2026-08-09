@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/utils";
+import { dummyPasswordCompare } from "@/lib/auth-timing";
 import { createPortalToken, setPortalSessionCookie } from "@/lib/portal-auth";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -23,6 +24,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!clientUser || !clientUser.isActive) {
+      await dummyPasswordCompare(); // iguala o tempo — ver lib/auth-timing.ts
       return apiError("E-mail ou senha incorretos.", 401);
     }
 

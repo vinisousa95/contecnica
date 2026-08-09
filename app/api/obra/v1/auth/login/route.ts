@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { createToken, setSessionCookie } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import { validateBody } from "@/lib/api-validation";
+import { dummyPasswordCompare } from "@/lib/auth-timing";
 import { obraLoginSchema } from "@/lib/validations";
 
 // Proteção contra força bruta é aplicada centralmente no middleware
@@ -16,6 +17,7 @@ export async function POST(request: NextRequest) {
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !user.isActive) {
+    await dummyPasswordCompare(); // iguala o tempo — ver lib/auth-timing.ts
     return NextResponse.json({ success: false, error: "Credenciais inválidas" }, { status: 401 });
   }
 

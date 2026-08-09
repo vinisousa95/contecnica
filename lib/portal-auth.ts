@@ -53,7 +53,10 @@ export function setPortalSessionCookie(token: string) {
   const cookieStore = (cookies() as unknown as UnsafeUnwrappedCookies);
   cookieStore.set(PORTAL_COOKIE, token, {
     httpOnly: true,
-    secure: process.env.APP_ENV === "production",
+    // "!== development" e não "=== production": se APP_ENV faltar no servidor,
+    // o cookie nasce Secure mesmo assim (fail-safe). Era o único lugar com a
+    // condição invertida em relação a lib/auth.ts.
+    secure: process.env.APP_ENV !== "development",
     sameSite: "lax",
     maxAge: COOKIE_MAX_AGE,
     path: "/",

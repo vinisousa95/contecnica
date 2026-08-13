@@ -83,12 +83,32 @@ export interface PreferenceItem {
   unit_price: number;
 }
 
+/**
+ * Tipos de pagamento do Mercado Pago que nos interessam no Brasil.
+ * `bank_transfer` é o PIX. Os demais são autoexplicativos.
+ */
+export const MP_PAYMENT_TYPES = [
+  "credit_card",
+  "debit_card",
+  "prepaid_card",
+  "ticket", // boleto
+  "bank_transfer", // PIX
+  "account_money", // saldo Mercado Pago
+] as const;
+
+export type MpPaymentType = (typeof MP_PAYMENT_TYPES)[number];
+
 export interface CreatePreferenceInput {
   /** Nosso Payment.id — volta na notificação como external_reference. */
   externalReference: string;
   items: PreferenceItem[];
   payer?: { name?: string | null; email?: string | null };
   description?: string;
+  /**
+   * Formas de pagamento permitidas. Tudo que NÃO estiver aqui é excluído no
+   * checkout. Omitir libera todas. Ex.: `["bank_transfer"]` = só PIX.
+   */
+  allowedPaymentTypes?: MpPaymentType[];
 }
 
 export interface PreferenceResult {
@@ -119,6 +139,16 @@ export async function createPreference(input: CreatePreferenceInput): Promise<Pr
     auto_return: "approved",
     notification_url: `${publicUrl}/api/webhooks/mercadopago`,
     statement_descriptor: "CONTECNICA",
+    // Restrição de forma de pagamento: exclui tudo que não está na allowlist.
+    // A checagem é do lado do MP, não escondendo botão — o cliente não consegue
+    // pagar por um meio que a Contécnica não liberou para aquele grupo.
+    ...(input.allowedPaymentTypes && {
+      payment_methods: {
+        excluded_payment_types: MP_PAYMENT_TYPES
+          .filter((t) => !input.allowedPaymentTypes!.includes(t))
+          .map((id) => ({ id })),
+      },
+    }),
   };
 
   const pref = await mpFetch("/checkout/preferences", {

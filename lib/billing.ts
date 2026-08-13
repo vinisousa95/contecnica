@@ -25,7 +25,20 @@ export interface PendingItem {
   isOverdue: boolean;
 }
 
-export async function getPendingForClient(clientId: string): Promise<{
+/**
+ * Grupo de cobrança. Cada um paga por formas diferentes no Mercado Pago:
+ * materiais só por PIX, serviços por cartão/débito/PIX. Ver a rota de checkout.
+ */
+export type BillingGroup = "materials" | "services";
+
+export function groupOf(type: PendingType): BillingGroup {
+  return type === "material" ? "materials" : "services";
+}
+
+export async function getPendingForClient(
+  clientId: string,
+  group?: BillingGroup
+): Promise<{
   pending: PendingItem[];
   totalPending: number;
 }> {
@@ -95,7 +108,9 @@ export async function getPendingForClient(clientId: string): Promise<{
       attachmentUrl: null,
       isOverdue: false,
     })),
-  ].sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+  ]
+    .filter((i) => !group || groupOf(i.type) === group)
+    .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
 
   // Arredonda em centavos: o gateway rejeita valores com mais casas.
   const totalPending = Math.round(pending.reduce((s, i) => s + i.amount, 0) * 100) / 100;
@@ -112,4 +127,20 @@ export interface PaymentItemSnapshot {
 
 export function toSnapshot(pending: PendingItem[]): PaymentItemSnapshot[] {
   return pending.map((p) => ({ type: p.type, id: p.id, amount: p.amount }));
+}
+
+/**
+ * Chave canônica de um snapshot, para comparar duas cobranças com segurança.
+ *
+ * Não dá para comparar `JSON.stringify(a) === JSON.stringify(b)`: o Postgres
+ * guarda os itens como JSONB e reordena as chaves na leitura, então o JSON lido
+ * do banco nunca bate com o JSON recém-montado. Aqui ordenamos os itens por id e
+ * montamos uma string estável, indiferente à ordem das chaves.
+ */
+export function snapshotKey(items: PaymentItemSnapshot[] | null | undefined): string {
+  if (!Array.isArray(items)) return "";
+  return items
+    .map((i) => `${i.type}:${i.id}:${Number(i.amount).toFixed(2)}`)
+    .sort()
+    .join("|");
 }

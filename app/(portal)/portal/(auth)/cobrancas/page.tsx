@@ -9,11 +9,14 @@ import {
   X, CreditCard, QrCode, Copy, Check, Clock, FileText, ExternalLink, Wrench,
 } from "lucide-react";
 
-/** Cria a cobrança no gateway e devolve a URL do checkout. */
-async function startCheckout(): Promise<string> {
+type BillingGroup = "materials" | "services";
+
+/** Cria a cobrança de um grupo no gateway e devolve a URL do checkout. */
+async function startCheckout(group: BillingGroup): Promise<string> {
   const res = await fetch("/api/portal/v1/billing/checkout", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ group }),
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json.error ?? "Não foi possível iniciar o pagamento.");
@@ -38,15 +41,13 @@ function PaymentModal({
   item,
   onClose,
   paymentEnabled,
-  totalGeral,
-  onPayAll,
+  onPay,
   paying,
 }: {
   item: any;
   onClose: () => void;
   paymentEnabled: boolean;
-  totalGeral: number;
-  onPayAll: () => void;
+  onPay: () => void;
   paying: boolean;
 }) {
   const [copied, setCopied] = useState(false);
@@ -57,7 +58,9 @@ function PaymentModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const label = item.type === "extra_service" ? "Serviço Extra" : "Reembolso de Material";
+  const isService = item.type === "extra_service";
+  const label = isService ? "Serviço Extra" : "Reembolso de Material";
+  const meiosTexto = isService ? "cartão de crédito, débito ou PIX" : "PIX";
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -89,16 +92,16 @@ function PaymentModal({
           {paymentEnabled ? (
             <>
               <p className="text-sm text-gray-600">
-                O pagamento é feito de uma vez, com o total pendente — PIX, boleto, cartão ou
-                saldo Mercado Pago. Este item entra nesse total.
+                O pagamento reúne {isService ? "os serviços extras" : "os materiais"} pendentes
+                num só checkout, pago por {meiosTexto}. Este item entra nesse total.
               </p>
               <button
-                onClick={onPayAll}
+                onClick={onPay}
                 disabled={paying}
                 className="w-full bg-[#EA580C] text-white font-semibold py-3 rounded-xl hover:bg-[#C2410C] transition-colors flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <CreditCard className="h-4 w-4" />
-                {paying ? "Abrindo pagamento..." : `Pagar total: ${formatCurrency(totalGeral)}`}
+                {paying ? "Abrindo pagamento..." : `Pagar ${isService ? "serviços extras" : "materiais"}`}
               </button>
               <button
                 onClick={onClose}
@@ -165,18 +168,18 @@ function ItemRow({ item, onDetails }: { item: any; onDetails: () => void }) {
 export default function CobrancasPage() {
   const { data, isLoading, isError, error } = useQuery({ queryKey: ["portal-billing"], queryFn: fetchBilling });
   const [selected, setSelected] = useState<any>(null);
-  const [paying, setPaying] = useState(false);
+  const [paying, setPaying] = useState<BillingGroup | null>(null);
   const [payError, setPayError] = useState<string | null>(null);
 
-  const handlePayAll = async () => {
-    setPaying(true);
+  const handlePay = async (group: BillingGroup) => {
+    setPaying(group);
     setPayError(null);
     try {
       // Redireciona para o Mercado Pago. O valor é calculado no servidor.
-      window.location.href = await startCheckout();
+      window.location.href = await startCheckout(group);
     } catch (e: any) {
       setPayError(e?.message ?? "Não foi possível iniciar o pagamento.");
-      setPaying(false);
+      setPaying(null);
     }
   };
 
@@ -203,22 +206,9 @@ export default function CobrancasPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Cobranças</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Valores pendentes de pagamento para sua obra</p>
-        </div>
-
-        {data.paymentEnabled && (
-          <button
-            onClick={handlePayAll}
-            disabled={paying}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#EA580C] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#C2410C] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <CreditCard className="h-4 w-4" />
-            {paying ? "Abrindo pagamento..." : `Pagar ${formatCurrency(totalGeral)}`}
-          </button>
-        )}
+      <div>
+        <h1 className="text-xl font-bold text-gray-900">Cobranças</h1>
+        <p className="text-sm text-gray-500 mt-0.5">Valores pendentes de pagamento para sua obra</p>
       </div>
 
       {payError && (
@@ -252,12 +242,22 @@ export default function CobrancasPage() {
         </div>
       </div>
 
-      {/* Materials section */}
+      {/* Materials section — pagamento só por PIX */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2 flex-wrap">
           <ShoppingCart className="h-4 w-4 text-amber-500" />
           <h2 className="font-semibold text-gray-900">Reembolso de Materiais</h2>
-          <span className="ml-auto text-xs text-gray-400 font-medium">{formatCurrency(totalMaterials)}</span>
+          <span className="text-xs text-gray-400 font-medium">{formatCurrency(totalMaterials)}</span>
+          {data.paymentEnabled && materials.length > 0 && (
+            <button
+              onClick={() => handlePay("materials")}
+              disabled={paying !== null}
+              className="ml-auto inline-flex items-center gap-2 rounded-lg bg-[#EA580C] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#C2410C] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <QrCode className="h-4 w-4" />
+              {paying === "materials" ? "Abrindo..." : `Pagar ${formatCurrency(totalMaterials)} via PIX`}
+            </button>
+          )}
         </div>
         {materials.length === 0 ? (
           <div className="px-6 py-8 text-center text-sm text-gray-400">
@@ -265,20 +265,35 @@ export default function CobrancasPage() {
             Nenhum material pendente
           </div>
         ) : (
-          <div className="divide-y divide-gray-50">
-            {materials.map((e: any) => (
-              <ItemRow key={e.id} item={e} onDetails={() => setSelected(e)} />
-            ))}
-          </div>
+          <>
+            <div className="divide-y divide-gray-50">
+              {materials.map((e: any) => (
+                <ItemRow key={e.id} item={e} onDetails={() => setSelected(e)} />
+              ))}
+            </div>
+            <p className="px-6 py-2.5 text-xs text-gray-400 border-t border-gray-50">
+              Reembolso de materiais é pago somente por PIX.
+            </p>
+          </>
         )}
       </div>
 
-      {/* Extra services section */}
+      {/* Extra services section — cartão de crédito, débito ou PIX */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2 flex-wrap">
           <Wrench className="h-4 w-4 text-[#EA580C]" />
           <h2 className="font-semibold text-gray-900">Serviços Extras</h2>
-          <span className="ml-auto text-xs text-gray-400 font-medium">{formatCurrency(totalExtras)}</span>
+          <span className="text-xs text-gray-400 font-medium">{formatCurrency(totalExtras)}</span>
+          {data.paymentEnabled && extraServices.length > 0 && (
+            <button
+              onClick={() => handlePay("services")}
+              disabled={paying !== null}
+              className="ml-auto inline-flex items-center gap-2 rounded-lg bg-[#EA580C] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#C2410C] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <CreditCard className="h-4 w-4" />
+              {paying === "services" ? "Abrindo..." : `Pagar ${formatCurrency(totalExtras)}`}
+            </button>
+          )}
         </div>
         {extraServices.length === 0 ? (
           <div className="px-6 py-8 text-center text-sm text-gray-400">
@@ -286,11 +301,16 @@ export default function CobrancasPage() {
             Nenhum serviço extra pendente
           </div>
         ) : (
-          <div className="divide-y divide-gray-50">
-            {extraServices.map((e: any) => (
-              <ItemRow key={e.id} item={e} onDetails={() => setSelected(e)} />
-            ))}
-          </div>
+          <>
+            <div className="divide-y divide-gray-50">
+              {extraServices.map((e: any) => (
+                <ItemRow key={e.id} item={e} onDetails={() => setSelected(e)} />
+              ))}
+            </div>
+            <p className="px-6 py-2.5 text-xs text-gray-400 border-t border-gray-50">
+              Pague com cartão de crédito, débito ou PIX.
+            </p>
+          </>
         )}
       </div>
 
@@ -299,9 +319,8 @@ export default function CobrancasPage() {
           item={selected}
           onClose={() => setSelected(null)}
           paymentEnabled={!!data.paymentEnabled}
-          totalGeral={totalGeral}
-          onPayAll={handlePayAll}
-          paying={paying}
+          onPay={() => handlePay(selected.type === "extra_service" ? "services" : "materials")}
+          paying={paying !== null}
         />
       )}
     </div>

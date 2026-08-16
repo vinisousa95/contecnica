@@ -84,8 +84,13 @@ export interface PreferenceItem {
 }
 
 /**
- * Tipos de pagamento do Mercado Pago que nos interessam no Brasil.
+ * Tipos de pagamento do Mercado Pago que PODEM ser excluídos de um checkout.
  * `bank_transfer` é o PIX. Os demais são autoexplicativos.
+ *
+ * `account_money` (saldo Mercado Pago) NÃO entra aqui de propósito: o MP recusa
+ * a preferência com "account_money cannot be excluded" se tentarmos removê-lo.
+ * Ou seja, o saldo MP fica sempre disponível — o que não quebra a regra de
+ * "materiais sem taxa de cartão", já que pagar com saldo não tem taxa de cartão.
  */
 export const MP_PAYMENT_TYPES = [
   "credit_card",
@@ -93,7 +98,6 @@ export const MP_PAYMENT_TYPES = [
   "prepaid_card",
   "ticket", // boleto
   "bank_transfer", // PIX
-  "account_money", // saldo Mercado Pago
 ] as const;
 
 export type MpPaymentType = (typeof MP_PAYMENT_TYPES)[number];

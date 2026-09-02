@@ -45,6 +45,24 @@ export default function ClientPortalPage(props: { params: Promise<{ id: string }
   const [showPassword, setShowPassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [showChangeEmail, setShowChangeEmail] = useState(false);
+  const [viewing, setViewing] = useState(false);
+
+  // Abre o portal do cliente numa aba nova, sem a senha dele. O POST devolve um
+  // Set-Cookie de portal (impersonação, 1h) que o navegador aplica; a aba nova
+  // já entra autenticada. Modo visualização — ações ficam bloqueadas na API.
+  const onViewAsClient = async () => {
+    setViewing(true);
+    try {
+      const res = await fetch(`/api/v1/clients/${params.id}/portal/impersonate`, { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Não foi possível abrir");
+      window.open("/portal/dashboard", "_blank", "noopener");
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    } finally {
+      setViewing(false);
+    }
+  };
 
   const { data: portalUser, isLoading } = useQuery({
     queryKey: ["client-portal", params.id],
@@ -171,15 +189,16 @@ export default function ClientPortalPage(props: { params: Promise<{ id: string }
             </p>
           </div>
           {portalUser && (
-            <a
-              href="/portal/dashboard"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
+            <button
+              type="button"
+              onClick={onViewAsClient}
+              disabled={viewing}
+              className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-60"
+              title="Abre o portal deste cliente numa aba nova, em modo visualização"
             >
               <Globe className="h-3.5 w-3.5" />
-              Abrir portal
-            </a>
+              {viewing ? "Abrindo..." : "Ver como cliente"}
+            </button>
           )}
         </div>
       </div>

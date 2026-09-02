@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPortalSessionFromRequest } from "@/lib/portal-auth";
-import { blockedByOnboarding } from "@/lib/portal-guard";
+import { blockedByOnboarding, impersonationBlock } from "@/lib/portal-guard";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/utils";
 import { writeFile, mkdir } from "fs/promises";
@@ -12,6 +12,10 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
   if (!session) return apiError("Não autorizado", 401);
 
   // Ato de vontade: exige o primeiro acesso concluído. Ver lib/portal-guard.ts.
+  // Impersonação (admin vendo como cliente) é somente-visualização.
+  const impBlock = impersonationBlock(session);
+  if (impBlock) return apiError(impBlock, 403);
+
   const bloqueio = await blockedByOnboarding(session.clientUserId);
   if (bloqueio) return apiError(bloqueio, 403);
 

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/utils";
 import { validateBody } from "@/lib/api-validation";
 import { getPortalSessionFromRequest } from "@/lib/portal-auth";
+import { impersonationBlock } from "@/lib/portal-guard";
 import { PRIVACY_POLICY_VERSION } from "@/lib/privacy";
 import { z } from "zod";
 
@@ -24,6 +25,9 @@ const schema = z
 export async function POST(request: NextRequest) {
   const session = await getPortalSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
+
+  const impBlock = impersonationBlock(session);
+  if (impBlock) return apiError(impBlock, 403);
 
   const parsed = await validateBody(request, schema);
   if (!parsed.ok) return apiError(parsed.error, parsed.status);

@@ -1,5 +1,21 @@
 import { prisma } from "@/lib/prisma";
 import { portalOnboarding } from "@/lib/privacy";
+import { isImpersonation, type PortalSessionPayload } from "@/lib/portal-auth";
+
+/**
+ * Bloqueia atos de vontade quando um ADMIN está vendo o portal como o cliente
+ * ("Ver como cliente"). Pagar, aceitar termos, aprovar serviço, assinar contrato
+ * ou trocar a senha são decisões do cliente — o admin em modo visualização não
+ * as toma no lugar dele.
+ *
+ * @returns mensagem do impedimento, ou `null` para seguir.
+ */
+export function impersonationBlock(session: PortalSessionPayload | null): string | null {
+  if (isImpersonation(session)) {
+    return "Modo visualização (admin): esta ação fica desabilitada. Ela é feita pelo próprio cliente, com o acesso dele.";
+  }
+  return null;
+}
 
 /**
  * Barra ações do portal enquanto o cliente não concluiu o primeiro acesso.

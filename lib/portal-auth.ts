@@ -16,6 +16,14 @@ export interface PortalSessionPayload {
   clientId: string;
   email: string;
   name: string;
+  /**
+   * Sessão de impersonação: um ADMIN vendo o portal como o cliente, sem a senha
+   * dele. Marca a sessão como somente-visualização — atos de vontade (pagar,
+   * aceitar termos, trocar senha, aprovar serviço) são bloqueados, para o admin
+   * não agir no lugar do cliente. `impBy` guarda quem entrou, para auditoria.
+   */
+  imp?: boolean;
+  impBy?: string;
 }
 
 export async function createPortalToken(payload: PortalSessionPayload): Promise<string> {
@@ -24,6 +32,26 @@ export async function createPortalToken(payload: PortalSessionPayload): Promise<
     .setIssuedAt()
     .setExpirationTime("30d")
     .sign(JWT_SECRET);
+}
+
+/**
+ * Token de impersonação (admin vendo como cliente). Vida curta — 1 hora — para
+ * não deixar uma sessão de cliente pendurada no navegador do admin por 30 dias.
+ */
+export async function createImpersonationToken(
+  payload: PortalSessionPayload,
+  adminUserId: string
+): Promise<string> {
+  return await new SignJWT({ ...payload, type: "portal", imp: true, impBy: adminUserId })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("1h")
+    .sign(JWT_SECRET);
+}
+
+/** A sessão é de impersonação (admin vendo como cliente)? */
+export function isImpersonation(session: PortalSessionPayload | null): boolean {
+  return !!session?.imp;
 }
 
 export async function verifyPortalToken(token: string): Promise<PortalSessionPayload | null> {

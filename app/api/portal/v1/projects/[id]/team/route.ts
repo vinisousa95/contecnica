@@ -29,7 +29,9 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
       status: { in: ["SCHEDULED", "IN_PROGRESS", "COMPLETED"] },
       date: { gte: from, lte: to },
     },
-    orderBy: { date: "asc" },
+    // Mais recentes primeiro, antigas embaixo — é o que o cliente espera ver ao
+    // abrir a Equipe na Obra.
+    orderBy: { date: "desc" },
     include: {
       employee: {
         select: {

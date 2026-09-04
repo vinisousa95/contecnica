@@ -92,6 +92,17 @@ function EquipeSection({ projectId }: { projectId: string }) {
     }
   };
 
+  const generateExpense = async (id: string) => {
+    try {
+      await apiFetch(`/api/v1/assignments/${id}/generate-expense`, { method: "POST" });
+      qc.invalidateQueries({ queryKey: ["assignments", projectId, filterDate] });
+      qc.invalidateQueries({ queryKey: ["project", projectId] });
+      toast({ title: "Diária gerada", variant: "success" });
+    } catch (e: any) {
+      toast({ title: "Não foi possível gerar a diária", description: e.message, variant: "error" });
+    }
+  };
+
   const deleteAssignment = async (id: string) => {
     if (!window.confirm("Remover este agendamento e sua despesa vinculada?")) return;
     try {
@@ -186,7 +197,16 @@ function EquipeSection({ projectId }: { projectId: string }) {
                         }}
                       />
                     ) : (
-                      <span className="text-xs text-gray-400">Sem diária</span>
+                      // Sem despesa vinculada: o funcionário foi agendado antes
+                      // de ter valor de diária. Botão gera a diária com o valor
+                      // atual dele. Ver lib/assignments.ts.
+                      <button
+                        onClick={() => generateExpense(a.id)}
+                        title="Gera a diária com o valor cadastrado no funcionário"
+                        className="text-xs font-medium text-[#EA580C] hover:underline"
+                      >
+                        Gerar diária
+                      </button>
                     )}
                   </TableCell>
                   <TableCell>

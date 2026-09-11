@@ -1225,6 +1225,8 @@ export default function ObraDetailPage(props: { params: Promise<{ id: string }> 
   });
 
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
+  // Despesas: mostra as 10 mais recentes; o resto fica atrás do "Ver todas".
+  const [showAllExpenses, setShowAllExpenses] = useState(false);
   const [deleteRevenueId, setDeleteRevenueId] = useState<string | null>(null);
   const [deletingExpense, setDeletingExpense] = useState(false);
   const [deletingRevenue, setDeletingRevenue] = useState(false);
@@ -1417,7 +1419,7 @@ export default function ObraDetailPage(props: { params: Promise<{ id: string }> 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {project.expenses?.map((e: any) => (
+                {(showAllExpenses ? project.expenses : project.expenses?.slice(0, 10))?.map((e: any) => (
                   <TableRow key={e.id}>
                     <TableCell className="font-medium text-sm">{e.description}</TableCell>
                     <TableCell className="text-sm text-gray-500">{e.category?.name ?? "—"}</TableCell>
@@ -1444,6 +1446,16 @@ export default function ObraDetailPage(props: { params: Promise<{ id: string }> 
                 ))}
               </TableBody>
             </Table>
+          )}
+          {(project.expenses?.length ?? 0) > 10 && (
+            <button
+              onClick={() => setShowAllExpenses((v) => !v)}
+              className="w-full py-2.5 text-sm font-medium text-[#EA580C] hover:bg-orange-50 border-t border-gray-100 transition-colors"
+            >
+              {showAllExpenses
+                ? "Ver menos"
+                : `Ver todas as ${project.expenses.length} despesas`}
+            </button>
           )}
         </CardContent>
       </Card>

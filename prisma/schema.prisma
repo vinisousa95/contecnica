@@ -1176,6 +1176,8 @@ model PersonalProjectMaterial {
   total         Decimal         @db.Decimal(12, 2)
   date          DateTime?
   paymentMethod String?         @map("payment_method")
+  /// Nota fiscal do material, guardada junto ao gasto (uso interno).
+  attachmentUrl String?         @map("attachment_url")
   notes         String?
   createdAt     DateTime        @default(now()) @map("created_at")
   updatedAt     DateTime        @updatedAt @map("updated_at")

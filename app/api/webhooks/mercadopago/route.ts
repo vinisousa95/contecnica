@@ -148,7 +148,15 @@ export async function POST(request: NextRequest) {
       ...(materialIds.length
         ? [prisma.expense.updateMany({
             where: { id: { in: materialIds } },
-            data: { clientPaid: true, clientPaidAt: now },
+            // clientPaid marca o reembolso; status/paymentDate mantêm a despesa em
+            // dia na lista de Despesas — sem isso o material reembolsado ficava
+            // "Pendente" ali mesmo já tendo sido pago pelo cliente.
+            data: {
+              clientPaid: true,
+              clientPaidAt: now,
+              status: "PAID",
+              paymentDate: mp.paidAt ? new Date(mp.paidAt) : now,
+            },
           })]
         : []),
       ...(serviceIds.length

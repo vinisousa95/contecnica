@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, use, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { api } from "@/lib/api-client";
@@ -16,6 +16,7 @@ import { CurrencyInput } from "@/components/ui/currency-input";
 import {
   ArrowLeft, Pencil, Plus, Trash2, Package, Wrench, DollarSign,
   Clock, CheckCircle2, XCircle, BarChart3, Phone, MapPin, Calendar, FileText,
+  Upload, Loader2, X,
 } from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -156,11 +157,32 @@ function SummaryTab({ project }: { project: any }) {
 // ── Materials Tab ─────────────────────────────────────────────
 function MateriaisTab({ projectId }: { projectId: string }) {
   const qc = useQueryClient();
-  const emptyForm = { description: "", supplier: "", quantity: "", unitPrice: "", date: "", paymentMethod: "", notes: "" };
+  const emptyForm = { description: "", supplier: "", quantity: "", unitPrice: "", date: "", paymentMethod: "", notes: "", attachmentUrl: "" };
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingNota, setUploadingNota] = useState(false);
+  const notaRef = useRef<HTMLInputElement>(null);
+
+  // Nota fiscal do material. type=document → vai para uploads/documents. O
+  // caminho fica no material; só sessão de admin abre o arquivo depois.
+  const handleNota = async (file: File) => {
+    setUploadingNota(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("type", "document");
+      const res = await fetch("/api/v1/upload", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Erro no upload");
+      setForm((prev) => ({ ...prev, attachmentUrl: json.data.url }));
+    } catch (e: any) {
+      toast({ title: "Erro ao enviar nota", description: e.message, variant: "error" });
+    } finally {
+      setUploadingNota(false);
+    }
+  };
 
   const { data: materials = [], isLoading } = useQuery({
     queryKey: ["partnership-materials", projectId],
@@ -189,7 +211,7 @@ function MateriaisTab({ projectId }: { projectId: string }) {
   };
 
   const handleEdit = (m: any) => {
-    setForm({ description: m.description, supplier: m.supplier ?? "", quantity: String(m.quantity), unitPrice: m.unitPrice != null ? Number(m.unitPrice).toFixed(2) : "", date: m.date ? String(m.date).slice(0, 10) : "", paymentMethod: m.paymentMethod ?? "", notes: m.notes ?? "" });
+    setForm({ description: m.description, supplier: m.supplier ?? "", quantity: String(m.quantity), unitPrice: m.unitPrice != null ? Number(m.unitPrice).toFixed(2) : "", date: m.date ? String(m.date).slice(0, 10) : "", paymentMethod: m.paymentMethod ?? "", notes: m.notes ?? "", attachmentUrl: m.attachmentUrl ?? "" });
     setEditId(m.id); setShowForm(true);
   };
 
@@ -255,6 +277,29 @@ function MateriaisTab({ projectId }: { projectId: string }) {
                     {formatCurrency((parseFloat(form.quantity) || 0) * (parseFloat(form.unitPrice) || 0))}
                   </div>
                 </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Nota fiscal</label>
+                  <input ref={notaRef} type="file" accept="image/*,application/pdf" className="hidden"
+                    onChange={(e) => { const file = e.target.files?.[0]; if (file) handleNota(file); }} />
+                  {form.attachmentUrl ? (
+                    <div className="flex items-center gap-2 text-sm">
+                      <a href={form.attachmentUrl} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-[#EA580C] font-medium hover:underline">
+                        <FileText className="h-3.5 w-3.5" />Ver nota anexada
+                      </a>
+                      <button type="button" onClick={() => setForm((prev) => ({ ...prev, attachmentUrl: "" }))}
+                        title="Remover nota" className="text-gray-400 hover:text-red-500">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => notaRef.current?.click()} disabled={uploadingNota}
+                      className="flex items-center gap-1.5 text-sm text-gray-500 border border-dashed border-gray-300 rounded-lg px-3 py-1.5 hover:border-orange-400 hover:text-orange-600 transition-colors disabled:opacity-50">
+                      {uploadingNota ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                      {uploadingNota ? "Enviando…" : "Anexar nota (PDF ou imagem)"}
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="flex gap-2 pt-1">
                 <Button type="submit" size="sm" disabled={saving}>{saving ? "Salvando…" : editId ? "Salvar" : "Adicionar"}</Button>
@@ -278,6 +323,7 @@ function MateriaisTab({ projectId }: { projectId: string }) {
                     <TableHead className="text-right">Qtd</TableHead>
                     <TableHead className="text-right">Unit.</TableHead>
                     <TableHead className="text-right">Total</TableHead>
+                    <TableHead>Nota</TableHead>
                     <TableHead />
                   </TableRow>
                 </TableHeader>
@@ -290,6 +336,16 @@ function MateriaisTab({ projectId }: { projectId: string }) {
                       <TableCell className="text-right text-sm">{Number(m.quantity).toLocaleString("pt-BR")}</TableCell>
                       <TableCell className="text-right text-sm">{formatCurrency(m.unitPrice)}</TableCell>
                       <TableCell className="text-right font-semibold text-sm">{formatCurrency(m.total)}</TableCell>
+                      <TableCell>
+                        {m.attachmentUrl ? (
+                          <a href={m.attachmentUrl} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-[#EA580C] hover:underline">
+                            <FileText className="h-3 w-3" />Ver
+                          </a>
+                        ) : (
+                          <span className="text-xs text-gray-300">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-1">
                           <button onClick={() => handleEdit(m)} className="p-1.5 rounded text-gray-300 hover:text-blue-500 hover:bg-blue-50"><Pencil className="h-3.5 w-3.5" /></button>

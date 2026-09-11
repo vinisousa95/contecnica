@@ -15,7 +15,7 @@ export async function PUT(
   const parsed = await validateBody(request, projectMaterialSchema);
   if (!parsed.ok) return apiError(parsed.error, parsed.status);
   const body = parsed.data as any;
-  const { description, supplier, quantity, unitPrice, date, paymentMethod, notes } = body;
+  const { description, supplier, quantity, unitPrice, date, paymentMethod, notes, attachmentUrl } = body;
   if (!description?.trim()) return apiError("Descrição é obrigatória");
   const qty = parseFloat(quantity) || 0;
   const price = parseFloat(unitPrice) || 0;
@@ -24,6 +24,7 @@ export async function PUT(
     data: {
       description: description.trim(), supplier: supplier || null, quantity: qty, unitPrice: price, total: qty * price,
       date: date ? new Date(date + "T12:00:00.000Z") : null, paymentMethod: paymentMethod || null, notes: notes || null,
+      attachmentUrl: attachmentUrl || null,
     },
   });
   return apiSuccess({ ...material, quantity: Number(material.quantity), unitPrice: Number(material.unitPrice), total: Number(material.total) });

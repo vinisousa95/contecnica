@@ -360,6 +360,12 @@ export const projectMaterialSchema = z.object({
   unitPrice: numeric("Valor unitário"),
   date: z.string().optional().nullable(),
   paymentMethod: z.string().max(50).optional().nullable(),
+  // Nota fiscal: só caminho devolvido por /api/v1/upload (nada de URL externa).
+  attachmentUrl: z
+    .string()
+    .regex(/^\/api\/v1\/uploads\/documents\/[A-Za-z0-9._-]+$/, "Nota inválida")
+    .optional()
+    .nullable(),
   notes: z.string().max(2000).optional().nullable(),
 }).strict();
 

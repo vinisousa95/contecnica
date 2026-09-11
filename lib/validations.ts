@@ -295,6 +295,7 @@ export const workServiceProviderSchema = z.object({
   startDate: z.string().optional().nullable(),
   expectedEndDate: z.string().optional().nullable(),
   agreedAmount: z.string().optional().nullable(),
+  paidAmount: z.string().optional().nullable(),
   status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELED"]).default("PENDING"),
   notes: z.string().optional().nullable(),
   generateExpense: z.boolean().optional().default(false),

@@ -34,12 +34,13 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
       return apiError(parsed.error.errors[0].message);
     }
 
-    const { generateExpense, agreedAmount, startDate, expectedEndDate, ...rest } = parsed.data;
+    const { generateExpense, agreedAmount, paidAmount, startDate, expectedEndDate, ...rest } = parsed.data;
 
     const data: Record<string, unknown> = {
       ...rest,
       projectId: params.id,
       ...(agreedAmount ? { agreedAmount } : {}),
+      ...(paidAmount ? { paidAmount } : {}),
       ...(startDate ? { startDate: new Date(startDate) } : {}),
       ...(expectedEndDate ? { expectedEndDate: new Date(expectedEndDate) } : {}),
     };

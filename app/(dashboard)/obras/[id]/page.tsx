@@ -25,6 +25,7 @@ import { LoadingPage } from "@/components/ui/loading";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatCurrencyInput } from "@/lib/masks";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { toast } from "@/hooks/use-toast";
 import { ReimbursementsSection } from "@/components/projects/reimbursements-section";
 import {
@@ -887,6 +888,7 @@ function PrestadoresSection({ projectId }: { projectId: string }) {
     serviceProviderId: "",
     serviceDescription: "",
     agreedAmount: "",
+    paidAmount: "",
     startDate: "",
     expectedEndDate: "",
     generateExpense: false,
@@ -905,7 +907,7 @@ function PrestadoresSection({ projectId }: { projectId: string }) {
   const providers: any[] = Array.isArray(providersData) ? providersData : (providersData?.data ?? []);
 
   const resetForm = () => {
-    setForm({ serviceProviderId: "", serviceDescription: "", agreedAmount: "", startDate: "", expectedEndDate: "", generateExpense: false });
+    setForm({ serviceProviderId: "", serviceDescription: "", agreedAmount: "", paidAmount: "", startDate: "", expectedEndDate: "", generateExpense: false });
     setEditingLinkId(null);
     setShowForm(false);
   };
@@ -914,7 +916,8 @@ function PrestadoresSection({ projectId }: { projectId: string }) {
     setForm({
       serviceProviderId: l.serviceProviderId,
       serviceDescription: l.serviceDescription ?? "",
-      agreedAmount: l.agreedAmount ? String(l.agreedAmount) : "",
+      agreedAmount: l.agreedAmount ? Number(l.agreedAmount).toFixed(2) : "",
+      paidAmount: l.paidAmount ? Number(l.paidAmount).toFixed(2) : "",
       startDate: l.startDate ? String(l.startDate).slice(0, 10) : "",
       expectedEndDate: l.expectedEndDate ? String(l.expectedEndDate).slice(0, 10) : "",
       generateExpense: false,
@@ -934,6 +937,7 @@ function PrestadoresSection({ projectId }: { projectId: string }) {
           body: JSON.stringify({
             serviceDescription: form.serviceDescription.trim(),
             ...(form.agreedAmount ? { agreedAmount: form.agreedAmount } : { agreedAmount: null }),
+            ...(form.paidAmount ? { paidAmount: form.paidAmount } : { paidAmount: null }),
             ...(form.startDate ? { startDate: form.startDate } : { startDate: null }),
             ...(form.expectedEndDate ? { expectedEndDate: form.expectedEndDate } : { expectedEndDate: null }),
           }),
@@ -946,6 +950,7 @@ function PrestadoresSection({ projectId }: { projectId: string }) {
             serviceProviderId: form.serviceProviderId,
             serviceDescription: form.serviceDescription.trim(),
             ...(form.agreedAmount ? { agreedAmount: form.agreedAmount } : {}),
+            ...(form.paidAmount ? { paidAmount: form.paidAmount } : {}),
             ...(form.startDate ? { startDate: form.startDate } : {}),
             ...(form.expectedEndDate ? { expectedEndDate: form.expectedEndDate } : {}),
             generateExpense: form.generateExpense,
@@ -1054,6 +1059,19 @@ function PrestadoresSection({ projectId }: { projectId: string }) {
                   className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
                 />
               </div>
+              <div>
+                <CurrencyInput
+                  label="Valor Pago (R$)"
+                  placeholder="0,00"
+                  value={form.paidAmount}
+                  onChange={(v) => setForm((f) => ({ ...f, paidAmount: v }))}
+                />
+                {form.agreedAmount && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Falta: {formatCurrency(Math.max(0, (parseFloat(form.agreedAmount) || 0) - (parseFloat(form.paidAmount) || 0)))}
+                  </p>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Início</label>
@@ -1133,8 +1151,22 @@ function PrestadoresSection({ projectId }: { projectId: string }) {
                     )}
                   </TableCell>
                   <TableCell className="text-sm text-gray-600 max-w-[180px] truncate">{l.serviceDescription}</TableCell>
-                  <TableCell className="text-sm font-medium">
-                    {l.agreedAmount ? formatCurrency(l.agreedAmount) : "—"}
+                  <TableCell className="text-sm">
+                    {l.agreedAmount ? (
+                      <>
+                        <span className="font-medium">{formatCurrency(l.agreedAmount)}</span>
+                        {l.paidAmount != null && Number(l.paidAmount) > 0 && (
+                          <span className="block text-xs">
+                            <span className="text-green-700">Pago {formatCurrency(l.paidAmount)}</span>
+                            {Number(l.agreedAmount) - Number(l.paidAmount) > 0.001 && (
+                              <span className="text-amber-600">
+                                {" · "}Falta {formatCurrency(Number(l.agreedAmount) - Number(l.paidAmount))}
+                              </span>
+                            )}
+                          </span>
+                        )}
+                      </>
+                    ) : "—"}
                   </TableCell>
                   <TableCell>
                     <select

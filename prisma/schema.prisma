@@ -774,6 +774,8 @@ model WorkServiceProvider {
   startDate           DateTime?           @map("start_date")
   expectedEndDate     DateTime?           @map("expected_end_date")
   agreedAmount        Decimal?            @db.Decimal(12, 2) @map("agreed_amount")
+  /// Quanto já foi pago ao prestador. O que falta é agreedAmount - paidAmount.
+  paidAmount          Decimal?            @db.Decimal(12, 2) @map("paid_amount")
   status              WorkProviderStatus  @default(PENDING)
   notes               String?
   expenseId           String?             @map("expense_id")

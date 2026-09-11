@@ -9,6 +9,7 @@ const updateSchema = z.object({
   startDate: z.string().optional().nullable(),
   expectedEndDate: z.string().optional().nullable(),
   agreedAmount: z.string().optional().nullable(),
+  paidAmount: z.string().optional().nullable(),
   status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELED"]).optional(),
   notes: z.string().optional().nullable(),
 }).strict();
@@ -29,13 +30,14 @@ export async function PATCH(
       return apiError(parsed.error.errors[0].message);
     }
 
-    const { agreedAmount, startDate, expectedEndDate, ...rest } = parsed.data;
+    const { agreedAmount, paidAmount, startDate, expectedEndDate, ...rest } = parsed.data;
 
     const link = await prisma.workServiceProvider.update({
       where: { id: params.linkId, projectId: params.id },
       data: {
         ...rest,
         ...(agreedAmount !== undefined ? { agreedAmount: agreedAmount || null } : {}),
+        ...(paidAmount !== undefined ? { paidAmount: paidAmount || null } : {}),
         ...(startDate !== undefined ? { startDate: startDate ? new Date(startDate) : null } : {}),
         ...(expectedEndDate !== undefined
           ? { expectedEndDate: expectedEndDate ? new Date(expectedEndDate) : null }

@@ -80,23 +80,61 @@ function EquipeSection({ projectId }: { projectId: string }) {
 
   const assignments: any[] = Array.isArray(data) ? data : (data?.data ?? []);
 
-  // Prestadores vinculados à obra, para mostrar quem está no dia junto da equipe.
+  // Prestadores vinculados à obra — usados só para preencher o seletor de
+  // "agendar prestador no dia".
   const { data: providersData } = useQuery({
     queryKey: ["project-service-providers", projectId],
     queryFn: () => apiFetch(`/api/v1/projects/${projectId}/service-providers`),
   });
   const providers: any[] = Array.isArray(providersData) ? providersData : (providersData?.data ?? []);
 
-  // "No dia": a data escolhida cai no período do prestador. Sem data de início
-  // ou fim, o período é aberto daquele lado. Cancelado não conta.
-  const providersNoDia = providers.filter((p) => {
-    if (p.status === "CANCELED") return false;
-    const start = p.startDate ? String(p.startDate).slice(0, 10) : null;
-    const end = p.expectedEndDate ? String(p.expectedEndDate).slice(0, 10) : null;
-    if (start && filterDate < start) return false;
-    if (end && filterDate > end) return false;
-    return true;
+  // Prestadores agendados no dia escolhido. O usuário escolhe dia + prestador;
+  // nada é automático por período.
+  const { data: providerDaysData } = useQuery({
+    queryKey: ["project-provider-days", projectId, filterDate],
+    queryFn: () =>
+      apiFetch(`/api/v1/projects/${projectId}/service-providers/days?date=${filterDate}`),
   });
+  const providerDays: any[] = Array.isArray(providerDaysData)
+    ? providerDaysData
+    : (providerDaysData?.data ?? []);
+
+  const [addingProvider, setAddingProvider] = useState(false);
+  const [pickedProvider, setPickedProvider] = useState("");
+
+  // Só oferece no seletor prestadores não cancelados e ainda não agendados
+  // neste dia.
+  const jaAgendados = new Set(providerDays.map((d) => d.workServiceProviderId));
+  const providersDisponiveis = providers.filter(
+    (p) => p.status !== "CANCELED" && !jaAgendados.has(p.id)
+  );
+
+  const addProviderDay = async () => {
+    if (!pickedProvider) return;
+    try {
+      await apiFetch(`/api/v1/projects/${projectId}/service-providers/days`, {
+        method: "POST",
+        body: JSON.stringify({ workServiceProviderId: pickedProvider, date: filterDate }),
+      });
+      setPickedProvider("");
+      setAddingProvider(false);
+      qc.invalidateQueries({ queryKey: ["project-provider-days", projectId, filterDate] });
+      toast({ title: "Prestador agendado no dia", variant: "success" });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    }
+  };
+
+  const removeProviderDay = async (dayId: string) => {
+    try {
+      await apiFetch(`/api/v1/projects/${projectId}/service-providers/days/${dayId}`, {
+        method: "DELETE",
+      });
+      qc.invalidateQueries({ queryKey: ["project-provider-days", projectId, filterDate] });
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "error" });
+    }
+  };
 
   const patchAssignment = async (id: string, payload: Record<string, unknown>) => {
     try {
@@ -252,41 +290,109 @@ function EquipeSection({ projectId }: { projectId: string }) {
           </Table>
         )}
 
-        {/* Prestadores atuando no dia selecionado, com a atribuição de cada um. */}
-        {providersNoDia.length > 0 && (
-          <div className="border-t border-gray-100">
-            <div className="px-5 pt-3 pb-1 flex items-center gap-2">
+        {/* Prestadores agendados no dia selecionado, com a atribuição de cada
+            um. O usuário escolhe o dia (filtro acima) e adiciona o prestador. */}
+        <div className="border-t border-gray-100">
+          <div className="px-5 pt-3 pb-1 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
               <HardHat className="h-3.5 w-3.5 text-[#EA580C]" />
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Prestadores no dia ({providersNoDia.length})
+                Prestadores no dia ({providerDays.length})
               </span>
             </div>
-            <div className="divide-y divide-gray-50">
-              {providersNoDia.map((p) => (
-                <div key={p.id} className="flex items-center gap-3 px-5 py-3">
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/prestadores/${p.serviceProviderId}`}
-                      className="text-sm font-medium text-gray-800 hover:text-blue-600"
-                    >
-                      {p.serviceProvider?.name}
-                    </Link>
-                    <p className="text-xs text-gray-400 truncate">
-                      {p.serviceProvider?.specialty ? `${SPECIALTY_LABELS[p.serviceProvider.specialty] ?? p.serviceProvider.specialty} · ` : ""}
-                      {p.serviceDescription}
-                    </p>
-                  </div>
-                  {p.agreedAmount != null && (
-                    <span className="text-sm text-gray-600 flex-shrink-0">{formatCurrency(p.agreedAmount)}</span>
-                  )}
-                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${WORK_PROVIDER_STATUS_COLORS[p.status] ?? "bg-gray-100 text-gray-500"}`}>
-                    {WORK_PROVIDER_STATUS_LABELS[p.status] ?? p.status}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {!addingProvider && (
+              <button
+                onClick={() => setAddingProvider(true)}
+                className="text-xs font-medium text-[#EA580C] hover:underline flex items-center gap-1"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Agendar prestador
+              </button>
+            )}
           </div>
-        )}
+
+          {addingProvider && (
+            <div className="px-5 py-3 flex items-end gap-2 flex-wrap">
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Prestador para {formatDate(filterDate)}
+                </label>
+                <select
+                  value={pickedProvider}
+                  onChange={(e) => setPickedProvider(e.target.value)}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#EA580C]"
+                >
+                  <option value="">Selecionar prestador…</option>
+                  {providersDisponiveis.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.serviceProvider?.name} — {p.serviceDescription}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button size="sm" onClick={addProviderDay} disabled={!pickedProvider}>
+                Adicionar
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setAddingProvider(false);
+                  setPickedProvider("");
+                }}
+              >
+                Cancelar
+              </Button>
+            </div>
+          )}
+
+          {providersDisponiveis.length === 0 && addingProvider && (
+            <p className="px-5 pb-2 text-xs text-gray-400">
+              Todos os prestadores vinculados já estão neste dia. Vincule novos prestadores na seção “Prestadores de Serviço”.
+            </p>
+          )}
+
+          {providerDays.length === 0 && !addingProvider ? (
+            <p className="px-5 py-3 text-xs text-gray-400">
+              Nenhum prestador agendado neste dia.
+            </p>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {providerDays.map((d) => {
+                const p = d.workServiceProvider ?? {};
+                return (
+                  <div key={d.id} className="flex items-center gap-3 px-5 py-3">
+                    <div className="min-w-0 flex-1">
+                      <Link
+                        href={`/prestadores/${p.serviceProviderId}`}
+                        className="text-sm font-medium text-gray-800 hover:text-blue-600"
+                      >
+                        {p.serviceProvider?.name}
+                      </Link>
+                      <p className="text-xs text-gray-400 truncate">
+                        {p.serviceProvider?.specialty ? `${SPECIALTY_LABELS[p.serviceProvider.specialty] ?? p.serviceProvider.specialty} · ` : ""}
+                        {p.serviceDescription}
+                      </p>
+                    </div>
+                    {p.agreedAmount != null && (
+                      <span className="text-sm text-gray-600 flex-shrink-0">{formatCurrency(p.agreedAmount)}</span>
+                    )}
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${WORK_PROVIDER_STATUS_COLORS[p.status] ?? "bg-gray-100 text-gray-500"}`}>
+                      {WORK_PROVIDER_STATUS_LABELS[p.status] ?? p.status}
+                    </span>
+                    <button
+                      onClick={() => removeProviderDay(d.id)}
+                      className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
+                      title="Remover deste dia"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

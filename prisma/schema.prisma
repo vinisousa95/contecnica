@@ -790,7 +790,24 @@ model WorkServiceProvider {
   createdAt           DateTime            @default(now()) @map("created_at")
   updatedAt           DateTime            @updatedAt @map("updated_at")
 
+  days                WorkProviderDay[]
+
   @@map("work_service_providers")
+}
+
+/// Dia em que o prestador está agendado na obra. Diferente do período
+/// (startDate/expectedEndDate) do vínculo, aqui o usuário escolhe
+/// explicitamente cada dia — nada é automático.
+model WorkProviderDay {
+  id                    String              @id @default(cuid())
+  workServiceProviderId String              @map("work_service_provider_id")
+  workServiceProvider   WorkServiceProvider @relation(fields: [workServiceProviderId], references: [id], onDelete: Cascade)
+  date                  DateTime
+  createdAt             DateTime            @default(now()) @map("created_at")
+
+  @@unique([workServiceProviderId, date])
+  @@index([date])
+  @@map("work_provider_days")
 }
 
 enum ServiceProviderType {

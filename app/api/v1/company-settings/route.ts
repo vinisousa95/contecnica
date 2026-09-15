@@ -17,6 +17,13 @@ const companySettingsSchema = z.object({
   city: z.string().optional().nullable(),
   state: z.string().optional().nullable(),
   zipCode: z.string().optional().nullable(),
+  // Só aceita caminho interno de upload (nunca URL externa), igual às notas.
+  signatureUrl: z
+    .string()
+    .regex(/^\/api\/v1\/uploads\/(photos|documents)\/[A-Za-z0-9._-]+$/, "Assinatura inválida")
+    .optional()
+    .nullable()
+    .or(z.literal("")),
 }).strict();
 
 export async function GET(request: NextRequest) {

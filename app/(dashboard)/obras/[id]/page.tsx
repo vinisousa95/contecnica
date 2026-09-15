@@ -32,7 +32,7 @@ import {
   ArrowLeft, Pencil, MapPin, Calendar, DollarSign,
   ArrowDownCircle, ArrowUpCircle, Plus, CheckCircle2,
   Circle, Eye, EyeOff, Trash2, Link2, ListChecks, RefreshCw, Wrench, Users, Car, HardHat, FileText,
-  ImagePlus, Loader2, X,
+  ImagePlus, Loader2, X, Receipt,
 } from "lucide-react";
 
 async function apiFetch(url: string, options?: RequestInit) {
@@ -1665,6 +1665,13 @@ export default function ObraDetailPage(props: { params: Promise<{ id: string }> 
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">
+                        {r.status === "RECEIVED" && (
+                          <a href={`/recibos/${r.id}/imprimir`} target="_blank" rel="noopener noreferrer">
+                            <Button variant="ghost" size="icon-sm" title="Gerar recibo (PDF)">
+                              <Receipt className="h-3.5 w-3.5 text-green-600" />
+                            </Button>
+                          </a>
+                        )}
                         <Link href={`/financeiro/receitas/${r.id}/editar?obraId=${params.id}`}>
                           <Button variant="ghost" size="icon-sm" title="Editar">
                             <Pencil className="h-3.5 w-3.5 text-gray-400" />

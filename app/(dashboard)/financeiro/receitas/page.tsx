@@ -19,7 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EmptyState, LoadingPage } from "@/components/ui/loading";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Search, ArrowUpCircle, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, ArrowUpCircle, Pencil, Trash2, Receipt } from "lucide-react";
 
 export default function ReceitasPage() {
   const queryClient = useQueryClient();
@@ -156,6 +156,13 @@ export default function ReceitasPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">
+                        {r.status === "RECEIVED" && (
+                          <Button variant="ghost" size="icon-sm" asChild title="Gerar recibo (PDF)">
+                            <a href={`/recibos/${r.id}/imprimir`} target="_blank" rel="noopener noreferrer">
+                              <Receipt className="h-3.5 w-3.5 text-green-600" />
+                            </a>
+                          </Button>
+                        )}
                         <Button variant="ghost" size="icon-sm" asChild>
                           <Link href={`/financeiro/receitas/${r.id}/editar`}>
                             <Pencil className="h-3.5 w-3.5" />

@@ -224,8 +224,8 @@ export default function OperacionalPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-sm text-gray-600">
-                      <Link href={`/obras/${a.project?.id}`} className="hover:text-blue-600">
-                        {a.project?.name ?? "—"}
+                      <Link href={a.obra?.href ?? "#"} className="hover:text-blue-600">
+                        {a.obra?.name ?? "—"}
                       </Link>
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">

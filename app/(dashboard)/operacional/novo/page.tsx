@@ -45,6 +45,18 @@ export default function NovoRegistroPage() {
     queryKey: ["projects-select"],
     queryFn: () => api.projects.list({ limit: "100" }) as Promise<any>,
   });
+  const { data: personalData } = useQuery({
+    queryKey: ["personal-projects-select"],
+    queryFn: () => api.personalProjects.list({ limit: "100" }) as Promise<any>,
+  });
+  const { data: partnershipData } = useQuery({
+    queryKey: ["partnership-projects-select"],
+    queryFn: () => api.partnershipProjects.list({ limit: "100" }) as Promise<any>,
+  });
+
+  // A obra escolhida vem como "<tipo>:<id>" (regular | personal | partnership),
+  // porque os três tipos moram em tabelas diferentes.
+  const [obra, setObra] = useState("");
 
   const { data: vehiclesData } = useQuery({
     queryKey: ["vehicles-active"],
@@ -69,12 +81,14 @@ export default function NovoRegistroPage() {
 
   const employees = Array.isArray(employeesData) ? employeesData : [];
   const projects = Array.isArray(projectsData) ? projectsData : [];
+  const personalProjects = Array.isArray(personalData?.data) ? personalData.data : (Array.isArray(personalData) ? personalData : []);
+  const partnershipProjects = Array.isArray(partnershipData?.data) ? partnershipData.data : (Array.isArray(partnershipData) ? partnershipData : []);
   const vehicles = Array.isArray(vehiclesData) ? vehiclesData : [];
 
   function validate(): boolean {
     const newErrors: Partial<Record<keyof AssignmentInput, string>> = {};
     if (!form.employeeId) newErrors.employeeId = "Funcionário é obrigatório";
-    if (!form.projectId) newErrors.projectId = "Obra é obrigatória";
+    if (!obra) newErrors.projectId = "Obra é obrigatória";
     if (!form.date) newErrors.date = "Data é obrigatória";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -83,8 +97,13 @@ export default function NovoRegistroPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
+    // "<tipo>:<id>" → o campo certo; os outros dois vão nulos.
+    const [tipo, id] = obra.split(":");
     mutation.mutate({
       ...form,
+      projectId: tipo === "regular" ? id : null,
+      personalProjectId: tipo === "personal" ? id : null,
+      partnershipProjectId: tipo === "partnership" ? id : null,
       vehicleId: form.vehicleId || null,
       departureTime: form.departureTime || null,
       returnTime: form.returnTime || null,
@@ -133,12 +152,17 @@ export default function NovoRegistroPage() {
               <Select
                 label="Obra"
                 required
-                value={form.projectId}
-                onChange={(e) => handleChange("projectId", e.target.value)}
+                value={obra}
+                onChange={(e) => {
+                  setObra(e.target.value);
+                  if (errors.projectId) setErrors((prev) => ({ ...prev, projectId: undefined }));
+                }}
                 error={errors.projectId}
                 options={[
                   { value: "", label: "Selecione a obra" },
-                  ...projects.map((p: any) => ({ value: p.id, label: p.name })),
+                  ...projects.map((p: any) => ({ value: `regular:${p.id}`, label: p.name })),
+                  ...partnershipProjects.map((p: any) => ({ value: `partnership:${p.id}`, label: `${p.name} (parceria)` })),
+                  ...personalProjects.map((p: any) => ({ value: `personal:${p.id}`, label: `${p.name} (pessoal)` })),
                 ]}
               />
             </div>

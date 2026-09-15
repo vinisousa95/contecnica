@@ -250,13 +250,19 @@ export const vehicleSchema = z.object({
 export const assignmentSchema = z.object({
   employeeId: z.string().min(1, "Funcionário é obrigatório"),
   vehicleId: z.string().optional().nullable(),
-  projectId: z.string().min(1, "Obra é obrigatória"),
+  // A obra pode ser normal, pessoal ou parceria — exatamente uma das três.
+  projectId: z.string().optional().nullable(),
+  personalProjectId: z.string().optional().nullable(),
+  partnershipProjectId: z.string().optional().nullable(),
   date: z.string().min(1, "Data é obrigatória"),
   departureTime: z.string().optional().nullable(),
   returnTime: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   status: z.enum(["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]).default("SCHEDULED"),
-}).strict();
+}).strict().refine(
+  (d) => [d.projectId, d.personalProjectId, d.partnershipProjectId].filter(Boolean).length === 1,
+  { message: "Selecione uma obra", path: ["projectId"] }
+);
 
 export type EmployeeInput = z.infer<typeof employeeSchema>;
 export type VehicleInput = z.infer<typeof vehicleSchema>;

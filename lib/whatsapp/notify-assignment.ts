@@ -31,6 +31,8 @@ export async function notifyAssignment(assignmentId: string, kind: NotifyKind): 
             neighborhood: true, city: true, state: true,
           },
         },
+        personalProject: { select: { name: true, address: true } },
+        partnershipProject: { select: { name: true, address: true } },
       },
     });
 
@@ -61,16 +63,29 @@ export async function notifyAssignment(assignmentId: string, kind: NotifyKind): 
       return;
     }
 
+    // A obra pode ser de qualquer um dos três tipos. Obra normal tem endereço
+    // estruturado; pessoal/parceria têm um endereço em texto único, que mando
+    // no campo `street` para a mensagem exibir do mesmo jeito.
+    const obraNome =
+      a.project?.name ?? a.personalProject?.name ?? a.partnershipProject?.name ?? "Obra";
+    const endereco = a.project
+      ? a.project
+      : a.personalProject?.address
+      ? { street: a.personalProject.address }
+      : a.partnershipProject?.address
+      ? { street: a.partnershipProject.address }
+      : null;
+
     const data: AssignmentMessageData = {
       employeeName: a.employee.name,
-      projectName: a.project.name,
+      projectName: obraNome,
       date: a.date,
       departureTime: a.departureTime,
       returnTime: a.returnTime,
       vehicleName: a.vehicle?.name ?? null,
       vehiclePlate: a.vehicle?.plate ?? null,
       notes: a.notes,
-      address: a.project,
+      address: endereco,
     };
 
     const text =

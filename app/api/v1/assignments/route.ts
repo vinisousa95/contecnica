@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
     where.OR = [
       { employee: { name: { contains: search, mode: "insensitive" } } },
       { project: { name: { contains: search, mode: "insensitive" } } },
+      { personalProject: { name: { contains: search, mode: "insensitive" } } },
+      { partnershipProject: { name: { contains: search, mode: "insensitive" } } },
       { vehicle: { name: { contains: search, mode: "insensitive" } } },
       { notes: { contains: search, mode: "insensitive" } },
     ];
@@ -52,13 +54,27 @@ export async function GET(request: NextRequest) {
         employee: { select: { id: true, name: true, role: true, cpf: true, rg: true, dailyRate: true } },
         vehicle: { select: { id: true, name: true, plate: true, color: true, model: true } },
         project: { select: { id: true, name: true } },
+        personalProject: { select: { id: true, name: true } },
+        partnershipProject: { select: { id: true, name: true } },
         expense: { select: { id: true, status: true, paymentDate: true, amount: true } },
       },
     }),
     prisma.workAssignment.count({ where }),
   ]);
 
-  return apiSuccess(assignments, {
+  // `obra` unificada: nome + para onde a linha aponta, seja qual for o tipo.
+  const withObra = assignments.map((a: any) => ({
+    ...a,
+    obra: a.project
+      ? { id: a.project.id, name: a.project.name, href: `/obras/${a.project.id}` }
+      : a.personalProject
+      ? { id: a.personalProject.id, name: a.personalProject.name, href: `/obras-pessoais/${a.personalProject.id}` }
+      : a.partnershipProject
+      ? { id: a.partnershipProject.id, name: a.partnershipProject.name, href: `/obras-parcerias/${a.partnershipProject.id}` }
+      : null,
+  }));
+
+  return apiSuccess(withObra, {
     pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
 }
@@ -75,7 +91,7 @@ export async function POST(request: NextRequest) {
       return apiError(parsed.error.errors[0].message);
     }
 
-    const { date, vehicleId, ...rest } = parsed.data;
+    const { date, vehicleId, projectId, personalProjectId, partnershipProjectId, ...rest } = parsed.data;
     const workDate = new Date(date + "T12:00:00.000Z");
 
     const assignment = await prisma.workAssignment.create({
@@ -83,39 +99,73 @@ export async function POST(request: NextRequest) {
         ...rest,
         date: workDate,
         vehicleId: vehicleId || null,
+        projectId: projectId || null,
+        personalProjectId: personalProjectId || null,
+        partnershipProjectId: partnershipProjectId || null,
       },
       include: {
         employee: { select: { id: true, name: true, role: true, dailyRate: true } },
         vehicle: { select: { id: true, name: true, plate: true } },
         project: { select: { id: true, name: true } },
+        personalProject: { select: { id: true, name: true } },
+        partnershipProject: { select: { id: true, name: true } },
       },
     });
 
-    // Auto-generate expense if employee has a daily rate
+    // Diária automática, quando o funcionário tem valor de diária. Vai para a
+    // despesa da obra do tipo escolhido: obra normal → Expense (com vínculo em
+    // expenseId); pessoal → PersonalProjectExpense; parceria → PartnershipExpense.
+    // Os dois últimos não têm coluna de vínculo no deslocamento, mas registram o
+    // custo de mão de obra na obra certa.
     if ((assignment.employee as any).dailyRate) {
       const dailyRate = Number((assignment.employee as any).dailyRate);
-      const laborCategory = await prisma.category.findFirst({
-        where: { name: { contains: "Mão de Obra", mode: "insensitive" }, type: { in: ["EXPENSE", "BOTH"] } },
-        select: { id: true },
-      });
-      const expense = await prisma.expense.create({
-        data: {
-          description: `Diária — ${assignment.employee.name}`,
-          supplier: assignment.employee.name,
-          amount: dailyRate,
-          dueDate: workDate,
-          status: "PENDING",
-          projectId: rest.projectId || null,
-          categoryId: laborCategory?.id ?? null,
-          createdById: session.userId,
-        },
-      });
-      await prisma.workAssignment.update({
-        where: { id: assignment.id },
-        data: { expenseId: expense.id },
-      });
-      (assignment as any).expenseId = expense.id;
-      (assignment as any).expense = { id: expense.id, status: "PENDING", paymentDate: null, amount: dailyRate };
+
+      if (projectId) {
+        const laborCategory = await prisma.category.findFirst({
+          where: { name: { contains: "Mão de Obra", mode: "insensitive" }, type: { in: ["EXPENSE", "BOTH"] } },
+          select: { id: true },
+        });
+        const expense = await prisma.expense.create({
+          data: {
+            description: `Diária — ${assignment.employee.name}`,
+            supplier: assignment.employee.name,
+            amount: dailyRate,
+            dueDate: workDate,
+            status: "PENDING",
+            projectId,
+            categoryId: laborCategory?.id ?? null,
+            createdById: session.userId,
+          },
+        });
+        await prisma.workAssignment.update({
+          where: { id: assignment.id },
+          data: { expenseId: expense.id },
+        });
+        (assignment as any).expenseId = expense.id;
+        (assignment as any).expense = { id: expense.id, status: "PENDING", paymentDate: null, amount: dailyRate };
+      } else if (personalProjectId) {
+        await prisma.personalProjectExpense.create({
+          data: {
+            projectId: personalProjectId,
+            description: `Diária — ${assignment.employee.name}`,
+            category: "mao_de_obra",
+            amount: dailyRate,
+            date: workDate,
+            status: "PENDING",
+          },
+        });
+      } else if (partnershipProjectId) {
+        await prisma.partnershipExpense.create({
+          data: {
+            projectId: partnershipProjectId,
+            description: `Diária — ${assignment.employee.name}`,
+            category: "mao_de_obra",
+            amount: dailyRate,
+            date: workDate,
+            status: "PENDING",
+          },
+        });
+      }
     }
 
     // Avisa o funcionário no WhatsApp. `await` de propósito: assim o resultado

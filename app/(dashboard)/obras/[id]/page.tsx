@@ -80,6 +80,24 @@ function EquipeSection({ projectId }: { projectId: string }) {
 
   const assignments: any[] = Array.isArray(data) ? data : (data?.data ?? []);
 
+  // Prestadores vinculados à obra, para mostrar quem está no dia junto da equipe.
+  const { data: providersData } = useQuery({
+    queryKey: ["project-service-providers", projectId],
+    queryFn: () => apiFetch(`/api/v1/projects/${projectId}/service-providers`),
+  });
+  const providers: any[] = Array.isArray(providersData) ? providersData : (providersData?.data ?? []);
+
+  // "No dia": a data escolhida cai no período do prestador. Sem data de início
+  // ou fim, o período é aberto daquele lado. Cancelado não conta.
+  const providersNoDia = providers.filter((p) => {
+    if (p.status === "CANCELED") return false;
+    const start = p.startDate ? String(p.startDate).slice(0, 10) : null;
+    const end = p.expectedEndDate ? String(p.expectedEndDate).slice(0, 10) : null;
+    if (start && filterDate < start) return false;
+    if (end && filterDate > end) return false;
+    return true;
+  });
+
   const patchAssignment = async (id: string, payload: Record<string, unknown>) => {
     try {
       await apiFetch(`/api/v1/assignments/${id}`, {
@@ -232,6 +250,42 @@ function EquipeSection({ projectId }: { projectId: string }) {
               ))}
             </TableBody>
           </Table>
+        )}
+
+        {/* Prestadores atuando no dia selecionado, com a atribuição de cada um. */}
+        {providersNoDia.length > 0 && (
+          <div className="border-t border-gray-100">
+            <div className="px-5 pt-3 pb-1 flex items-center gap-2">
+              <HardHat className="h-3.5 w-3.5 text-[#EA580C]" />
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Prestadores no dia ({providersNoDia.length})
+              </span>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {providersNoDia.map((p) => (
+                <div key={p.id} className="flex items-center gap-3 px-5 py-3">
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      href={`/prestadores/${p.serviceProviderId}`}
+                      className="text-sm font-medium text-gray-800 hover:text-blue-600"
+                    >
+                      {p.serviceProvider?.name}
+                    </Link>
+                    <p className="text-xs text-gray-400 truncate">
+                      {p.serviceProvider?.specialty ? `${SPECIALTY_LABELS[p.serviceProvider.specialty] ?? p.serviceProvider.specialty} · ` : ""}
+                      {p.serviceDescription}
+                    </p>
+                  </div>
+                  {p.agreedAmount != null && (
+                    <span className="text-sm text-gray-600 flex-shrink-0">{formatCurrency(p.agreedAmount)}</span>
+                  )}
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${WORK_PROVIDER_STATUS_COLORS[p.status] ?? "bg-gray-100 text-gray-500"}`}>
+                    {WORK_PROVIDER_STATUS_LABELS[p.status] ?? p.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>

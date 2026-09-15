@@ -18,6 +18,12 @@ const companySettingsSchema = z.object({
   state: z.string().optional().nullable(),
   zipCode: z.string().optional().nullable(),
   // Só aceita caminho interno de upload (nunca URL externa), igual às notas.
+  logoUrl: z
+    .string()
+    .regex(/^\/api\/v1\/uploads\/(photos|documents)\/[A-Za-z0-9._-]+$/, "Logo inválido")
+    .optional()
+    .nullable()
+    .or(z.literal("")),
   signatureUrl: z
     .string()
     .regex(/^\/api\/v1\/uploads\/(photos|documents)\/[A-Za-z0-9._-]+$/, "Assinatura inválida")

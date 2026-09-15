@@ -10,13 +10,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LoadingPage } from "@/components/ui/loading";
 import { toast } from "@/hooks/use-toast";
-import { Building2, PenLine, Upload, X } from "lucide-react";
+import { Building2, PenLine, Upload, X, Image as ImageIcon } from "lucide-react";
 
 export default function EmpresaPage() {
   const queryClient = useQueryClient();
-  const fileRef = useRef<HTMLInputElement>(null);
+  const sigFileRef = useRef<HTMLInputElement>(null);
+  const logoFileRef = useRef<HTMLInputElement>(null);
   const [signatureUrl, setSignatureUrl] = useState<string>("");
-  const [uploading, setUploading] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string>("");
+  const [uploading, setUploading] = useState<"" | "logo" | "signature">("");
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ["company-settings"],
@@ -34,6 +36,7 @@ export default function EmpresaPage() {
     if (settings) {
       reset(settings);
       setSignatureUrl(settings.signatureUrl ?? "");
+      setLogoUrl(settings.logoUrl ?? "");
     }
   }, [settings, reset]);
 
@@ -48,8 +51,8 @@ export default function EmpresaPage() {
     },
   });
 
-  const handleSignatureFile = async (file: File) => {
-    setUploading(true);
+  const handleUpload = async (file: File, target: "logo" | "signature") => {
+    setUploading(target);
     try {
       const fd = new FormData();
       fd.append("file", file);
@@ -59,13 +62,18 @@ export default function EmpresaPage() {
       if (!res.ok || !json?.data?.url) {
         throw new Error(json?.error ?? "Falha no upload");
       }
-      setSignatureUrl(json.data.url);
-      toast({ title: "Assinatura enviada — clique em Salvar Dados", variant: "success" });
+      if (target === "logo") setLogoUrl(json.data.url);
+      else setSignatureUrl(json.data.url);
+      toast({
+        title: `${target === "logo" ? "Logo" : "Assinatura"} enviada — clique em Salvar Dados`,
+        variant: "success",
+      });
     } catch (e: any) {
-      toast({ title: "Erro ao enviar assinatura", description: e.message, variant: "error" });
+      toast({ title: "Erro ao enviar imagem", description: e.message, variant: "error" });
     } finally {
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
+      setUploading("");
+      if (logoFileRef.current) logoFileRef.current.value = "";
+      if (sigFileRef.current) sigFileRef.current.value = "";
     }
   };
 
@@ -80,7 +88,9 @@ export default function EmpresaPage() {
 
       <form
         onSubmit={handleSubmit((d) =>
-          mutation.mutateAsync({ ...d, signatureUrl: signatureUrl || "" }).catch(() => {})
+          mutation
+            .mutateAsync({ ...d, logoUrl: logoUrl || "", signatureUrl: signatureUrl || "" })
+            .catch(() => {})
         )}
         className="space-y-5"
       >
@@ -98,6 +108,57 @@ export default function EmpresaPage() {
               <Input label="Telefone" placeholder="(00) 00000-0000" {...register("phone")} />
               <Input label="E-mail" type="email" placeholder="contato@empresa.com" {...register("email")} />
               <Input label="Site" placeholder="https://empresa.com.br" {...register("website")} />
+            </div>
+
+            {/* Logo da empresa */}
+            <div className="border-t border-gray-100 pt-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="h-4 w-4 text-gray-400" />
+                <h4 className="text-sm font-semibold text-gray-700">Logo da empresa</h4>
+              </div>
+              <p className="text-xs text-gray-500">
+                Aparece no cabeçalho dos recibos. PNG ou JPG.
+              </p>
+              {logoUrl ? (
+                <div className="flex items-center gap-4">
+                  <div className="border border-gray-200 rounded-lg p-3 bg-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={logoUrl} alt="Logo" className="h-16 object-contain" />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => logoFileRef.current?.click()} disabled={uploading !== ""}>
+                      <Upload className="h-3.5 w-3.5 mr-1" />
+                      Trocar
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-red-500 hover:text-red-600"
+                      onClick={() => setLogoUrl("")}
+                      disabled={uploading !== ""}
+                    >
+                      <X className="h-3.5 w-3.5 mr-1" />
+                      Remover
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button type="button" variant="outline" size="sm" onClick={() => logoFileRef.current?.click()} disabled={uploading !== ""}>
+                  <Upload className="h-3.5 w-3.5 mr-1" />
+                  {uploading === "logo" ? "Enviando…" : "Enviar logo"}
+                </Button>
+              )}
+              <input
+                ref={logoFileRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleUpload(f, "logo");
+                }}
+              />
             </div>
           </CardContent>
         </Card>
@@ -139,7 +200,7 @@ export default function EmpresaPage() {
                   <img src={signatureUrl} alt="Assinatura" className="h-16 object-contain" />
                 </div>
                 <div className="flex gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => sigFileRef.current?.click()} disabled={uploading !== ""}>
                     <Upload className="h-3.5 w-3.5 mr-1" />
                     Trocar
                   </Button>
@@ -149,7 +210,7 @@ export default function EmpresaPage() {
                     size="sm"
                     className="text-red-500 hover:text-red-600"
                     onClick={() => setSignatureUrl("")}
-                    disabled={uploading}
+                    disabled={uploading !== ""}
                   >
                     <X className="h-3.5 w-3.5 mr-1" />
                     Remover
@@ -157,20 +218,20 @@ export default function EmpresaPage() {
                 </div>
               </div>
             ) : (
-              <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+              <Button type="button" variant="outline" size="sm" onClick={() => sigFileRef.current?.click()} disabled={uploading !== ""}>
                 <Upload className="h-3.5 w-3.5 mr-1" />
-                {uploading ? "Enviando…" : "Enviar assinatura"}
+                {uploading === "signature" ? "Enviando…" : "Enviar assinatura"}
               </Button>
             )}
 
             <input
-              ref={fileRef}
+              ref={sigFileRef}
               type="file"
               accept="image/png,image/jpeg,image/webp"
               className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0];
-                if (f) handleSignatureFile(f);
+                if (f) handleUpload(f, "signature");
               }}
             />
             <p className="text-xs text-gray-400">
@@ -180,7 +241,7 @@ export default function EmpresaPage() {
         </Card>
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={mutation.isPending || uploading}>
+          <Button type="submit" disabled={mutation.isPending || uploading !== ""}>
             {mutation.isPending ? "Salvando..." : "Salvar Dados"}
           </Button>
         </div>

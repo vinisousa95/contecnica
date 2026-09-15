@@ -65,6 +65,7 @@ export default async function ImprimirReciboPage(props: {
   const companyCnpj = company?.cnpj || "";
   const companyCity = company?.city || "";
   const signatureUrl = company?.signatureUrl || "";
+  const logoUrl = company?.logoUrl || "";
 
   // Data do recibo: data de recebimento, senão a de vencimento.
   const dataRecibo = revenue.receivedDate ?? revenue.dueDate;
@@ -96,6 +97,7 @@ export default async function ImprimirReciboPage(props: {
             display: flex; justify-content: space-between; align-items: flex-start;
             margin-bottom: 24px;
           }
+          .company-block .logo { max-height: 64px; max-width: 240px; object-fit: contain; margin-bottom: 8px; display: block; }
           .company-name { font-size: 13pt; font-weight: bold; }
           .company-info { font-size: 9.5pt; color: #444; margin-top: 2px; }
           .valor-badge {
@@ -152,7 +154,11 @@ export default async function ImprimirReciboPage(props: {
         <div className="recibo-box">
           {/* Cabeçalho: empresa + valor */}
           <div className="top">
-            <div>
+            <div className="company-block">
+              {logoUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={logoUrl} alt="Logo" className="logo" />
+              )}
               <div className="company-name">{companyName || "—"}</div>
               {companyCnpj && <div className="company-info">CNPJ: {companyCnpj}</div>}
               {(company?.street || company?.city) && (

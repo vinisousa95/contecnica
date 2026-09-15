@@ -80,9 +80,13 @@ export default function NovoRegistroPage() {
   });
 
   const employees = Array.isArray(employeesData) ? employeesData : [];
-  const projects = Array.isArray(projectsData) ? projectsData : [];
-  const personalProjects = Array.isArray(personalData?.data) ? personalData.data : (Array.isArray(personalData) ? personalData : []);
-  const partnershipProjects = Array.isArray(partnershipData?.data) ? partnershipData.data : (Array.isArray(partnershipData) ? partnershipData : []);
+  // Só obras ativas no dropdown: esconde Concluída e Cancelada (mantém
+  // Planejamento, Em Andamento e Pausada). Não filtra quando o status vier
+  // ausente, para não sumir obra por acidente.
+  const ativa = (p: any) => p?.status !== "COMPLETED" && p?.status !== "CANCELLED";
+  const projects = (Array.isArray(projectsData) ? projectsData : []).filter(ativa);
+  const personalProjects = (Array.isArray(personalData?.data) ? personalData.data : (Array.isArray(personalData) ? personalData : [])).filter(ativa);
+  const partnershipProjects = (Array.isArray(partnershipData?.data) ? partnershipData.data : (Array.isArray(partnershipData) ? partnershipData : [])).filter(ativa);
   const vehicles = Array.isArray(vehiclesData) ? vehiclesData : [];
 
   function validate(): boolean {

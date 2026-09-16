@@ -8,7 +8,7 @@ import { Lock } from "lucide-react";
 // novo e pede o PIN. Guardamos só um horário de expiração (não o PIN).
 const SESSION_KEY = "finance_access_until";
 // Tempo de inatividade até trancar sozinho.
-const IDLE_MS = 2 * 60 * 1000;
+const IDLE_MS = 10 * 60 * 1000;
 
 function readUnlockedUntil(): number {
   try {
@@ -41,8 +41,9 @@ export function FinancePinGuard({ children }: { children: React.ReactNode }) {
     setPin("");
   }, []);
 
-  // Enquanto destravado: renova a expiração a cada interação e tranca ao ficar
-  // parado (IDLE_MS) ou ao esconder a aba/janela.
+  // Enquanto destravado: renova a expiração a cada interação e tranca sozinho
+  // depois de IDLE_MS sem uso. Sem travar em troca de aba/perda de foco — isso
+  // disparava à toa e trancava rápido demais. Para travar na hora, use o botão.
   useEffect(() => {
     if (status !== "unlocked" || !required) return;
 
@@ -51,21 +52,14 @@ export function FinancePinGuard({ children }: { children: React.ReactNode }) {
       if (idleTimer.current) clearTimeout(idleTimer.current);
       idleTimer.current = setTimeout(lock, IDLE_MS);
     };
-    const onVisibility = () => {
-      if (document.visibilityState === "hidden") lock();
-    };
 
     const events = ["mousemove", "mousedown", "keydown", "scroll", "touchstart", "click"];
     events.forEach((e) => window.addEventListener(e, bump, { passive: true }));
-    document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("blur", lock);
     bump();
 
     return () => {
       if (idleTimer.current) clearTimeout(idleTimer.current);
       events.forEach((e) => window.removeEventListener(e, bump));
-      document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("blur", lock);
     };
   }, [status, required, lock]);
 
@@ -128,7 +122,7 @@ export function FinancePinGuard({ children }: { children: React.ReactNode }) {
           <button
             onClick={lock}
             title="Bloquear o financeiro agora (pedirá o PIN de novo)"
-            className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-[#1F2937] text-white text-sm font-medium px-4 py-2.5 shadow-lg hover:bg-gray-800 transition-colors"
+            className="fixed bottom-5 right-5 z-[9999] flex items-center gap-2 rounded-full bg-[#1F2937] text-white text-sm font-medium px-4 py-2.5 shadow-lg hover:bg-gray-800 transition-colors"
           >
             <Lock className="h-4 w-4" />
             Bloquear

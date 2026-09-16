@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Lock } from "lucide-react";
 
 // A liberação vale por pouco tempo e some ao sair. O objetivo é: se a tela ficar
@@ -33,7 +34,10 @@ export function FinancePinGuard({ children }: { children: React.ReactNode }) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [verifying, setVerifying] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => setMounted(true), []);
 
   const lock = useCallback(() => {
     writeUnlockedUntil(0);
@@ -113,21 +117,26 @@ export function FinancePinGuard({ children }: { children: React.ReactNode }) {
 
   if (status === "checking") return null;
   if (status === "unlocked") {
+    // O botão vai por portal no body: assim não fica preso por transform/overflow
+    // de nenhuma página (o dashboard, com os gráficos, prendia a posição fixa).
+    const lockButton =
+      required && mounted
+        ? createPortal(
+            <button
+              onClick={lock}
+              title="Bloquear o financeiro agora (pedirá o PIN de novo)"
+              className="fixed bottom-5 right-5 z-[9999] flex items-center gap-2 rounded-full bg-[#1F2937] text-white text-sm font-medium px-4 py-2.5 shadow-lg hover:bg-gray-800 transition-colors"
+            >
+              <Lock className="h-4 w-4" />
+              Bloquear
+            </button>,
+            document.body
+          )
+        : null;
     return (
       <>
         {children}
-        {required && (
-          // Trava manual: fecha o financeiro na hora, sem esperar o tempo de
-          // inatividade. Fica fixo no canto para estar sempre à mão.
-          <button
-            onClick={lock}
-            title="Bloquear o financeiro agora (pedirá o PIN de novo)"
-            className="fixed bottom-5 right-5 z-[9999] flex items-center gap-2 rounded-full bg-[#1F2937] text-white text-sm font-medium px-4 py-2.5 shadow-lg hover:bg-gray-800 transition-colors"
-          >
-            <Lock className="h-4 w-4" />
-            Bloquear
-          </button>
-        )}
+        {lockButton}
       </>
     );
   }

@@ -1,25 +1,95 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Lock } from "lucide-react";
 
-const SESSION_KEY = "finance_access_verified";
+// A liberação vale por pouco tempo e some ao sair. O objetivo é: se a tela ficar
+// aberta e parada, ou se você trocar de aba/sair da área, o financeiro tranca de
+// novo e pede o PIN. Guardamos só um horário de expiração (não o PIN).
+const SESSION_KEY = "finance_access_until";
+// Tempo de inatividade até trancar sozinho.
+const IDLE_MS = 2 * 60 * 1000;
+
+function readUnlockedUntil(): number {
+  try {
+    const v = sessionStorage.getItem(SESSION_KEY);
+    return v ? Number(v) : 0;
+  } catch {
+    return 0;
+  }
+}
+function writeUnlockedUntil(ts: number) {
+  try {
+    if (ts > 0) sessionStorage.setItem(SESSION_KEY, String(ts));
+    else sessionStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* sessionStorage indisponível: cai no estado em memória */
+  }
+}
 
 export function FinancePinGuard({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<"checking" | "unlocked" | "locked">("checking");
+  const [required, setRequired] = useState(true);
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [verifying, setVerifying] = useState(false);
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const lock = useCallback(() => {
+    writeUnlockedUntil(0);
+    setStatus("locked");
+    setPin("");
+  }, []);
+
+  // Enquanto destravado: renova a expiração a cada interação e tranca ao ficar
+  // parado (IDLE_MS) ou ao esconder a aba/janela.
+  useEffect(() => {
+    if (status !== "unlocked" || !required) return;
+
+    const bump = () => {
+      writeUnlockedUntil(Date.now() + IDLE_MS);
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+      idleTimer.current = setTimeout(lock, IDLE_MS);
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") lock();
+    };
+
+    const events = ["mousemove", "mousedown", "keydown", "scroll", "touchstart", "click"];
+    events.forEach((e) => window.addEventListener(e, bump, { passive: true }));
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("blur", lock);
+    bump();
+
+    return () => {
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+      events.forEach((e) => window.removeEventListener(e, bump));
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("blur", lock);
+    };
+  }, [status, required, lock]);
 
   useEffect(() => {
-    if (sessionStorage.getItem(SESSION_KEY) === "true") {
-      setStatus("unlocked");
-      return;
-    }
+    let active = true;
     fetch("/api/v1/verify-finance-pin")
       .then((r) => r.json())
-      .then((d) => setStatus(d.required ? "locked" : "unlocked"))
-      .catch(() => setStatus("unlocked"));
+      .then((d) => {
+        if (!active) return;
+        if (!d.required) {
+          setRequired(false);
+          setStatus("unlocked");
+          return;
+        }
+        setRequired(true);
+        // Só continua liberado se a janela de tempo ainda estiver válida.
+        setStatus(readUnlockedUntil() > Date.now() ? "unlocked" : "locked");
+      })
+      .catch(() => {
+        if (active) setStatus("unlocked");
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,12 +104,14 @@ export function FinancePinGuard({ children }: { children: React.ReactNode }) {
       });
       const data = await res.json();
       if (data.success) {
-        sessionStorage.setItem(SESSION_KEY, "true");
+        writeUnlockedUntil(Date.now() + IDLE_MS);
         setStatus("unlocked");
       } else {
         setError("PIN incorreto. Tente novamente.");
         setPin("");
       }
+    } catch {
+      setError("Não foi possível verificar agora. Tente novamente.");
     } finally {
       setVerifying(false);
     }

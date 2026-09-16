@@ -87,11 +87,15 @@ export default function EmpresaPage() {
       />
 
       <form
-        onSubmit={handleSubmit((d) =>
-          mutation
-            .mutateAsync({ ...d, logoUrl: logoUrl || "", signatureUrl: signatureUrl || "" })
-            .catch(() => {})
-        )}
+        onSubmit={handleSubmit((d) => {
+          // reset(settings) traz o objeto inteiro pro form (inclusive id e
+          // updatedAt). A API valida com .strict() e recusa chaves extras, então
+          // removo o que não faz parte do payload antes de enviar.
+          const { id, updatedAt, createdAt, logoUrl: _l, signatureUrl: _s, ...rest } = d as any;
+          return mutation
+            .mutateAsync({ ...rest, logoUrl: logoUrl || "", signatureUrl: signatureUrl || "" })
+            .catch(() => {});
+        })}
         className="space-y-5"
       >
         <Card>

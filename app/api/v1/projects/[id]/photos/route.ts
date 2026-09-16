@@ -9,6 +9,7 @@ const schema = z.object({
   description: z.string().optional(),
   visible: z.boolean().default(true),
   taskId: z.string().optional().nullable(),
+  phase: z.enum(["BEFORE", "AFTER"]).optional().nullable(),
 }).strict();
 
 export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {

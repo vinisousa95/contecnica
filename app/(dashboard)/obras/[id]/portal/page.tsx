@@ -282,6 +282,9 @@ export default function ProjectPortalPage(props: { params: Promise<{ id: string 
   const deleteUpdate = async (id: string) => { await apiFetch(`/api/v1/projects/${params.id}/updates/${id}`, { method: "DELETE" }); qc.invalidateQueries({ queryKey: ["project-updates", params.id] }); toast({ title: "Atualização removida" }); };
   const togglePhotoVisible = async (id: string, visible: boolean) => { await apiFetch(`/api/v1/projects/${params.id}/photos/${id}`, { method: "PUT", body: JSON.stringify({ visible: !visible }) }); qc.invalidateQueries({ queryKey: ["project-photos", params.id] }); };
   const deletePhoto = async (id: string) => { await apiFetch(`/api/v1/projects/${params.id}/photos/${id}`, { method: "DELETE" }); qc.invalidateQueries({ queryKey: ["project-photos", params.id] }); toast({ title: "Foto removida" }); };
+  // Marca a foto como "antes"/"depois" (ou tira a marcação) para o relatório de
+  // conclusão. Clicar de novo no mesmo valor desmarca.
+  const setPhotoPhase = async (id: string, phase: "BEFORE" | "AFTER" | null) => { await apiFetch(`/api/v1/projects/${params.id}/photos/${id}`, { method: "PUT", body: JSON.stringify({ phase }) }); qc.invalidateQueries({ queryKey: ["project-photos", params.id] }); };
   const toggleDocVisible = async (id: string, visible: boolean) => { await apiFetch(`/api/v1/projects/${params.id}/documents/${id}`, { method: "PUT", body: JSON.stringify({ visible: !visible }) }); qc.invalidateQueries({ queryKey: ["project-documents", params.id] }); };
   const deleteDoc = async (id: string) => { await apiFetch(`/api/v1/projects/${params.id}/documents/${id}`, { method: "DELETE" }); qc.invalidateQueries({ queryKey: ["project-documents", params.id] }); toast({ title: "Documento removido" }); };
 
@@ -347,6 +350,23 @@ export default function ProjectPortalPage(props: { params: Promise<{ id: string 
                   <div key={p.id} className="relative bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm aspect-square group">
                     <img src={p.imageUrl} alt={p.description ?? "Foto"} className="w-full h-full object-cover" />
                     {!p.visible && <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><EyeOff className="h-6 w-6 text-white" /></div>}
+                    {/* Marcação antes/depois para o relatório de conclusão */}
+                    <div className="absolute top-2 left-2 flex gap-1">
+                      <button
+                        onClick={() => setPhotoPhase(p.id, p.phase === "BEFORE" ? null : "BEFORE")}
+                        title="Marcar como Antes"
+                        className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold shadow ${p.phase === "BEFORE" ? "bg-gray-800 text-white" : "bg-white/90 text-gray-600 hover:bg-white"}`}
+                      >
+                        Antes
+                      </button>
+                      <button
+                        onClick={() => setPhotoPhase(p.id, p.phase === "AFTER" ? null : "AFTER")}
+                        title="Marcar como Depois"
+                        className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold shadow ${p.phase === "AFTER" ? "bg-[#EA580C] text-white" : "bg-white/90 text-gray-600 hover:bg-white"}`}
+                      >
+                        Depois
+                      </button>
+                    </div>
                     <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button onClick={() => togglePhotoVisible(p.id, p.visible)} className="bg-white rounded-lg p-1.5 shadow hover:bg-gray-50">
                         {p.visible ? <Eye className="h-3.5 w-3.5 text-gray-600" /> : <EyeOff className="h-3.5 w-3.5 text-gray-600" />}

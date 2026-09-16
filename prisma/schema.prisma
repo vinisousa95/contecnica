@@ -482,9 +482,16 @@ model ProjectPhoto {
   imageUrl    String       @map("image_url")
   description String?
   visible     Boolean      @default(true)
+  /// Marcação "antes"/"depois" para o relatório de conclusão. Nulo = sem marcação.
+  phase       PhotoPhase?
   createdAt   DateTime     @default(now()) @map("created_at")
 
   @@map("project_photos")
+}
+
+enum PhotoPhase {
+  BEFORE
+  AFTER
 }
 
 model ProjectDocument {

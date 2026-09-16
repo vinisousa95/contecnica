@@ -90,6 +90,19 @@ async function isAuthorized(request: NextRequest, filePath: string, fileName: st
   // Fotos: as visíveis das obras do cliente, a foto de capa, e a foto do
   // serviço extra (que o cliente precisa ver para decidir se aprova).
   if (filePath.startsWith("photos/")) {
+    // Logo e assinatura da empresa aparecem no recibo e no relatório de
+    // conclusão que o cliente baixa — então o portal precisa poder carregá-los.
+    const company = await prisma.companySettings.findUnique({
+      where: { id: "singleton" },
+      select: { logoUrl: true, signatureUrl: true },
+    });
+    if (
+      (company?.logoUrl && company.logoUrl.endsWith(filePath)) ||
+      (company?.signatureUrl && company.signatureUrl.endsWith(filePath))
+    ) {
+      return true;
+    }
+
     const [photo, cover, extra] = await Promise.all([
       prisma.projectPhoto.findFirst({
         where: {

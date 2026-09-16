@@ -1439,6 +1439,14 @@ export default function ObraDetailPage(props: { params: Promise<{ id: string }> 
                 Voltar
               </Link>
             </Button>
+            {project.status === "COMPLETED" && (
+              <Button variant="outline" size="sm" asChild title="Relatório de conclusão (PDF)">
+                <a href={`/relatorios/conclusao/${params.id}`} target="_blank" rel="noopener noreferrer">
+                  <FileText className="h-4 w-4" />
+                  Relatório de Conclusão
+                </a>
+              </Button>
+            )}
             <Button variant="outline" size="sm" asChild>
               <Link href={`/obras/${params.id}/portal`}>
                 Portal do Cliente

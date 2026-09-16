@@ -7,6 +7,7 @@ import { z } from "zod";
 const schema = z.object({
   description: z.string().optional(),
   visible: z.boolean().optional(),
+  phase: z.enum(["BEFORE", "AFTER"]).optional().nullable(),
 }).strict();
 
 export async function PUT(

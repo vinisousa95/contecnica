@@ -29,12 +29,17 @@ export default function LoginPage() {
       await api.auth.login(data);
       router.push("/dashboard");
       router.refresh();
-    } catch {
-      toast({
-        title: "Erro ao entrar",
-        description: "E-mail ou senha incorretos.",
-        variant: "error",
-      });
+    } catch (err: any) {
+      // Mostra a causa real. Antes qualquer falha virava "senha incorreta",
+      // então bloqueio por excesso de tentativas (429) enganava o usuário.
+      const status = err?.status;
+      const description =
+        status === 429
+          ? "Muitas tentativas de login. Aguarde alguns minutos e tente novamente."
+          : status === 401
+          ? "E-mail ou senha incorretos."
+          : err?.message || "Não foi possível entrar. Tente novamente.";
+      toast({ title: "Erro ao entrar", description, variant: "error" });
     }
   };
 

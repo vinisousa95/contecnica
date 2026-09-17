@@ -106,10 +106,16 @@ export function FinancePinGuard({ children }: { children: React.ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pin }),
       });
-      const data = await res.json();
-      if (data.success) {
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
         writeUnlockedUntil(Date.now() + IDLE_MS);
         setStatus("unlocked");
+      } else if (res.status === 429 || data?.locked) {
+        const min = data?.retryAfterMinutes;
+        setError(
+          `Muitas tentativas erradas. Tente de novo em ${min ? `${min} min` : "alguns minutos"}.`
+        );
+        setPin("");
       } else {
         setError("PIN incorreto. Tente novamente.");
         setPin("");

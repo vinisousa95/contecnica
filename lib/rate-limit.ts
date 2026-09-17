@@ -125,8 +125,16 @@ export function resolveRule(pathname: string, method: string): RateLimitRule {
     return RATE_LIMIT_CONFIG.passwordChange;
   }
 
+  const isRead = method === "GET" || method === "HEAD";
+
+  // A checagem "existe PIN?" (GET /verify-finance-pin) é leitura corriqueira,
+  // feita a cada tela financeira. Só o POST (tentativa de PIN) é superfície de
+  // brute-force e precisa do limite rígido. Sem isso, poucas navegações
+  // estouravam o balde de 5/15min e a checagem passava a devolver 429.
+  const isFinancePinGet = isRead && /\/verify-finance-pin$/.test(pathname);
+
   const isExempt = AUTH_EXEMPT.some((re) => re.test(pathname));
-  if (!isExempt && AUTH_PATTERNS.some((re) => re.test(pathname))) {
+  if (!isExempt && !isFinancePinGet && AUTH_PATTERNS.some((re) => re.test(pathname))) {
     return RATE_LIMIT_CONFIG.auth;
   }
   if (AI_PATTERNS.some((re) => re.test(pathname))) {
@@ -135,7 +143,6 @@ export function resolveRule(pathname: string, method: string): RateLimitRule {
   if (WEBHOOK_PATTERNS.some((re) => re.test(pathname))) {
     return RATE_LIMIT_CONFIG.webhook;
   }
-  const isRead = method === "GET" || method === "HEAD";
   return isRead ? RATE_LIMIT_CONFIG.read : RATE_LIMIT_CONFIG.mutation;
 }
 

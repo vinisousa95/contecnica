@@ -69,21 +69,27 @@ export function FinancePinGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let active = true;
+    // Falha FECHADO: só libera sem PIN quando a resposta é OK e diz claramente
+    // que não há PIN cadastrado. Erro, 401, 429 ou resposta estranha → exige o
+    // PIN. Antes qualquer falha (ex.: 429 por excesso de chamadas) era lida como
+    // "sem PIN" e abria o financeiro sozinho — some o botão e não pedia mais PIN.
+    const decideRequired = () => {
+      setRequired(true);
+      setStatus(readUnlockedUntil() > Date.now() ? "unlocked" : "locked");
+    };
     fetch("/api/v1/verify-finance-pin")
-      .then((r) => r.json())
-      .then((d) => {
+      .then(async (r) => ({ ok: r.ok, data: await r.json().catch(() => null) }))
+      .then(({ ok, data }) => {
         if (!active) return;
-        if (!d.required) {
+        if (ok && data && data.required === false) {
           setRequired(false);
           setStatus("unlocked");
           return;
         }
-        setRequired(true);
-        // Só continua liberado se a janela de tempo ainda estiver válida.
-        setStatus(readUnlockedUntil() > Date.now() ? "unlocked" : "locked");
+        decideRequired();
       })
       .catch(() => {
-        if (active) setStatus("unlocked");
+        if (active) decideRequired();
       });
     return () => {
       active = false;

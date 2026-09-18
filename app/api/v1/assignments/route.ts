@@ -4,10 +4,14 @@ import { prisma } from "@/lib/prisma";
 import { assignmentSchema } from "@/lib/validations";
 import { apiSuccess, apiError, getPaginationParams } from "@/lib/utils";
 import { notifyAssignment } from "@/lib/whatsapp/notify-assignment";
+import { autoCompleteInProgress } from "@/lib/assignments-autocomplete";
 
 export async function GET(request: NextRequest) {
   const session = await getSessionFromRequest(request);
   if (!session) return apiError("Não autorizado", 401);
+
+  // Encerra sozinho os "Em Andamento" cujo 17:00 já passou, antes de listar.
+  await autoCompleteInProgress();
 
   const { searchParams } = new URL(request.url);
   const { page, limit, skip } = getPaginationParams(searchParams);

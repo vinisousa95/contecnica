@@ -290,6 +290,20 @@ export function ExpenseForm({
             />
           </div>
 
+          {/* Custo interno: fica fora do Reembolso de Materiais do cliente. */}
+          <div className="md:col-span-2">
+            <label className="flex items-start gap-2.5 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+              <input type="checkbox" className="mt-0.5 rounded" {...register("internalCost")} />
+              <span>
+                <span className="block text-sm font-medium text-gray-700">Custo interno (não cobrar do cliente)</span>
+                <span className="block text-xs text-gray-400">
+                  Marque para prestador, administrativo e outros custos da empresa. Some do
+                  "Reembolso de Materiais" e nunca vai para o portal do cliente.
+                </span>
+              </span>
+            </label>
+          </div>
+
           {/* Nota Fiscal upload */}
           <div className="md:col-span-2">
             <label className="block text-xs font-medium text-gray-600 mb-1.5">Nota Fiscal / Comprovante</label>

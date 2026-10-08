@@ -81,6 +81,8 @@ export const expenseSchema = z.object({
   paymentMethod: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   attachmentUrl: z.string().optional().nullable(),
+  /** Custo interno (prestador/administrativo): não vai para o cliente. */
+  internalCost: z.boolean().optional(),
 }).strict();
 
 // ── Revenues ──────────────────────────────────────────────────

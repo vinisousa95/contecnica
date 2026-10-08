@@ -59,6 +59,8 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
           dueDate: expectedEndDate ? new Date(expectedEndDate) : new Date(),
           status: "PENDING",
           createdById: session.userId,
+          // Prestador é mão de obra = custo da Contécnica, nunca cobrado do cliente.
+          internalCost: true,
         },
       });
       data.expenseId = expense.id;

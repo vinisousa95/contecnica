@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import {
-  ShoppingCart, FileText, Send, Undo2, CheckCircle2, Paperclip, Loader2, ExternalLink,
+  ShoppingCart, FileText, Send, Undo2, CheckCircle2, Paperclip, Loader2, ExternalLink, Building2,
 } from "lucide-react";
 
 /**
@@ -68,7 +68,7 @@ export function ReimbursementsSection({ projectId }: { projectId: string }) {
   });
 
   const mutation = useMutation({
-    mutationFn: (body: { expenseIds: string[]; billedToClient?: boolean; receiptShared?: boolean }) =>
+    mutationFn: (body: { expenseIds: string[]; billedToClient?: boolean; receiptShared?: boolean; internalCost?: boolean }) =>
       apiFetch(`/api/v1/projects/${projectId}/reimbursements`, {
         method: "PATCH",
         body: JSON.stringify(body),
@@ -81,7 +81,9 @@ export function ReimbursementsSection({ projectId }: { projectId: string }) {
 
       const n = data?.updated ?? vars.expenseIds.length;
       const titulo =
-        vars.billedToClient === true
+        vars.internalCost === true
+          ? `${n} ${n === 1 ? "despesa movida" : "despesas movidas"} para custo interno`
+          : vars.billedToClient === true
           ? `${n} ${n === 1 ? "material enviado" : "materiais enviados"} para cobrança`
           : vars.billedToClient === false
           ? `${n} ${n === 1 ? "material retirado" : "materiais retirados"} da cobrança`
@@ -125,7 +127,7 @@ export function ReimbursementsSection({ projectId }: { projectId: string }) {
       prev.size === selectable.length ? new Set() : new Set(selectable.map((r) => r.id))
     );
 
-  const apply = (body: { billedToClient?: boolean; receiptShared?: boolean }) =>
+  const apply = (body: { billedToClient?: boolean; receiptShared?: boolean; internalCost?: boolean }) =>
     mutation.mutate({ expenseIds: Array.from(selected), ...body });
 
   const podeEnviar = selectedRows.some((r) => !r.billedToClient);
@@ -146,8 +148,9 @@ export function ReimbursementsSection({ projectId }: { projectId: string }) {
               </span>
             </CardTitle>
             <p className="text-xs text-gray-400 mt-1">
-              Despesas da obra, sem as diárias de funcionário. Só o que for enviado aqui
-              aparece em Cobranças no portal do cliente.
+              Só materiais reembolsáveis pelo cliente. Diárias, prestadores e custos internos
+              (administrativo, etc.) ficam de fora. Só o que for enviado aqui aparece em
+              Cobranças no portal do cliente.
             </p>
           </div>
           {/* ml-auto: quando o cabeçalho quebra em tela estreita, os totais
@@ -215,6 +218,16 @@ export function ReimbursementsSection({ projectId }: { projectId: string }) {
               Retirar da cobrança
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={mutation.isPending}
+            onClick={() => apply({ internalCost: true })}
+            title="Marca como custo da empresa — sai da lista e nunca vai para o cliente"
+          >
+            <Building2 className="h-3.5 w-3.5 mr-1" />
+            Custo interno
+          </Button>
         </div>
       )}
 

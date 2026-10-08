@@ -24,8 +24,19 @@ import { z } from "zod";
  * lista viraria só diária.
  */
 
-/** Despesa que pode ser cobrada do cliente: qualquer uma que não seja diária. */
-const NAO_E_DIARIA = { workAssignment: { is: null } } as const;
+/**
+ * Despesa que pode ser cobrada do cliente. Exclui, por critério ESTRUTURAL (não
+ * pelo nome da categoria):
+ *   - diárias de funcionário (vínculo com o apontamento) — mão de obra;
+ *   - despesas de prestador (vínculo com WorkServiceProvider) — mão de obra;
+ *   - custos internos marcados (administrativo, etc.) — `internalCost`.
+ * Tudo isso é custo da Contécnica, não do cliente.
+ */
+const COBRAVEL = {
+  workAssignment: { is: null },
+  workServiceProviders: { none: {} },
+  internalCost: false,
+} as const;
 
 const patchSchema = z
   .object({
@@ -34,11 +45,15 @@ const patchSchema = z
     billedToClient: z.boolean().optional(),
     /** true = liberar a nota fiscal para o cliente. */
     receiptShared: z.boolean().optional(),
+    /** true = marcar como custo interno (sai da lista do cliente). */
+    internalCost: z.boolean().optional(),
   })
   .strict()
-  .refine((d) => d.billedToClient !== undefined || d.receiptShared !== undefined, {
-    message: "Informe billedToClient e/ou receiptShared",
-  });
+  .refine(
+    (d) =>
+      d.billedToClient !== undefined || d.receiptShared !== undefined || d.internalCost !== undefined,
+    { message: "Informe billedToClient, receiptShared e/ou internalCost" }
+  );
 
 export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -48,10 +63,10 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
   const expenses = await prisma.expense.findMany({
     where: {
       projectId: params.id,
-      // `billedToClient: true` continua aparecendo mesmo se for diária: se alguma
-      // foi enviada antes deste filtro existir, ela precisa ficar visível para
-      // poder ser retirada — esconder algo que está sendo cobrado seria pior.
-      OR: [NAO_E_DIARIA, { billedToClient: true }],
+      // `billedToClient: true` continua aparecendo mesmo se não for cobrável: se
+      // algo foi enviado antes deste filtro existir, precisa ficar visível para
+      // poder ser retirado — esconder algo que está sendo cobrado seria pior.
+      OR: [COBRAVEL, { billedToClient: true }],
     },
     include: { category: { select: { id: true, name: true } } },
     orderBy: [{ dueDate: "desc" }],
@@ -84,7 +99,7 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
 
   const parsed = await validateBody(request, patchSchema);
   if (!parsed.ok) return apiError(parsed.error, parsed.status);
-  const { expenseIds, billedToClient, receiptShared } = parsed.data;
+  const { expenseIds, billedToClient, receiptShared, internalCost } = parsed.data;
 
   // Restringe à obra da URL: sem isto, um id de despesa de outra obra passaria.
   const target = await prisma.expense.findMany({
@@ -92,9 +107,10 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
       id: { in: expenseIds },
       projectId: params.id,
       clientPaid: false,
-      // Diária nunca pode ser ENVIADA para cobrança, nem por requisição forjada.
-      // Retirar e mexer na nota seguem permitidos, para corrigir dado antigo.
-      ...(billedToClient === true ? NAO_E_DIARIA : {}),
+      // Só o que é cobrável pode ser ENVIADO para cobrança, nem por requisição
+      // forjada (diária, prestador e custo interno ficam de fora). Retirar,
+      // mexer na nota e marcar custo interno seguem permitidos.
+      ...(billedToClient === true ? COBRAVEL : {}),
     },
     select: { id: true, attachmentUrl: true },
   });
@@ -102,7 +118,7 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
   if (target.length === 0) {
     return apiError(
       billedToClient === true
-        ? "Nenhuma despesa elegível — diárias não podem ser cobradas do cliente"
+        ? "Nenhuma despesa elegível — diárias, prestadores e custos internos não vão para o cliente"
         : "Nenhuma despesa elegível — verifique se já foi reembolsada",
       400
     );
@@ -119,6 +135,17 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
   }
 
   if (receiptShared !== undefined) data.receiptShared = receiptShared;
+
+  if (internalCost !== undefined) {
+    data.internalCost = internalCost;
+    // Custo interno não é cobrado do cliente: ao marcar, tira da cobrança e
+    // recolhe a nota.
+    if (internalCost) {
+      data.billedToClient = false;
+      data.billedToClientAt = null;
+      data.receiptShared = false;
+    }
+  }
 
   await prisma.expense.updateMany({ where: { id: { in: target.map((t) => t.id) } }, data });
 

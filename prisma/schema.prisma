@@ -194,6 +194,11 @@ model Expense {
   /// portal nem pode ser baixado por uma sessão de cliente.
   receiptShared    Boolean      @default(false) @map("receipt_shared")
 
+  /// Custo interno da Contécnica (prestador, administrativo, etc.) — NUNCA vai
+  /// para o cliente. Fica fora da aba "Reembolso de Materiais" e não pode ser
+  /// enviado para cobrança. Despesas de prestador nascem com isto marcado.
+  internalCost     Boolean      @default(false) @map("internal_cost")
+
   // Reembolso pelo CLIENTE. Distinto de `status`: PAID ali significa que a
   // Contécnica pagou o fornecedor, não que o cliente reembolsou.
   clientPaid      Boolean       @default(false) @map("client_paid")

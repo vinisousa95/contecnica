@@ -63,12 +63,19 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
   const expenses = await prisma.expense.findMany({
     where: {
       projectId: params.id,
-      // `billedToClient: true` continua aparecendo mesmo se não for cobrável: se
-      // algo foi enviado antes deste filtro existir, precisa ficar visível para
-      // poder ser retirado — esconder algo que está sendo cobrado seria pior.
-      OR: [COBRAVEL, { billedToClient: true }],
+      // Materiais cobráveis + o que já foi enviado + custos internos (prestador
+      // ou marcados). Diárias ficam SEMPRE de fora (workAssignment null em todos
+      // os ramos), senão a lista viraria só diária.
+      OR: [
+        COBRAVEL,
+        { billedToClient: true },
+        { workAssignment: { is: null }, OR: [{ internalCost: true }, { workServiceProviders: { some: {} } }] },
+      ],
     },
-    include: { category: { select: { id: true, name: true } } },
+    include: {
+      category: { select: { id: true, name: true } },
+      _count: { select: { workServiceProviders: true } },
+    },
     orderBy: [{ dueDate: "desc" }],
   });
 
@@ -88,6 +95,9 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
       receiptShared: e.receiptShared,
       clientPaid: e.clientPaid,
       clientPaidAt: e.clientPaidAt,
+      // Classificação para a aba "Custos internos".
+      internalCost: e.internalCost,
+      isProvider: e._count.workServiceProviders > 0,
     }))
   );
 }

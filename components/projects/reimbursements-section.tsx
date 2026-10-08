@@ -34,18 +34,23 @@ interface Row {
   receiptShared: boolean;
   clientPaid: boolean;
   clientPaidAt: string | null;
+  internalCost: boolean;
+  isProvider: boolean;
 }
 
-type Filter = "todos" | "nao_enviados" | "aguardando" | "reembolsados";
+type Filter = "todos" | "nao_enviados" | "aguardando" | "reembolsados" | "internos";
 
 const FILTERS: { value: Filter; label: string }[] = [
   { value: "todos", label: "Todas" },
   { value: "nao_enviados", label: "Não enviadas" },
   { value: "aguardando", label: "Aguardando pagamento" },
   { value: "reembolsados", label: "Reembolsadas" },
+  { value: "internos", label: "Custos internos" },
 ];
 
-function situacao(r: Row): Filter {
+// Situação de uma despesa de MATERIAL (reembolsável). Custos internos têm aba
+// própria e não entram aqui.
+function situacao(r: Row): Exclude<Filter, "internos"> {
   if (r.clientPaid) return "reembolsados";
   return r.billedToClient ? "aguardando" : "nao_enviados";
 }
@@ -103,16 +108,29 @@ export function ReimbursementsSection({ projectId }: { projectId: string }) {
     onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "error" }),
   });
 
-  const visible = rows.filter((r) => filter === "todos" || situacao(r) === filter);
-  const selectable = visible.filter((r) => !r.clientPaid);
+  const isInternos = filter === "internos";
+  const materialRows = rows.filter((r) => !r.internalCost && !r.isProvider);
+  const internalRows = rows.filter((r) => r.internalCost || r.isProvider);
+
+  const visible = isInternos
+    ? internalRows
+    : materialRows.filter((r) => filter === "todos" || situacao(r) === filter);
+
+  // Selecionável: materiais não pagos; na aba de custos internos, só os marcados
+  // manualmente (prestador é estrutural e não volta a ser reembolsável por aqui).
+  const selectable = isInternos
+    ? visible.filter((r) => r.internalCost && !r.isProvider && !r.clientPaid)
+    : visible.filter((r) => !r.clientPaid);
+
   const selectedRows = rows.filter((r) => selected.has(r.id));
 
-  const totalPendente = rows
+  const totalPendente = materialRows
     .filter((r) => r.billedToClient && !r.clientPaid)
     .reduce((s, r) => s + r.amount, 0);
-  const totalNaoEnviado = rows
+  const totalNaoEnviado = materialRows
     .filter((r) => !r.billedToClient && !r.clientPaid)
     .reduce((s, r) => s + r.amount, 0);
+  const totalInterno = internalRows.reduce((s, r) => s + r.amount, 0);
   const totalSelecionado = selectedRows.reduce((s, r) => s + r.amount, 0);
 
   const toggle = (id: string) =>
@@ -144,7 +162,7 @@ export function ReimbursementsSection({ projectId }: { projectId: string }) {
               <ShoppingCart className="h-4 w-4 text-amber-500" />
               Reembolso de Materiais
               <span className="text-xs font-normal text-gray-400 ml-1">
-                ({rows.length} {rows.length === 1 ? "despesa" : "despesas"})
+                ({materialRows.length} {materialRows.length === 1 ? "despesa" : "despesas"})
               </span>
             </CardTitle>
             <p className="text-xs text-gray-400 mt-1">
@@ -164,18 +182,30 @@ export function ReimbursementsSection({ projectId }: { projectId: string }) {
               <p className="text-[11px] uppercase tracking-wide text-gray-400 font-medium">Não enviado</p>
               <p className="text-sm font-bold text-gray-500">{formatCurrency(totalNaoEnviado)}</p>
             </div>
+            <div>
+              <p className="text-[11px] uppercase tracking-wide text-gray-400 font-medium">Custos internos</p>
+              <p className="text-sm font-bold text-gray-700">{formatCurrency(totalInterno)}</p>
+            </div>
           </div>
         </div>
       </CardHeader>
 
       <div className="px-5 pb-3 flex flex-wrap items-center gap-2">
         {FILTERS.map((f) => {
-          const count = f.value === "todos" ? rows.length : rows.filter((r) => situacao(r) === f.value).length;
+          const count =
+            f.value === "internos"
+              ? internalRows.length
+              : f.value === "todos"
+              ? materialRows.length
+              : materialRows.filter((r) => situacao(r) === f.value).length;
           return (
             <button
               key={f.value}
               type="button"
-              onClick={() => setFilter(f.value)}
+              onClick={() => {
+                setFilter(f.value);
+                setSelected(new Set()); // seleção não cruza entre abas
+              }}
               className={`text-xs font-medium rounded-full px-3 py-1 transition-colors ${
                 filter === f.value
                   ? "bg-[#EA580C] text-white"
@@ -195,39 +225,48 @@ export function ReimbursementsSection({ projectId }: { projectId: string }) {
             {formatCurrency(totalSelecionado)}
           </p>
           {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin text-[#EA580C]" />}
-          {podeEnviar && (
-            <Button size="sm" disabled={mutation.isPending} onClick={() => apply({ billedToClient: true })}>
-              <Send className="h-3.5 w-3.5 mr-1" />
-              Enviar para cobrança
-            </Button>
-          )}
-          {podeLiberarNota && (
-            <Button size="sm" variant="outline" disabled={mutation.isPending} onClick={() => apply({ receiptShared: true })}>
-              <Paperclip className="h-3.5 w-3.5 mr-1" />
-              Enviar nota ao cliente
-            </Button>
-          )}
-          {podeRecolherNota && (
-            <Button size="sm" variant="outline" disabled={mutation.isPending} onClick={() => apply({ receiptShared: false })}>
-              Recolher nota
-            </Button>
-          )}
-          {podeRetirar && (
-            <Button size="sm" variant="outline" disabled={mutation.isPending} onClick={() => apply({ billedToClient: false })}>
+          {isInternos ? (
+            <Button size="sm" variant="outline" disabled={mutation.isPending} onClick={() => apply({ internalCost: false })}>
               <Undo2 className="h-3.5 w-3.5 mr-1" />
-              Retirar da cobrança
+              Voltar para reembolsável
             </Button>
+          ) : (
+            <>
+              {podeEnviar && (
+                <Button size="sm" disabled={mutation.isPending} onClick={() => apply({ billedToClient: true })}>
+                  <Send className="h-3.5 w-3.5 mr-1" />
+                  Enviar para cobrança
+                </Button>
+              )}
+              {podeLiberarNota && (
+                <Button size="sm" variant="outline" disabled={mutation.isPending} onClick={() => apply({ receiptShared: true })}>
+                  <Paperclip className="h-3.5 w-3.5 mr-1" />
+                  Enviar nota ao cliente
+                </Button>
+              )}
+              {podeRecolherNota && (
+                <Button size="sm" variant="outline" disabled={mutation.isPending} onClick={() => apply({ receiptShared: false })}>
+                  Recolher nota
+                </Button>
+              )}
+              {podeRetirar && (
+                <Button size="sm" variant="outline" disabled={mutation.isPending} onClick={() => apply({ billedToClient: false })}>
+                  <Undo2 className="h-3.5 w-3.5 mr-1" />
+                  Retirar da cobrança
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={mutation.isPending}
+                onClick={() => apply({ internalCost: true })}
+                title="Marca como custo da empresa — sai da lista e nunca vai para o cliente"
+              >
+                <Building2 className="h-3.5 w-3.5 mr-1" />
+                Custo interno
+              </Button>
+            </>
           )}
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={mutation.isPending}
-            onClick={() => apply({ internalCost: true })}
-            title="Marca como custo da empresa — sai da lista e nunca vai para o cliente"
-          >
-            <Building2 className="h-3.5 w-3.5 mr-1" />
-            Custo interno
-          </Button>
         </div>
       )}
 
@@ -271,7 +310,7 @@ export function ReimbursementsSection({ projectId }: { projectId: string }) {
                       aria-label={`Selecionar ${r.description}`}
                       checked={selected.has(r.id)}
                       onChange={() => toggle(r.id)}
-                      disabled={r.clientPaid}
+                      disabled={r.clientPaid || (isInternos && r.isProvider)}
                       className="h-4 w-4 rounded border-gray-300 text-[#EA580C] focus:ring-[#EA580C] disabled:opacity-40"
                     />
                   </TableCell>
@@ -306,7 +345,12 @@ export function ReimbursementsSection({ projectId }: { projectId: string }) {
                     )}
                   </TableCell>
                   <TableCell>
-                    {r.clientPaid ? (
+                    {r.internalCost || r.isProvider ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600">
+                        <Building2 className="h-3 w-3" />
+                        {r.isProvider ? "Prestador" : "Custo interno"}
+                      </span>
+                    ) : r.clientPaid ? (
                       <div className="text-xs">
                         <span className="inline-flex items-center gap-1 font-medium text-green-700">
                           <CheckCircle2 className="h-3.5 w-3.5" />

@@ -27,7 +27,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatCurrencyInput } from "@/lib/masks";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { toast } from "@/hooks/use-toast";
-import { ReimbursementsSection } from "@/components/projects/reimbursements-section";
+import { ReimbursementsSection, InternalCostsSection } from "@/components/projects/reimbursements-section";
 import {
   ArrowLeft, Pencil, MapPin, Calendar, DollarSign,
   ArrowDownCircle, ArrowUpCircle, Plus, CheckCircle2,
@@ -1551,6 +1551,9 @@ export default function ObraDetailPage(props: { params: Promise<{ id: string }> 
 
       {/* Reembolso de Materiais — o que o cliente vê em Cobranças */}
       <ReimbursementsSection projectId={params.id} />
+
+      {/* Custos internos da obra — prestadores, administrativo (não vão ao cliente) */}
+      <InternalCostsSection projectId={params.id} />
 
       {/* Prestadores */}
       <PrestadoresSection projectId={params.id} />

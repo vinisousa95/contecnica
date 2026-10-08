@@ -109,6 +109,7 @@ function usePatch(projectId: string, onDone: () => void) {
 export function ReimbursementsSection({ projectId }: { projectId: string }) {
   const [filter, setFilter] = useState<Filter>("todos");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [showAll, setShowAll] = useState(false);
 
   const { data: rows = [], isLoading } = useQuery<Row[]>({
     queryKey: QUERY_KEY(projectId),
@@ -130,6 +131,10 @@ export function ReimbursementsSection({ projectId }: { projectId: string }) {
     .filter((r) => !r.billedToClient && !r.clientPaid)
     .reduce((s, r) => s + r.amount, 0);
   const totalSelecionado = selectedRows.reduce((s, r) => s + r.amount, 0);
+
+  // Lista enxuta: 10 mais recentes (ordenados por data desc na API), com opção
+  // de expandir — igual à lista de Despesas.
+  const shown = showAll ? visible : visible.slice(0, 10);
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -275,7 +280,7 @@ export function ReimbursementsSection({ projectId }: { projectId: string }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visible.map((r) => (
+              {shown.map((r) => (
                 <TableRow key={r.id} className={r.billedToClient && !r.clientPaid ? "bg-amber-50/40" : ""}>
                   <TableCell>
                     <input
@@ -343,6 +348,18 @@ export function ReimbursementsSection({ projectId }: { projectId: string }) {
             </TableBody>
           </Table>
         )}
+
+        {visible.length > 10 && (
+          <div className="border-t border-gray-100 px-5 py-2.5 text-center">
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="text-xs font-medium text-[#EA580C] hover:underline"
+            >
+              {showAll ? "Ver menos" : `Ver todas as ${visible.length} despesas`}
+            </button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -353,6 +370,7 @@ export function ReimbursementsSection({ projectId }: { projectId: string }) {
 // ─────────────────────────────────────────────────────────────
 export function InternalCostsSection({ projectId }: { projectId: string }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [showAll, setShowAll] = useState(false);
 
   const { data: rows = [] } = useQuery<Row[]>({
     queryKey: QUERY_KEY(projectId),
@@ -369,6 +387,7 @@ export function InternalCostsSection({ projectId }: { projectId: string }) {
   // Só os marcados manualmente voltam a ser reembolsáveis (prestador é estrutural).
   const selectable = internalRows.filter((r) => r.internalCost && !r.isProvider && !r.clientPaid);
   const selectedRows = internalRows.filter((r) => selected.has(r.id));
+  const shown = showAll ? internalRows : internalRows.slice(0, 10);
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -445,7 +464,7 @@ export function InternalCostsSection({ projectId }: { projectId: string }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {internalRows.map((r) => (
+            {shown.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
                   <input
@@ -475,6 +494,17 @@ export function InternalCostsSection({ projectId }: { projectId: string }) {
             ))}
           </TableBody>
         </Table>
+        {internalRows.length > 10 && (
+          <div className="border-t border-gray-100 px-5 py-2.5 text-center">
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="text-xs font-medium text-[#EA580C] hover:underline"
+            >
+              {showAll ? "Ver menos" : `Ver todas as ${internalRows.length} despesas`}
+            </button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

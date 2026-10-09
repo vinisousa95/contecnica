@@ -612,6 +612,7 @@ model Employee {
   assignments   WorkAssignment[]
   assignedTasks Task[]           @relation("TaskAssignee")
   absences      EmployeeAbsence[]
+  advances      EmployeeAdvance[]
   fines         VehicleFine[]
 
   @@map("employees")
@@ -744,6 +745,8 @@ model WorkAssignment {
   notes           String?
   status          AssignmentStatus @default(SCHEDULED)
   workedConfirmed Boolean          @default(false) @map("worked_confirmed")
+  /// Diária quitada por adiantamento (já foi paga antecipadamente ao funcionário).
+  advanceApplied  Boolean          @default(false) @map("advance_applied")
   expenseId       String?          @unique @map("expense_id")
   expense         Expense?         @relation("AssignmentExpense", fields: [expenseId], references: [id])
   createdAt       DateTime         @default(now()) @map("created_at")
@@ -758,6 +761,22 @@ enum AssignmentStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+/// Adiantamento pago ao funcionário (diárias pagas antecipadas). O saldo é
+/// `amount` somado menos as diárias já abatidas (WorkAssignment.advanceApplied).
+model EmployeeAdvance {
+  id          String   @id @default(cuid())
+  employeeId  String   @map("employee_id")
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  amount      Decimal  @db.Decimal(10, 2)
+  date        DateTime
+  notes       String?
+  createdById String   @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([employeeId])
+  @@map("employee_advances")
 }
 
 // ─────────────────────────────────────────────

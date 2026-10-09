@@ -30,6 +30,7 @@ import {
   Fuel,
   Receipt,
   Bus,
+  HandCoins,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -127,6 +128,7 @@ const navigation: NavItem[] = [
       { label: "Combustível", href: "/operacional/combustivel", icon: Fuel },
       { label: "Pedágio", href: "/operacional/pedagio", icon: Receipt },
       { label: "Transporte", href: "/operacional/transporte", icon: Bus },
+      { label: "Adiantamentos", href: "/operacional/adiantamentos", icon: HandCoins },
       { label: "Faltas", href: "/operacional/faltas", icon: UserX },
       { label: "Multas", href: "/operacional/multas", icon: AlertTriangle },
     ],

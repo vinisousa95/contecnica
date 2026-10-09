@@ -32,7 +32,7 @@ import {
   ArrowLeft, Pencil, MapPin, Calendar, DollarSign,
   ArrowDownCircle, ArrowUpCircle, Plus, CheckCircle2,
   Circle, Eye, EyeOff, Trash2, Link2, ListChecks, RefreshCw, Wrench, Users, Car, HardHat, FileText,
-  ImagePlus, Loader2, X, Receipt,
+  ImagePlus, Loader2, X, Receipt, HandCoins,
 } from "lucide-react";
 
 async function apiFetch(url: string, options?: RequestInit) {
@@ -79,6 +79,14 @@ function EquipeSection({ projectId }: { projectId: string }) {
   });
 
   const assignments: any[] = Array.isArray(data) ? data : (data?.data ?? []);
+
+  // Saldo de adiantamento por funcionário — para avisar na diária que já foi
+  // pago antecipado e não pagar de novo.
+  const { data: advBalancesData } = useQuery({
+    queryKey: ["advance-balances"],
+    queryFn: () => apiFetch(`/api/v1/advances/balances`),
+  });
+  const advBalances: Record<string, number> = advBalancesData ?? {};
 
   // Prestadores vinculados à obra — usados só para preencher o seletor de
   // "agendar prestador no dia".
@@ -169,6 +177,19 @@ function EquipeSection({ projectId }: { projectId: string }) {
       toast({ title: "Agendamento removido", variant: "success" });
     } catch (e: any) {
       toast({ title: "Erro", description: e.message, variant: "error" });
+    }
+  };
+
+  // Abate a diária do saldo de adiantamento do funcionário (não pagar de novo).
+  const applyAdvance = async (id: string) => {
+    try {
+      await apiFetch(`/api/v1/assignments/${id}/apply-advance`, { method: "POST" });
+      qc.invalidateQueries({ queryKey: ["assignments", projectId, filterDate] });
+      qc.invalidateQueries({ queryKey: ["advance-balances"] });
+      qc.invalidateQueries({ queryKey: ["project", projectId] });
+      toast({ title: "Diária abatida do adiantamento", variant: "success" });
+    } catch (e: any) {
+      toast({ title: "Não foi possível abater", description: e.message, variant: "error" });
     }
   };
 
@@ -267,12 +288,48 @@ function EquipeSection({ projectId }: { projectId: string }) {
                     )}
                   </TableCell>
                   <TableCell>
-                    {a.expense ? (
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${EXPENSE_BADGE[a.expense.status] ?? "bg-gray-100 text-gray-500"}`}>
-                        {EXPENSE_LABEL[a.expense.status] ?? a.expense.status}
+                    {a.advanceApplied ? (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700"
+                        title="Diária paga antecipadamente (adiantamento)"
+                      >
+                        <HandCoins className="h-3 w-3" /> Adiantamento
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-400">—</span>
+                      (() => {
+                        const saldo = advBalances[a.employee?.id] ?? 0;
+                        const paga = a.expense?.status === "PAID";
+                        return (
+                          <div className="flex flex-col gap-1">
+                            {a.expense ? (
+                              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${EXPENSE_BADGE[a.expense.status] ?? "bg-gray-100 text-gray-500"}`}>
+                                {EXPENSE_LABEL[a.expense.status] ?? a.expense.status}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-400">—</span>
+                            )}
+                            {saldo > 0 && !paga && (
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span
+                                  className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700"
+                                  title="Este funcionário tem saldo adiantado — não pague de novo"
+                                >
+                                  ⚠ Adiantado {formatCurrency(saldo)}
+                                </span>
+                                {a.expense && (
+                                  <button
+                                    onClick={() => applyAdvance(a.id)}
+                                    className="text-[10px] font-semibold text-[#EA580C] hover:underline"
+                                    title="Quitar esta diária usando o saldo adiantado"
+                                  >
+                                    Abater
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()
                     )}
                   </TableCell>
                   <TableCell>

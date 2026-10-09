@@ -96,6 +96,15 @@ export const operationalExpenseSchema = z.object({
 }).strict();
 export type OperationalExpenseInput = z.infer<typeof operationalExpenseSchema>;
 
+// ── Adiantamentos de funcionário ─────────────────────────────
+export const employeeAdvanceSchema = z.object({
+  employeeId: z.string().min(1, "Funcionário é obrigatório"),
+  amount: z.string().min(1, "Valor é obrigatório"),
+  date: z.string().min(1, "Data é obrigatória"),
+  notes: z.string().optional().nullable(),
+}).strict();
+export type EmployeeAdvanceInput = z.infer<typeof employeeAdvanceSchema>;
+
 // ── Revenues ──────────────────────────────────────────────────
 export const revenueSchema = z.object({
   projectId: z.string().optional().nullable(),

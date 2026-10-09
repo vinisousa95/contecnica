@@ -85,6 +85,17 @@ export const expenseSchema = z.object({
   internalCost: z.boolean().optional(),
 }).strict();
 
+// ── Operacional: Combustível / Pedágio / Transporte ──────────
+// Lançamento rápido que vira uma despesa (custo interno) da obra.
+export const operationalExpenseSchema = z.object({
+  type: z.enum(["FUEL", "TOLL", "TRANSPORT"]),
+  projectId: z.string().min(1, "Obra é obrigatória"),
+  amount: z.string().min(1, "Valor é obrigatório"),
+  date: z.string().min(1, "Data é obrigatória"),
+  notes: z.string().optional().nullable(),
+}).strict();
+export type OperationalExpenseInput = z.infer<typeof operationalExpenseSchema>;
+
 // ── Revenues ──────────────────────────────────────────────────
 export const revenueSchema = z.object({
   projectId: z.string().optional().nullable(),

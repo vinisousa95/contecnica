@@ -27,6 +27,9 @@ import {
   UserX,
   AlertTriangle,
   Handshake,
+  Fuel,
+  Receipt,
+  Bus,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -121,6 +124,9 @@ const navigation: NavItem[] = [
     children: [
       { label: "Deslocamentos", href: "/operacional", icon: MapPin },
       { label: "Veículos", href: "/operacional/veiculos", icon: Truck },
+      { label: "Combustível", href: "/operacional/combustivel", icon: Fuel },
+      { label: "Pedágio", href: "/operacional/pedagio", icon: Receipt },
+      { label: "Transporte", href: "/operacional/transporte", icon: Bus },
       { label: "Faltas", href: "/operacional/faltas", icon: UserX },
       { label: "Multas", href: "/operacional/multas", icon: AlertTriangle },
     ],

@@ -199,6 +199,10 @@ model Expense {
   /// enviado para cobrança. Despesas de prestador nascem com isto marcado.
   internalCost     Boolean      @default(false) @map("internal_cost")
 
+  /// Lançamento operacional (Combustível / Pedágio / Transporte) feito pelos
+  /// módulos de Operacional. Nulo = despesa comum. Nasce como custo interno.
+  operationalType  OperationalExpenseType? @map("operational_type")
+
   // Reembolso pelo CLIENTE. Distinto de `status`: PAID ali significa que a
   // Contécnica pagou o fornecedor, não que o cliente reembolsou.
   clientPaid      Boolean       @default(false) @map("client_paid")
@@ -216,6 +220,12 @@ enum ExpenseStatus {
   PENDING
   PAID
   OVERDUE
+}
+
+enum OperationalExpenseType {
+  FUEL
+  TOLL
+  TRANSPORT
 }
 
 // ─────────────────────────────────────────────
